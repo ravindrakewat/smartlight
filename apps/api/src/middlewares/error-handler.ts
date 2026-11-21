@@ -1,9 +1,27 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
+import { Prisma } from '@smart-light/db';
 import { NodeEnvironment, type ApiErrorResponse } from '@smart-light/shared';
 import { env } from '../config/env';
 import { AppError } from '../utils/app-error';
 import { logger } from '../utils/logger';
+
+/** Maps expected database errors to clean API errors (no SQL details leak out). */
+function translateDatabaseError(err: unknown): unknown {
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (err.code === 'P2002') {
+      return new AppError({
+        statusCode: 409,
+        code: 'CONFLICT',
+        message: 'A record with these details already exists',
+      });
+    }
+    if (err.code === 'P2025') {
+      return new AppError({ statusCode: 404, code: 'NOT_FOUND', message: 'Record not found' });
+    }
+  }
+  return err;
+}
 
 /**
  * Errors raised by Express body parsers (`express.json`, `express.urlencoded`).
@@ -41,7 +59,13 @@ function isBodyParserError(err: unknown): err is BodyParserError {
   );
 }
 
-export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction): void {
+export function errorHandler(
+  rawError: unknown,
+  req: Request,
+  res: Response,
+  _next: NextFunction,
+): void {
+  const err = translateDatabaseError(rawError);
   const requestId = typeof res.locals.requestId === 'string' ? res.locals.requestId : undefined;
   const timestamp = new Date().toISOString();
 

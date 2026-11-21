@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { createApp } from './app';
 import { env } from './config/env';
+import { prisma } from './lib/prisma';
 import { logger } from './utils/logger';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
@@ -34,7 +35,10 @@ function gracefulShutdown(signal: string): void {
     }
 
     logger.info('HTTP server closed cleanly');
-    process.exit(0);
+    void prisma
+      .$disconnect()
+      .catch(() => undefined)
+      .finally(() => process.exit(0));
   });
 }
 
