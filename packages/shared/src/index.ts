@@ -5,3 +5,4 @@ export * from './schemas/env';
 export * from './schemas/health';
 export * from './schemas/pagination';
 export * from './iot';
+export * from './i18n/locales';

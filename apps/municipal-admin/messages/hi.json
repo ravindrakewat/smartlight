@@ -1,0 +1,83 @@
+{
+  "Metadata": {
+    "title": "नगर नियंत्रण केंद्र",
+    "description": "अपने शहर की स्ट्रीट लाइटों की निगरानी, नियंत्रण और रखरखाव करें।"
+  },
+  "Common": {
+    "productName": "स्मार्ट स्ट्रीट लाइट",
+    "consoleName": "नगर नियंत्रण केंद्र",
+    "language": "भाषा",
+    "skipToContent": "मुख्य सामग्री पर जाएं",
+    "navigation": "मुख्य नेविगेशन",
+    "openMenu": "मेनू खोलें",
+    "closeMenu": "मेनू बंद करें",
+    "previewData": "नमूना डेटा",
+    "comingSoonTitle": "जल्द उपलब्ध",
+    "comingSoonDescription": "यह मॉड्यूल तैयार किया जा रहा है और अगले संस्करण में उपलब्ध होगा।",
+    "backToDashboard": "डैशबोर्ड पर वापस जाएं"
+  },
+  "Nav": {
+    "dashboard": "डैशबोर्ड",
+    "map": "लाइव मैप",
+    "assets": "खंभे और लाइटें",
+    "alerts": "अलर्ट",
+    "workOrders": "कार्य आदेश",
+    "schedules": "समय-सारिणी",
+    "reports": "रिपोर्ट",
+    "settings": "सेटिंग्स"
+  },
+  "Status": {
+    "on": "चालू",
+    "dimmed": "धीमी",
+    "off": "बंद",
+    "fault": "खराबी",
+    "offline": "ऑफ़लाइन"
+  },
+  "Severity": {
+    "critical": "गंभीर",
+    "warning": "चेतावनी"
+  },
+  "AlertTypes": {
+    "lamp_failure": "लैंप खराब",
+    "relay_stuck": "रिले अटका (लाइट बंद नहीं हो रही)",
+    "day_burning": "दिन में जल रही है",
+    "over_voltage": "अधिक वोल्टेज",
+    "under_voltage": "कम वोल्टेज",
+    "offline": "कंट्रोलर ऑफ़लाइन"
+  },
+  "Dashboard": {
+    "title": "डैशबोर्ड",
+    "description": "आपके शहर की स्ट्रीट लाइटों का लाइव अवलोकन।",
+    "stats": {
+      "totalLights": "कुल लाइटें",
+      "working": "चालू",
+      "faulty": "खराब",
+      "offline": "ऑफ़लाइन",
+      "energyToday": "आज की ऊर्जा खपत",
+      "shareOfTotal": "सभी लाइटों का {percent}",
+      "energyValue": "{value} kWh",
+      "energyHint": "डिमिंग से {percent} बचत"
+    },
+    "map": {
+      "title": "लाइव मैप",
+      "description": "हर खंभा, उसकी मौजूदा स्थिति के रंग में।",
+      "emptyTitle": "मैप यहां दिखेगा",
+      "emptyDescription": "कंट्रोलर ऑनलाइन होते ही खंभे मैप पर दिखने लगेंगे।"
+    },
+    "alerts": {
+      "title": "हाल के अलर्ट",
+      "description": "पिछले 24 घंटों में कंट्रोलरों द्वारा भेजी गई खराबियां।",
+      "viewAll": "सभी अलर्ट देखें",
+      "pole": "खंभा {code}"
+    },
+    "zones": {
+      "title": "ज़ोन",
+      "description": "ज़ोन के अनुसार स्ट्रीट लाइटों की उपलब्धता।",
+      "zone": "ज़ोन",
+      "total": "लाइटें",
+      "working": "चालू",
+      "faulty": "खराब",
+      "availability": "उपलब्धता"
+    }
+  }
+}

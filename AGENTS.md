@@ -35,7 +35,7 @@ Mobile App (Expo / RN)      ─┘                                      │
 | `apps/mobile`          | `@smart-light/mobile`          | React Native, Expo, TypeScript          | Mobile app for field technicians and operations            |
 | `apps/api`             | `@smart-light/api`             | Node.js, Express.js, TypeScript, Zod    | Central REST API (and future Socket.IO, Prisma, BullMQ)    |
 | `packages/shared`      | `@smart-light/shared`          | TypeScript, Zod                         | Platform-agnostic types, enums, API contracts, Zod schemas |
-| `packages/ui`          | `@smart-light/ui`              | React, TypeScript                       | Shared **web-only** UI component library for Next.js apps  |
+| `packages/ui`          | `@smart-light/ui`              | React, Tailwind CSS v4, Radix           | Shared **web-only** design system for the Next.js apps     |
 | `packages/config`      | `@smart-light/config`          | JSON, ESM                               | Shared TypeScript, ESLint, and Prettier configurations     |
 | `firmware/`            | —                              | ESP-IDF v5.4 (C), ESP32-S3              | Street light controller firmware (MQTT over TLS)           |
 | `infra/docker/`        | —                              | Docker / Compose (future)               | Local development infrastructure definitions               |
@@ -114,6 +114,19 @@ Mobile App (Expo / RN)      ─┘                                      │
 - Every API error response must conform to the `ApiErrorResponse` contract in `@smart-light/shared`.
 - Validate all external inputs (HTTP params/query/body, environment variables, MQTT payloads) using Zod at the boundary.
 - The device ↔ cloud MQTT contract lives in `packages/shared/src/iot` and is mirrored in `firmware/street-light-controller/main/include/sl_protocol.h`. Change both together and update `docs/iot/mqtt-protocol.md`.
+
+---
+
+## 8a. UI/UX, Accessibility & Localisation Standards
+
+The platform is supplied to government bodies and must meet **GIGW 3.0** and **WCAG 2.1 AA**.
+
+- **Design system first:** build web UI from `@smart-light/ui` components and semantic Tailwind tokens (`bg-surface`, `text-muted-foreground`, `text-danger`, …) defined in `packages/ui/src/styles/theme.css`. Never hardcode colours or use inline styles.
+- **Fonts:** Inter (Latin, tabular numerals) + Noto Sans Devanagari (Hindi), loaded with `next/font` in each app. Do not apply negative letter-spacing to Devanagari text.
+- **Bilingual:** every user-visible string goes through `next-intl` with both `messages/en.json` and `messages/hi.json`. `npm run check:i18n` (CI) fails on missing or mismatched keys. Format numbers and dates with the locale-aware formatter (Indian digit grouping, `Asia/Kolkata`).
+- **Accessibility:** one `h1` per page and a correct heading order; skip link and `main#main-content` on every layout; visible focus; touch targets ≥ 44 px; status is never shown by colour alone (always text or icon); tables use `th scope`; respect `prefers-reduced-motion`.
+- **Responsive:** every screen must work at 360 px width without horizontal page scroll; wide tables scroll inside their card.
+- **Honest data:** placeholder data lives in `src/lib/preview-data.ts` and is always labelled with a visible "Preview data" badge until replaced by API data.
 
 ---
 

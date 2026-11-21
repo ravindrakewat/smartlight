@@ -36,6 +36,9 @@ jobs:
       - name: Lint all workspaces
         run: npm run lint
 
+      - name: Check translations (Hindi / English)
+        run: npm run check:i18n
+
       - name: Run tests
         run: npm run test
 

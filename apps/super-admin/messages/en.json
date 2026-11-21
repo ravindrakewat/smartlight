@@ -1,0 +1,64 @@
+{
+  "Metadata": {
+    "title": "Platform Console",
+    "description": "Manage municipalities, devices and the health of the Smart Street Light platform."
+  },
+  "Common": {
+    "productName": "Smart Street Light",
+    "consoleName": "Platform Console",
+    "language": "Language",
+    "skipToContent": "Skip to main content",
+    "navigation": "Main navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "previewData": "Preview data",
+    "comingSoonTitle": "Coming soon",
+    "comingSoonDescription": "This module is being built and will be available in an upcoming release.",
+    "backToDashboard": "Back to overview"
+  },
+  "Nav": {
+    "overview": "Overview",
+    "municipalities": "Municipalities",
+    "devices": "Devices",
+    "firmware": "Firmware",
+    "users": "Platform users",
+    "audit": "Audit log",
+    "health": "System health",
+    "settings": "Settings"
+  },
+  "TenantStatus": {
+    "active": "Active",
+    "onboarding": "Onboarding",
+    "suspended": "Suspended"
+  },
+  "Overview": {
+    "title": "Platform overview",
+    "description": "All municipalities on the platform at a glance.",
+    "stats": {
+      "municipalities": "Municipalities",
+      "devices": "Controllers",
+      "online": "Online now",
+      "alerts": "Open critical alerts",
+      "onlineHint": "{percent} of all controllers"
+    },
+    "tenants": {
+      "title": "Municipalities",
+      "description": "Tenants, their fleet size and controller connectivity.",
+      "name": "Municipality",
+      "devices": "Controllers",
+      "online": "Online",
+      "status": "Status",
+      "onboard": "Onboard municipality"
+    },
+    "health": {
+      "title": "System health",
+      "description": "Core platform services.",
+      "api": "Central API",
+      "database": "Database",
+      "broker": "MQTT broker",
+      "queue": "Job queue",
+      "operational": "Operational",
+      "notConnected": "Not connected yet"
+    }
+  }
+}

@@ -1,5 +1,30 @@
-export { PortalShell, type PortalShellProps } from './components/PortalShell';
-export { StatusBadge, type StatusBadgeProps, type StatusBadgeTone } from './components/StatusBadge';
-export { SurfaceCard, type SurfaceCardProps } from './components/SurfaceCard';
-export { KeyValueList, type KeyValueItem, type KeyValueListProps } from './components/KeyValueList';
-export { uiTokens } from './styles/theme';
+export { cn } from './lib/cn';
+export type { Tone } from './lib/tones';
+
+export { AppShell, type AppShellNavItem, type AppShellProps } from './components/AppShell';
+export { Badge, type BadgeProps } from './components/Badge';
+export { BrandMark, type BrandMarkProps } from './components/BrandMark';
+export { Button, buttonVariants, type ButtonProps } from './components/Button';
+export {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  type CardTitleProps,
+} from './components/Card';
+export { EmptyState, type EmptyStateProps } from './components/EmptyState';
+export {
+  LanguageSwitcher,
+  type LanguageOption,
+  type LanguageSwitcherProps,
+} from './components/LanguageSwitcher';
+export { PageHeader, type PageHeaderProps } from './components/PageHeader';
+export { SkipLink, type SkipLinkProps } from './components/SkipLink';
+export { StatCard, type StatCardProps } from './components/StatCard';
+export {
+  StatusIndicator,
+  type LightStatus,
+  type StatusIndicatorProps,
+} from './components/StatusIndicator';
+export { TextSizeControl, type TextSizeControlProps } from './components/TextSizeControl';

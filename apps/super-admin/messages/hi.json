@@ -1,0 +1,64 @@
+{
+  "Metadata": {
+    "title": "प्लेटफ़ॉर्म कंसोल",
+    "description": "स्मार्ट स्ट्रीट लाइट प्लेटफ़ॉर्म के नगर निगमों, उपकरणों और सिस्टम की स्थिति का प्रबंधन करें।"
+  },
+  "Common": {
+    "productName": "स्मार्ट स्ट्रीट लाइट",
+    "consoleName": "प्लेटफ़ॉर्म कंसोल",
+    "language": "भाषा",
+    "skipToContent": "मुख्य सामग्री पर जाएं",
+    "navigation": "मुख्य नेविगेशन",
+    "openMenu": "मेनू खोलें",
+    "closeMenu": "मेनू बंद करें",
+    "previewData": "नमूना डेटा",
+    "comingSoonTitle": "जल्द उपलब्ध",
+    "comingSoonDescription": "यह मॉड्यूल तैयार किया जा रहा है और अगले संस्करण में उपलब्ध होगा।",
+    "backToDashboard": "अवलोकन पर वापस जाएं"
+  },
+  "Nav": {
+    "overview": "अवलोकन",
+    "municipalities": "नगर निगम",
+    "devices": "उपकरण",
+    "firmware": "फ़र्मवेयर",
+    "users": "प्लेटफ़ॉर्म उपयोगकर्ता",
+    "audit": "ऑडिट लॉग",
+    "health": "सिस्टम की स्थिति",
+    "settings": "सेटिंग्स"
+  },
+  "TenantStatus": {
+    "active": "सक्रिय",
+    "onboarding": "जोड़ा जा रहा है",
+    "suspended": "निलंबित"
+  },
+  "Overview": {
+    "title": "प्लेटफ़ॉर्म अवलोकन",
+    "description": "प्लेटफ़ॉर्म पर सभी नगर निगम एक नज़र में।",
+    "stats": {
+      "municipalities": "नगर निगम",
+      "devices": "कंट्रोलर",
+      "online": "अभी ऑनलाइन",
+      "alerts": "खुले गंभीर अलर्ट",
+      "onlineHint": "सभी कंट्रोलरों का {percent}"
+    },
+    "tenants": {
+      "title": "नगर निगम",
+      "description": "नगर निगम, उनके उपकरणों की संख्या और कंट्रोलर कनेक्टिविटी।",
+      "name": "नगर निगम",
+      "devices": "कंट्रोलर",
+      "online": "ऑनलाइन",
+      "status": "स्थिति",
+      "onboard": "नया नगर निगम जोड़ें"
+    },
+    "health": {
+      "title": "सिस्टम की स्थिति",
+      "description": "प्लेटफ़ॉर्म की मुख्य सेवाएं।",
+      "api": "केंद्रीय API",
+      "database": "डेटाबेस",
+      "broker": "MQTT ब्रोकर",
+      "queue": "जॉब क्यू",
+      "operational": "चालू",
+      "notConnected": "अभी जुड़ा नहीं"
+    }
+  }
+}

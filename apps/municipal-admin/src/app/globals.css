@@ -1,11 +1,5 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+@import 'tailwindcss';
+@import '@smart-light/ui/theme.css';
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-}
+/* Let Tailwind see the class names used inside the shared design system. */
+@source '../../../../packages/ui/src';

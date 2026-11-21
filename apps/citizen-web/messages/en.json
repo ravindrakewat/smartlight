@@ -1,0 +1,66 @@
+{
+  "Metadata": {
+    "title": "Smart Street Light — Citizen Portal",
+    "description": "Report a faulty street light in under a minute and track the repair until it is fixed."
+  },
+  "Common": {
+    "appName": "Smart Street Light",
+    "tagline": "Citizen Service Portal",
+    "language": "Language",
+    "skipToContent": "Skip to main content",
+    "textSize": {
+      "group": "Text size",
+      "decrease": "Decrease text size",
+      "reset": "Normal text size",
+      "increase": "Increase text size"
+    },
+    "reportCta": "Report a problem",
+    "trackCta": "Track complaint",
+    "comingSoonTitle": "Coming soon",
+    "comingSoonDescription": "This service will be available in the next release.",
+    "backHome": "Back to home"
+  },
+  "Home": {
+    "eyebrow": "Citizen services",
+    "title": "Street light not working? Tell us and we will fix it.",
+    "subtitle": "Report it in under a minute, get a complaint number, and follow every step until the light is back on.",
+    "issues": {
+      "title": "You can report",
+      "lightOff": "Light is off",
+      "flickering": "Light is flickering",
+      "dayBurning": "Light is on during the day",
+      "damage": "Damaged pole or wiring"
+    },
+    "steps": {
+      "title": "How it works",
+      "one": {
+        "title": "Identify the pole",
+        "body": "Enter the number painted on the pole, or pick the spot on the map."
+      },
+      "two": {
+        "title": "Describe the problem",
+        "body": "Choose what is wrong and add a photo if you can."
+      },
+      "three": {
+        "title": "Track the repair",
+        "body": "Follow every update with your complaint number and get SMS alerts."
+      }
+    },
+    "safety": {
+      "title": "Safety first",
+      "body": "If you see fallen wires or a risk of electric shock, stay away from the pole and call 112 immediately."
+    }
+  },
+  "Report": {
+    "title": "Report a problem",
+    "description": "Report a faulty street light online."
+  },
+  "Track": {
+    "title": "Track your complaint",
+    "description": "Check the status of your complaint with its number."
+  },
+  "Footer": {
+    "rights": "© {year} Smart Street Light Management System",
+    "note": "Street lighting services for the citizens of your city."
+  }
+}

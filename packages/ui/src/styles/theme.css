@@ -1,0 +1,161 @@
+/*
+ * Smart Street Light design tokens (Tailwind CSS v4).
+ *
+ * Usage in each Next.js app's globals.css:
+ *   @import 'tailwindcss';
+ *   @import '@smart-light/ui/theme.css';
+ *   @source '<relative path>/packages/ui/src';
+ *
+ * Accessibility (GIGW 3.0 / WCAG 2.1 AA): every text/background pair below meets a
+ * contrast ratio of at least 4.5:1. Status is never conveyed by colour alone —
+ * components always pair colour with text or an icon.
+ *
+ * Fonts: `--font-inter` (Latin, tabular numerals) and `--font-devanagari`
+ * (Noto Sans Devanagari) are provided by next/font in each app. Latin glyphs render
+ * in Inter and Hindi glyphs fall through to Noto Sans Devanagari.
+ */
+
+@theme inline {
+  --font-sans:
+    var(--font-inter), var(--font-devanagari), ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    sans-serif;
+
+  --color-background: var(--sl-background);
+  --color-foreground: var(--sl-foreground);
+  --color-surface: var(--sl-surface);
+  --color-surface-subtle: var(--sl-surface-subtle);
+  --color-muted-foreground: var(--sl-muted-foreground);
+  --color-border: var(--sl-border);
+  --color-ring: var(--sl-ring);
+
+  --color-primary: var(--sl-primary);
+  --color-primary-hover: var(--sl-primary-hover);
+  --color-primary-foreground: var(--sl-primary-foreground);
+  --color-primary-subtle: var(--sl-primary-subtle);
+
+  /* Brand glow (street-light amber). Decorative only — never for text. */
+  --color-brand: var(--sl-brand);
+
+  --color-success: var(--sl-success);
+  --color-success-subtle: var(--sl-success-subtle);
+  --color-warning: var(--sl-warning);
+  --color-warning-subtle: var(--sl-warning-subtle);
+  --color-danger: var(--sl-danger);
+  --color-danger-subtle: var(--sl-danger-subtle);
+  --color-danger-foreground: var(--sl-danger-foreground);
+  --color-info: var(--sl-info);
+  --color-info-subtle: var(--sl-info-subtle);
+  --color-neutral: var(--sl-neutral);
+  --color-neutral-subtle: var(--sl-neutral-subtle);
+}
+
+:root {
+  color-scheme: light;
+
+  --sl-background: #f5f7fa;
+  --sl-foreground: #0f172a;
+  --sl-surface: #ffffff;
+  --sl-surface-subtle: #eef2f6;
+  --sl-muted-foreground: #475569;
+  --sl-border: #dbe2ea;
+  --sl-ring: #2563eb;
+
+  --sl-primary: #1d4ed8;
+  --sl-primary-hover: #1e40af;
+  --sl-primary-foreground: #ffffff;
+  --sl-primary-subtle: #e8efff;
+
+  --sl-brand: #f59e0b;
+
+  --sl-success: #047857;
+  --sl-success-subtle: #e7f8f0;
+  --sl-warning: #a14a06;
+  --sl-warning-subtle: #fff4dc;
+  --sl-danger: #b91c1c;
+  --sl-danger-subtle: #fdecec;
+  --sl-danger-foreground: #ffffff;
+  --sl-info: #1d4ed8;
+  --sl-info-subtle: #e8efff;
+  --sl-neutral: #475569;
+  --sl-neutral-subtle: #eef2f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --sl-background: #0a0f1c;
+    --sl-foreground: #e6ebf2;
+    --sl-surface: #111827;
+    --sl-surface-subtle: #1b2434;
+    --sl-muted-foreground: #a3afc2;
+    --sl-border: #263247;
+    --sl-ring: #7aa7ff;
+
+    --sl-primary: #2f6bf0;
+    --sl-primary-hover: #4a80f5;
+    --sl-primary-foreground: #ffffff;
+    --sl-primary-subtle: #172544;
+
+    --sl-brand: #fbbf24;
+
+    --sl-success: #4ade9b;
+    --sl-success-subtle: #10291f;
+    --sl-warning: #fbbf4d;
+    --sl-warning-subtle: #2d2210;
+    --sl-danger: #fb8282;
+    --sl-danger-subtle: #321617;
+    --sl-danger-foreground: #1a0606;
+    --sl-info: #8bb4ff;
+    --sl-info-subtle: #172544;
+    --sl-neutral: #a3afc2;
+    --sl-neutral-subtle: #1b2434;
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Devanagari needs extra vertical room for matras above and below the line. */
+  :lang(hi) {
+    line-height: 1.75;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    line-height: 1.3;
+    text-wrap: balance;
+  }
+
+  /* Clearly visible keyboard focus everywhere (GIGW / WCAG 2.4.7). */
+  :focus-visible {
+    outline: 3px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
