@@ -13,6 +13,7 @@
   "dependencies": {
     "@smart-light/shared": "*",
     "@smart-light/ui": "*",
+    "@tanstack/react-query": "^5.108.2",
     "lucide-react": "^0.540.0",
     "next": "^15.3.2",
     "next-intl": "^4.15.3",

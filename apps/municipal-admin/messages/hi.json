@@ -11,10 +11,28 @@
     "navigation": "मुख्य नेविगेशन",
     "openMenu": "मेनू खोलें",
     "closeMenu": "मेनू बंद करें",
-    "previewData": "नमूना डेटा",
     "comingSoonTitle": "जल्द उपलब्ध",
     "comingSoonDescription": "यह मॉड्यूल तैयार किया जा रहा है और अगले संस्करण में उपलब्ध होगा।",
-    "backToDashboard": "डैशबोर्ड पर वापस जाएं"
+    "backToDashboard": "डैशबोर्ड पर वापस जाएं",
+    "loading": "लोड हो रहा है…",
+    "errorTitle": "कुछ गड़बड़ हो गई",
+    "errorBody": "डेटा लोड नहीं हो सका। अपना कनेक्शन जांचें और फिर से कोशिश करें।",
+    "retry": "फिर से कोशिश करें",
+    "notAllowedTitle": "इस कंसोल की अनुमति नहीं है",
+    "notAllowedBody": "आपका खाता नगर नियंत्रण केंद्र उपयोग करने के लिए अधिकृत नहीं है।",
+    "signOut": "साइन आउट",
+    "previous": "पिछला",
+    "next": "अगला",
+    "pageStatus": "पृष्ठ {page} / {total}",
+    "openInMaps": "मैप में खोलें",
+    "roles": {
+      "SUPER_ADMIN": "प्लेटफ़ॉर्म प्रशासक",
+      "MUNICIPAL_ADMIN": "नगर निगम प्रशासक",
+      "SUPERVISOR": "पर्यवेक्षक",
+      "OPERATOR": "कंट्रोल रूम ऑपरेटर",
+      "AGENCY_MANAGER": "एजेंसी प्रबंधक",
+      "TECHNICIAN": "तकनीशियन"
+    }
   },
   "Nav": {
     "dashboard": "डैशबोर्ड",
@@ -26,58 +44,204 @@
     "reports": "रिपोर्ट",
     "settings": "सेटिंग्स"
   },
-  "Status": {
-    "on": "चालू",
-    "dimmed": "धीमी",
-    "off": "बंद",
-    "fault": "खराबी",
-    "offline": "ऑफ़लाइन"
+  "Login": {
+    "title": "साइन इन करें",
+    "subtitle": "अधिकृत कर्मचारियों के लिए नगर नियंत्रण केंद्र।",
+    "email": "ईमेल पता",
+    "password": "पासवर्ड",
+    "submit": "साइन इन करें",
+    "submitting": "साइन इन हो रहा है…",
+    "notice": "केवल अधिकृत नगर निगम कर्मचारियों के लिए। सभी गतिविधियां दर्ज की जाती हैं।",
+    "errors": {
+      "INVALID_CREDENTIALS": "ईमेल या पासवर्ड गलत है।",
+      "ACCOUNT_LOCKED": "बहुत अधिक गलत प्रयास। 15 मिनट बाद फिर से कोशिश करें।",
+      "ACCOUNT_DISABLED": "यह खाता बंद कर दिया गया है। अपने प्रशासक से संपर्क करें।",
+      "TENANT_SUSPENDED": "यह नगर निगम अभी निलंबित है।",
+      "WRONG_PORTAL": "यह खाता नगर नियंत्रण केंद्र का उपयोग नहीं कर सकता।",
+      "NETWORK_ERROR": "सर्वर से संपर्क नहीं हो पा रहा। अपना कनेक्शन जांचें।",
+      "generic": "साइन इन नहीं हो सका। कृपया फिर से कोशिश करें।"
+    }
   },
-  "Severity": {
-    "critical": "गंभीर",
-    "warning": "चेतावनी"
+  "LightStatus": {
+    "UNKNOWN": "कंट्रोलर नहीं",
+    "ON": "चालू",
+    "DIMMED": "धीमी",
+    "OFF": "बंद",
+    "FAULT": "खराबी",
+    "OFFLINE": "ऑफ़लाइन"
   },
-  "AlertTypes": {
+  "WorkOrderStatus": {
+    "OPEN": "खुला",
+    "ASSIGNED": "सौंपा गया",
+    "IN_PROGRESS": "काम जारी",
+    "PENDING_VERIFICATION": "सत्यापन बाकी",
+    "RESOLVED": "हल हुआ",
+    "CANCELLED": "रद्द"
+  },
+  "Priority": {
+    "CRITICAL": "अति आवश्यक",
+    "HIGH": "उच्च",
+    "NORMAL": "सामान्य",
+    "LOW": "कम"
+  },
+  "Source": {
+    "IOT_ALERT": "कंट्रोलर अलर्ट",
+    "CITIZEN_COMPLAINT": "नागरिक शिकायत",
+    "INSPECTION": "निरीक्षण",
+    "MANUAL": "कंट्रोल रूम"
+  },
+  "Fault": {
     "lamp_failure": "लैंप खराब",
-    "relay_stuck": "रिले अटका (लाइट बंद नहीं हो रही)",
+    "relay_stuck": "रिले अटका",
     "day_burning": "दिन में जल रही है",
     "over_voltage": "अधिक वोल्टेज",
     "under_voltage": "कम वोल्टेज",
-    "offline": "कंट्रोलर ऑफ़लाइन"
+    "over_current": "अधिक करंट",
+    "offline": "कंट्रोलर ऑफ़लाइन",
+    "LIGHT_OFF": "लाइट बंद",
+    "FLICKERING": "टिमटिमा रही है",
+    "DAY_BURNING": "दिन में जल रही है",
+    "DAMAGED_POLE": "क्षतिग्रस्त खंभा",
+    "EXPOSED_WIRING": "खुले तार",
+    "OTHER": "अन्य",
+    "unknown": "नहीं बताया गया"
+  },
+  "Resolution": {
+    "LAMP_REPLACED": "लैंप बदला",
+    "DRIVER_REPLACED": "ड्राइवर बदला",
+    "CONTROLLER_REPLACED": "कंट्रोलर बदला",
+    "WIRING_REPAIRED": "वायरिंग ठीक की",
+    "FUSE_REPLACED": "फ्यूज़ बदला",
+    "POWER_RESTORED": "बिजली बहाल की",
+    "POLE_REPAIRED": "खंभा ठीक किया",
+    "NO_FAULT_FOUND": "कोई खराबी नहीं मिली",
+    "OTHER": "अन्य"
+  },
+  "Event": {
+    "CREATED": "कार्य आदेश बना",
+    "ASSIGNED": "सौंपा गया",
+    "STARTED": "मौके पर काम शुरू",
+    "COMPLETED": "तकनीशियन ने काम पूरा बताया",
+    "VERIFIED": "मरम्मत सत्यापित",
+    "VERIFICATION_FAILED": "मरम्मत सत्यापित नहीं — वापस भेजा",
+    "REOPENED": "फिर से खोला",
+    "CANCELLED": "रद्द किया",
+    "COMMENT": "टिप्पणी",
+    "SLA_BREACHED": "समय-सीमा पार"
   },
   "Dashboard": {
     "title": "डैशबोर्ड",
     "description": "आपके शहर की स्ट्रीट लाइटों का लाइव अवलोकन।",
     "stats": {
-      "totalLights": "कुल लाइटें",
+      "totalLights": "कुल खंभे",
       "working": "चालू",
       "faulty": "खराब",
       "offline": "ऑफ़लाइन",
-      "energyToday": "आज की ऊर्जा खपत",
-      "shareOfTotal": "सभी लाइटों का {percent}",
-      "energyValue": "{value} kWh",
-      "energyHint": "डिमिंग से {percent} बचत"
+      "controllers": "ऑनलाइन कंट्रोलर",
+      "controllersHint": "{total} में से {online} कंट्रोलर",
+      "shareOfTotal": "सभी खंभों का {percent}"
     },
     "map": {
       "title": "लाइव मैप",
       "description": "हर खंभा, उसकी मौजूदा स्थिति के रंग में।",
-      "emptyTitle": "मैप यहां दिखेगा",
-      "emptyDescription": "कंट्रोलर ऑनलाइन होते ही खंभे मैप पर दिखने लगेंगे।"
+      "emptyTitle": "मैप जल्द आ रहा है",
+      "emptyDescription": "अगले संस्करण में खंभे इंटरैक्टिव मैप पर दिखेंगे।"
     },
-    "alerts": {
-      "title": "हाल के अलर्ट",
-      "description": "पिछले 24 घंटों में कंट्रोलरों द्वारा भेजी गई खराबियां।",
-      "viewAll": "सभी अलर्ट देखें",
-      "pole": "खंभा {code}"
+    "openWork": {
+      "title": "सबसे ज़रूरी मरम्मत",
+      "description": "खुले कार्य आदेश, सबसे नज़दीकी समय-सीमा पहले।",
+      "viewAll": "सभी कार्य आदेश देखें",
+      "empty": "कोई खुला कार्य आदेश नहीं। सभी लाइटें ठीक हैं।"
     },
     "zones": {
       "title": "ज़ोन",
       "description": "ज़ोन के अनुसार स्ट्रीट लाइटों की उपलब्धता।",
       "zone": "ज़ोन",
-      "total": "लाइटें",
+      "total": "खंभे",
       "working": "चालू",
       "faulty": "खराब",
       "availability": "उपलब्धता"
     }
+  },
+  "WorkOrders": {
+    "title": "कार्य आदेश",
+    "description": "कंट्रोलर अलर्ट और नागरिक शिकायतों से बनी मरम्मत, 24 घंटे की समय-सीमा के साथ।",
+    "filters": {
+      "label": "कार्य आदेश छांटें",
+      "open": "खुले",
+      "overdue": "समय-सीमा पार",
+      "pending": "सत्यापन बाकी",
+      "resolved": "हल हुए",
+      "all": "सभी"
+    },
+    "columns": {
+      "number": "संख्या",
+      "pole": "खंभा",
+      "fault": "खराबी",
+      "priority": "प्राथमिकता",
+      "status": "स्थिति",
+      "technician": "तकनीशियन",
+      "due": "समय-सीमा"
+    },
+    "unassigned": "किसी को नहीं सौंपा",
+    "overdue": "समय-सीमा पार",
+    "complaints": "{count, plural, one {# शिकायत} other {# शिकायतें}}",
+    "empty": "इस फ़िल्टर में कोई कार्य आदेश नहीं।",
+    "detail": {
+      "back": "सभी कार्य आदेश",
+      "summary": "विवरण",
+      "pole": "खंभा",
+      "zone": "ज़ोन",
+      "address": "पता",
+      "source": "स्रोत",
+      "created": "बनाया गया",
+      "deadline": "समय-सीमा",
+      "agency": "एजेंसी",
+      "resolution": "किया गया काम",
+      "controller": "कंट्रोलर",
+      "hasController": "लगा है — मरम्मत अपने आप सत्यापित होगी",
+      "noController": "नहीं लगा — पर्यवेक्षक मरम्मत सत्यापित करेंगे",
+      "timeline": "समयरेखा",
+      "assign": {
+        "title": "तकनीशियन सौंपें",
+        "technician": "तकनीशियन",
+        "choose": "तकनीशियन चुनें",
+        "submit": "सौंपें",
+        "done": "सौंप दिया गया।"
+      },
+      "verify": {
+        "title": "मरम्मत सत्यापित करें",
+        "body": "तकनीशियन ने काम पूरा बताया है। सबूत जांचें और पुष्टि करें।",
+        "note": "टिप्पणी (वैकल्पिक)",
+        "approve": "मरम्मत स्वीकार करें",
+        "reject": "वापस भेजें",
+        "waitingIot": "कंट्रोलर से लैंप चालू होने की पुष्टि का इंतज़ार है।"
+      },
+      "cancel": {
+        "button": "कार्य आदेश रद्द करें",
+        "reason": "रद्द करने का कारण",
+        "confirm": "कार्य आदेश रद्द करें",
+        "keep": "रहने दें"
+      }
+    }
+  },
+  "Poles": {
+    "title": "खंभे और लाइटें",
+    "description": "हर पंजीकृत खंभा, उसके QR कोड और लाइव स्थिति के साथ।",
+    "search": "खंभा कोड, पता या वार्ड से खोजें",
+    "statusFilter": "स्थिति",
+    "allStatuses": "सभी स्थितियां",
+    "columns": {
+      "code": "खंभा कोड",
+      "zone": "ज़ोन",
+      "address": "पता",
+      "status": "लाइट",
+      "controller": "कंट्रोलर"
+    },
+    "controllerOnline": "ऑनलाइन",
+    "controllerOffline": "ऑफ़लाइन",
+    "noController": "नहीं लगा",
+    "empty": "आपकी खोज से कोई खंभा नहीं मिला।",
+    "total": "{count, plural, one {# खंभा} other {# खंभे}}"
   }
 }

@@ -14,10 +14,13 @@ import { requireRoles } from '../../middlewares/authorize';
 import { usersController } from './users.controller';
 
 export const usersRouter = Router();
-usersRouter.use(authenticate, requireRoles('SUPER_ADMIN', 'MUNICIPAL_ADMIN', 'AGENCY_MANAGER'));
-usersRouter.get('/', usersController.list);
-usersRouter.post('/', usersController.create);
-usersRouter.patch('/:id', usersController.update);
+const MANAGERS = ['SUPER_ADMIN', 'MUNICIPAL_ADMIN', 'AGENCY_MANAGER'] as const;
+
+usersRouter.use(authenticate);
+// Supervisors read the staff list to dispatch technicians; they cannot change accounts.
+usersRouter.get('/', requireRoles(...MANAGERS, 'SUPERVISOR'), usersController.list);
+usersRouter.post('/', requireRoles(...MANAGERS), usersController.create);
+usersRouter.patch('/:id', requireRoles(...MANAGERS), usersController.update);
 
 const TAG = 'Users';
 

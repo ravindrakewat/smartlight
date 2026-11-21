@@ -12,6 +12,7 @@ import {
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { LocaleSwitcher } from './LocaleSwitcher';
+import { UserMenu } from './Session';
 
 export async function ConsoleShell({ children }: { children: ReactNode }) {
   const t = await getTranslations();
@@ -19,7 +20,7 @@ export async function ConsoleShell({ children }: { children: ReactNode }) {
   const navigation: AppShellNavItem[] = [
     { href: '/', label: t('Nav.dashboard'), icon: <LayoutDashboard /> },
     { href: '/map', label: t('Nav.map'), icon: <MapIcon /> },
-    { href: '/assets', label: t('Nav.assets'), icon: <Lightbulb /> },
+    { href: '/poles', label: t('Nav.assets'), icon: <Lightbulb /> },
     { href: '/alerts', label: t('Nav.alerts'), icon: <Bell /> },
     { href: '/work-orders', label: t('Nav.workOrders'), icon: <ClipboardList /> },
     { href: '/schedules', label: t('Nav.schedules'), icon: <CalendarClock /> },
@@ -38,7 +39,12 @@ export async function ConsoleShell({ children }: { children: ReactNode }) {
         closeMenu: t('Common.closeMenu'),
         skipToContent: t('Common.skipToContent'),
       }}
-      headerActions={<LocaleSwitcher />}
+      headerActions={
+        <>
+          <LocaleSwitcher />
+          <UserMenu />
+        </>
+      }
     >
       {children}
     </AppShell>

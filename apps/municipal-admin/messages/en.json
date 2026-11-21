@@ -11,10 +11,28 @@
     "navigation": "Main navigation",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
-    "previewData": "Preview data",
     "comingSoonTitle": "Coming soon",
     "comingSoonDescription": "This module is being built and will be available in an upcoming release.",
-    "backToDashboard": "Back to dashboard"
+    "backToDashboard": "Back to dashboard",
+    "loading": "Loading…",
+    "errorTitle": "Something went wrong",
+    "errorBody": "The data could not be loaded. Check your connection and try again.",
+    "retry": "Try again",
+    "notAllowedTitle": "No access to this console",
+    "notAllowedBody": "Your account is not permitted to use the Municipal Control Centre.",
+    "signOut": "Sign out",
+    "previous": "Previous",
+    "next": "Next",
+    "pageStatus": "Page {page} of {total}",
+    "openInMaps": "Open in maps",
+    "roles": {
+      "SUPER_ADMIN": "Platform administrator",
+      "MUNICIPAL_ADMIN": "Municipal administrator",
+      "SUPERVISOR": "Supervisor",
+      "OPERATOR": "Control-room operator",
+      "AGENCY_MANAGER": "Agency manager",
+      "TECHNICIAN": "Technician"
+    }
   },
   "Nav": {
     "dashboard": "Dashboard",
@@ -26,58 +44,204 @@
     "reports": "Reports",
     "settings": "Settings"
   },
-  "Status": {
-    "on": "On",
-    "dimmed": "Dimmed",
-    "off": "Off",
-    "fault": "Fault",
-    "offline": "Offline"
+  "Login": {
+    "title": "Sign in",
+    "subtitle": "Municipal Control Centre for authorised staff.",
+    "email": "Email address",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "notice": "Authorised municipal staff only. All activity is recorded.",
+    "errors": {
+      "INVALID_CREDENTIALS": "The email or password is incorrect.",
+      "ACCOUNT_LOCKED": "Too many failed attempts. Try again in 15 minutes.",
+      "ACCOUNT_DISABLED": "This account has been disabled. Contact your administrator.",
+      "TENANT_SUSPENDED": "This municipality is currently suspended.",
+      "WRONG_PORTAL": "This account cannot use the Municipal Control Centre.",
+      "NETWORK_ERROR": "Cannot reach the server. Check your connection.",
+      "generic": "Sign-in failed. Please try again."
+    }
   },
-  "Severity": {
-    "critical": "Critical",
-    "warning": "Warning"
+  "LightStatus": {
+    "UNKNOWN": "No controller",
+    "ON": "On",
+    "DIMMED": "Dimmed",
+    "OFF": "Off",
+    "FAULT": "Fault",
+    "OFFLINE": "Offline"
   },
-  "AlertTypes": {
+  "WorkOrderStatus": {
+    "OPEN": "Open",
+    "ASSIGNED": "Assigned",
+    "IN_PROGRESS": "In progress",
+    "PENDING_VERIFICATION": "Awaiting verification",
+    "RESOLVED": "Resolved",
+    "CANCELLED": "Cancelled"
+  },
+  "Priority": {
+    "CRITICAL": "Critical",
+    "HIGH": "High",
+    "NORMAL": "Normal",
+    "LOW": "Low"
+  },
+  "Source": {
+    "IOT_ALERT": "Controller alert",
+    "CITIZEN_COMPLAINT": "Citizen complaint",
+    "INSPECTION": "Inspection",
+    "MANUAL": "Control room"
+  },
+  "Fault": {
     "lamp_failure": "Lamp failure",
     "relay_stuck": "Relay stuck on",
     "day_burning": "Burning during daytime",
     "over_voltage": "Over-voltage",
     "under_voltage": "Under-voltage",
-    "offline": "Controller offline"
+    "over_current": "Over-current",
+    "offline": "Controller offline",
+    "LIGHT_OFF": "Light off",
+    "FLICKERING": "Flickering",
+    "DAY_BURNING": "On during the day",
+    "DAMAGED_POLE": "Damaged pole",
+    "EXPOSED_WIRING": "Exposed wiring",
+    "OTHER": "Other",
+    "unknown": "Not specified"
+  },
+  "Resolution": {
+    "LAMP_REPLACED": "Lamp replaced",
+    "DRIVER_REPLACED": "Driver replaced",
+    "CONTROLLER_REPLACED": "Controller replaced",
+    "WIRING_REPAIRED": "Wiring repaired",
+    "FUSE_REPLACED": "Fuse replaced",
+    "POWER_RESTORED": "Power restored",
+    "POLE_REPAIRED": "Pole repaired",
+    "NO_FAULT_FOUND": "No fault found",
+    "OTHER": "Other"
+  },
+  "Event": {
+    "CREATED": "Work order created",
+    "ASSIGNED": "Assigned",
+    "STARTED": "Work started on site",
+    "COMPLETED": "Marked complete by technician",
+    "VERIFIED": "Fix verified",
+    "VERIFICATION_FAILED": "Fix not verified — sent back",
+    "REOPENED": "Reopened",
+    "CANCELLED": "Cancelled",
+    "COMMENT": "Note",
+    "SLA_BREACHED": "Deadline missed"
   },
   "Dashboard": {
     "title": "Dashboard",
     "description": "Live overview of street lighting across your city.",
     "stats": {
-      "totalLights": "Total lights",
+      "totalLights": "Total poles",
       "working": "Working",
       "faulty": "Faulty",
       "offline": "Offline",
-      "energyToday": "Energy today",
-      "shareOfTotal": "{percent} of all lights",
-      "energyValue": "{value} kWh",
-      "energyHint": "Saved {percent} with dimming"
+      "controllers": "Controllers online",
+      "controllersHint": "{online} of {total} controllers",
+      "shareOfTotal": "{percent} of all poles"
     },
     "map": {
       "title": "Live map",
       "description": "Every pole, coloured by its current status.",
-      "emptyTitle": "Map will appear here",
-      "emptyDescription": "Poles show up on the map as soon as their controllers come online."
+      "emptyTitle": "Map view is coming next",
+      "emptyDescription": "Poles will be shown on an interactive map in the next release."
     },
-    "alerts": {
-      "title": "Recent alerts",
-      "description": "Faults reported by controllers in the last 24 hours.",
-      "viewAll": "View all alerts",
-      "pole": "Pole {code}"
+    "openWork": {
+      "title": "Most urgent repairs",
+      "description": "Open work orders, nearest deadline first.",
+      "viewAll": "View all work orders",
+      "empty": "No open work orders. Every light is working."
     },
     "zones": {
       "title": "Zones",
       "description": "Availability of street lights by zone.",
       "zone": "Zone",
-      "total": "Lights",
+      "total": "Poles",
       "working": "Working",
       "faulty": "Faulty",
       "availability": "Availability"
     }
+  },
+  "WorkOrders": {
+    "title": "Work orders",
+    "description": "Repairs from controller alerts and citizen complaints, with a 24-hour deadline.",
+    "filters": {
+      "label": "Filter work orders",
+      "open": "Open",
+      "overdue": "Overdue",
+      "pending": "Awaiting verification",
+      "resolved": "Resolved",
+      "all": "All"
+    },
+    "columns": {
+      "number": "Number",
+      "pole": "Pole",
+      "fault": "Fault",
+      "priority": "Priority",
+      "status": "Status",
+      "technician": "Technician",
+      "due": "Deadline"
+    },
+    "unassigned": "Not assigned",
+    "overdue": "Overdue",
+    "complaints": "{count, plural, one {# complaint} other {# complaints}}",
+    "empty": "No work orders match this filter.",
+    "detail": {
+      "back": "All work orders",
+      "summary": "Details",
+      "pole": "Pole",
+      "zone": "Zone",
+      "address": "Address",
+      "source": "Source",
+      "created": "Created",
+      "deadline": "Deadline",
+      "agency": "Agency",
+      "resolution": "Work done",
+      "controller": "Controller",
+      "hasController": "Fitted — the fix is verified automatically",
+      "noController": "Not fitted — a supervisor verifies the fix",
+      "timeline": "Timeline",
+      "assign": {
+        "title": "Assign technician",
+        "technician": "Technician",
+        "choose": "Choose a technician",
+        "submit": "Assign",
+        "done": "Assigned."
+      },
+      "verify": {
+        "title": "Verify the repair",
+        "body": "The technician has marked this job complete. Check the evidence and confirm.",
+        "note": "Note (optional)",
+        "approve": "Approve fix",
+        "reject": "Send back",
+        "waitingIot": "Waiting for the controller to confirm the lamp is working."
+      },
+      "cancel": {
+        "button": "Cancel work order",
+        "reason": "Reason for cancelling",
+        "confirm": "Cancel work order",
+        "keep": "Keep it"
+      }
+    }
+  },
+  "Poles": {
+    "title": "Poles & lights",
+    "description": "Every registered pole with its QR code and live status.",
+    "search": "Search by pole code, address or ward",
+    "statusFilter": "Status",
+    "allStatuses": "All statuses",
+    "columns": {
+      "code": "Pole code",
+      "zone": "Zone",
+      "address": "Address",
+      "status": "Light",
+      "controller": "Controller"
+    },
+    "controllerOnline": "Online",
+    "controllerOffline": "Offline",
+    "noController": "Not fitted",
+    "empty": "No poles match your search.",
+    "total": "{count, plural, one {# pole} other {# poles}}"
   }
 }

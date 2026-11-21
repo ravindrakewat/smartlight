@@ -46,12 +46,8 @@ const INDORE_ZONES = [
 
 const POLES_PER_ZONE = 12;
 
-async function main(): Promise<void> {
-  if ((await prisma.tenant.count()) > 0) {
-    console.log('Database already seeded — run `npx prisma migrate reset` to start over.');
-    return;
-  }
-
+/** Tenants, agencies, users, zones, poles and controllers. */
+async function seedBase(): Promise<void> {
   const passwordHash = await hashPassword(DEMO_PASSWORD);
   const random = createRandom(42);
 
@@ -188,6 +184,107 @@ async function main(): Promise<void> {
   });
 
   console.log(`Seeded 2 tenants, 2 agencies, ${users.length} users, ${serial} poles.`);
+}
+
+/** One work order per faulty/offline pole in various stages, plus citizen complaints. */
+async function seedDemoRepairs(): Promise<void> {
+  const indore = await prisma.tenant.findUniqueOrThrow({ where: { slug: 'indore-mc' } });
+  const municipalAgency = await prisma.agency.findFirstOrThrow({
+    where: { tenantId: indore.id, type: 'MUNICIPAL' },
+  });
+  const technician = await prisma.user.findUniqueOrThrow({
+    where: { email: 'tech1@indore.smartlight.local' },
+  });
+  const supervisor = await prisma.user.findUniqueOrThrow({
+    where: { email: 'supervisor@indore.smartlight.local' },
+  });
+  const citizen = await prisma.citizen.create({
+    data: { phone: '+919900000001', name: 'Demo Citizen' },
+  });
+  const brokenPoles = await prisma.pole.findMany({
+    where: { tenantId: indore.id, lightStatus: { in: ['FAULT', 'OFFLINE'] } },
+    orderBy: { serial: 'asc' },
+  });
+  const HOUR = 60 * 60 * 1000;
+  const stages = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'PENDING_VERIFICATION', 'ASSIGNED'] as const;
+  let workOrderNumber = 0;
+  let complaintNumber = 0;
+
+  for (const [index, pole] of brokenPoles.entries()) {
+    workOrderNumber++;
+    const status = stages[index % stages.length] ?? 'OPEN';
+    const ageHours = 2 + index * 3;
+    const createdAt = new Date(Date.now() - ageHours * HOUR);
+    const assigned = status !== 'OPEN';
+    const workOrder = await prisma.workOrder.create({
+      data: {
+        tenantId: indore.id,
+        number: `IND-W-${String(workOrderNumber).padStart(6, '0')}`,
+        poleId: pole.id,
+        source: pole.lightStatus === 'FAULT' ? 'IOT_ALERT' : 'MANUAL',
+        priority: pole.lightStatus === 'FAULT' ? 'HIGH' : 'NORMAL',
+        faultType: pole.lightStatus === 'FAULT' ? 'lamp_failure' : 'offline',
+        status,
+        assignedAgencyId: assigned ? municipalAgency.id : null,
+        assignedTechnicianId: assigned ? technician.id : null,
+        slaDueAt: new Date(createdAt.getTime() + 24 * HOUR),
+        startedAt:
+          status === 'IN_PROGRESS' || status === 'PENDING_VERIFICATION' ? new Date() : null,
+        completedAt: status === 'PENDING_VERIFICATION' ? new Date() : null,
+        resolutionCode: status === 'PENDING_VERIFICATION' ? 'LAMP_REPLACED' : null,
+        createdAt,
+        events: {
+          create: [
+            { type: 'CREATED', createdAt },
+            ...(assigned
+              ? [
+                  {
+                    type: 'ASSIGNED' as const,
+                    actorUserId: supervisor.id,
+                    createdAt: new Date(createdAt.getTime() + 0.5 * HOUR),
+                  },
+                ]
+              : []),
+          ],
+        },
+      },
+    });
+
+    if (index % 2 === 0) {
+      complaintNumber++;
+      await prisma.complaint.create({
+        data: {
+          tenantId: indore.id,
+          number: `IND-C-${String(complaintNumber).padStart(6, '0')}`,
+          poleId: pole.id,
+          citizenId: citizen.id,
+          workOrderId: workOrder.id,
+          category: 'LIGHT_OFF',
+          source: 'WEB',
+          status: assigned ? 'IN_PROGRESS' : 'SUBMITTED',
+          createdAt,
+        },
+      });
+    }
+  }
+  await prisma.tenantCounter.createMany({
+    data: [
+      { tenantId: indore.id, name: 'work_order', value: workOrderNumber },
+      { tenantId: indore.id, name: 'complaint', value: complaintNumber },
+    ],
+  });
+
+  console.log(`Seeded ${workOrderNumber} work orders and ${complaintNumber} complaints.`);
+}
+
+/** Additive and re-runnable: each part runs only if its data is missing. */
+async function main(): Promise<void> {
+  if ((await prisma.tenant.count()) === 0) {
+    await seedBase();
+  }
+  if ((await prisma.workOrder.count()) === 0) {
+    await seedDemoRepairs();
+  }
   console.log(`Demo password for every account: ${DEMO_PASSWORD}`);
 }
 

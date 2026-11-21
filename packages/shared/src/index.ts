@@ -13,3 +13,4 @@ export * from './api/org';
 export * from './api/assets';
 export * from './api/complaints';
 export * from './api/work-orders';
+export * from './client/api-client';

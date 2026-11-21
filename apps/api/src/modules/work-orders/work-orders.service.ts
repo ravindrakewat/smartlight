@@ -363,9 +363,9 @@ export const workOrdersService = {
         workOrderId: id,
         type: 'ASSIGNED',
         actorUserId: auth.userId,
-        note:
-          input.note ?? (technicianName ? `Assigned to ${technicianName}` : 'Assigned to agency'),
-        metadata: { agencyId, technicianId },
+        // Free text only from people; the UI renders the event in the viewer's language.
+        note: input.note ?? null,
+        metadata: { agencyId, technicianId, technicianName },
       });
       if (technicianId) {
         await tx.complaint.updateMany({

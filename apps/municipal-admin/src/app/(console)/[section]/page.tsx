@@ -8,9 +8,7 @@ import { getTranslations } from 'next-intl/server';
 /** Console sections that exist in the navigation but are not built yet. */
 const SECTIONS = {
   map: 'map',
-  assets: 'assets',
   alerts: 'alerts',
-  'work-orders': 'workOrders',
   schedules: 'schedules',
   reports: 'reports',
   settings: 'settings',
