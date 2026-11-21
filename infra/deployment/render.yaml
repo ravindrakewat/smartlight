@@ -1,0 +1,33 @@
+# Render Blueprint — Smart Street Light Management System
+# Phase 0 foundation blueprint. Do not commit real secrets here; configure secret
+# values via Render Dashboard / Environment Groups when deploying.
+
+services:
+  - type: web
+    name: smart-light-api
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm ci && npm run build -w @smart-light/shared && npm run build -w @smart-light/api
+    startCommand: npm run start -w @smart-light/api
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: '4000'
+      - key: LOG_LEVEL
+        value: info
+      - key: SERVICE_NAME
+        value: smart-light-api
+      - key: CORS_ORIGINS
+        sync: false
+
+  # Future phases:
+  # - type: worker
+  #   name: smart-light-mqtt-worker
+  #   runtime: node
+  # - type: worker
+  #   name: smart-light-queue-worker
+  #   runtime: node

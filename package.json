@@ -1,0 +1,36 @@
+{
+  "name": "smart-street-light-management",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Enterprise multi-tenant SaaS monorepo for Smart Street Light Management System",
+  "engines": {
+    "node": ">=20.18.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w @smart-light/api",
+    "dev:citizen": "npm run dev -w @smart-light/citizen-web",
+    "dev:municipal": "npm run dev -w @smart-light/municipal-admin",
+    "dev:super-admin": "npm run dev -w @smart-light/super-admin",
+    "dev:mobile": "npm run start -w @smart-light/mobile",
+    "build:packages": "npm run build -w @smart-light/shared",
+    "build:api": "npm run build -w @smart-light/api",
+    "build:citizen": "npm run build -w @smart-light/citizen-web",
+    "build:municipal": "npm run build -w @smart-light/municipal-admin",
+    "build:super-admin": "npm run build -w @smart-light/super-admin",
+    "build:web": "npm run build:citizen && npm run build:municipal && npm run build:super-admin",
+    "build": "npm run build:packages && npm run build:api && npm run build:web",
+    "typecheck": "npm run build:packages && npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3"
+  }
+}

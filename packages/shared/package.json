@@ -1,0 +1,26 @@
+{
+  "name": "@smart-light/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared platform-agnostic TypeScript types, enums, Zod validation schemas, and API contracts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@smart-light/config": "*",
+    "typescript": "^5.8.3"
+  }
+}

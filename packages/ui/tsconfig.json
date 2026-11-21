@@ -1,0 +1,5 @@
+{
+  "extends": "@smart-light/config/tsconfig/react-library.json",
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "dist"]
+}
