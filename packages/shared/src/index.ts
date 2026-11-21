@@ -9,3 +9,5 @@ export * from './i18n/locales';
 export * from './assets/pole-code';
 export * from './api/auth';
 export * from './api/envelope';
+export * from './api/org';
+export * from './api/assets';

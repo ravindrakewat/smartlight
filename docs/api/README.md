@@ -21,6 +21,9 @@ apps/api/src/
 └── routes/index.ts         /api/health, /api/v1/*, docs
 ```
 
+Very small modules (zones, devices, dashboard) keep the same layers as clearly marked sections of a
+single `<feature>.module.ts` file; split it into separate files once it grows.
+
 Rules: controllers never touch Prisma; services never touch `req`/`res` (except passing the
 request through for audit metadata); every tenant-owned query filters by `tenantId`.
 
@@ -44,6 +47,22 @@ request through for audit metadata); every tenant-owned query filters by `tenant
 | `POST /api/v1/auth/refresh` | Rotates the refresh token. Re-using an old one revokes the whole login (theft detection).                              |
 | `POST /api/v1/auth/logout`  | Revokes the session.                                                                                                   |
 | `GET /api/v1/auth/me`       | Current user, tenant and agency.                                                                                       |
+
+## Endpoints (v1)
+
+| Area           | Endpoints                                                                           | Who                                         |
+| -------------- | ----------------------------------------------------------------------------------- | ------------------------------------------- |
+| Municipalities | `GET/POST /tenants`, `PATCH /tenants/{id}`                                          | SUPER_ADMIN                                 |
+| Public         | `GET /public/tenants/{slug}`                                                        | anyone (citizen portal)                     |
+| Agencies       | `GET/POST /agencies`, `PATCH /agencies/{id}`                                        | admins (agency managers: read own)          |
+| Users          | `GET/POST /users`, `PATCH /users/{id}`                                              | admins; agency managers for own technicians |
+| Zones          | `GET/POST /zones`                                                                   | staff read, admins write                    |
+| Poles          | `GET /poles`, `/poles/map`, `/poles/by-code/{code}`, `/poles/{id}`, `POST`, `PATCH` | staff read, admins/supervisors write        |
+| Devices        | `POST /devices/commission`                                                          | admins, supervisors, technicians            |
+| Dashboard      | `GET /dashboard/summary`                                                            | control-room roles                          |
+
+SUPER_ADMIN passes `?tenantId=` on tenant-scoped endpoints; everyone else is pinned to their own
+municipality (a different `tenantId` returns 403).
 
 ## Tests
 
