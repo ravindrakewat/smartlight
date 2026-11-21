@@ -45,7 +45,7 @@ export const telemetryPayloadSchema = z.object({
     on: z.boolean(),
     /** Dimming output, 0–100 %. */
     dimPercent: z.number().int().min(0).max(100),
-    mode: z.nativeEnum(LightOperatingMode),
+    mode: z.enum(LightOperatingMode),
   }),
   electrical: z.object({
     voltageV: z.number().min(0).max(500),
@@ -66,7 +66,7 @@ export const telemetryPayloadSchema = z.object({
   device: z.object({
     firmwareVersion: z.string().min(1).max(32),
     uptimeSec: z.number().int().nonnegative(),
-    network: z.nativeEnum(NetworkInterface),
+    network: z.enum(NetworkInterface),
     /** Signal strength in dBm (Wi-Fi RSSI or cellular RSSI). */
     rssiDbm: z.number().int().min(-140).max(0),
     boardTempC: z.number().min(-40).max(125).optional(),
@@ -118,10 +118,10 @@ export const deviceEventPayloadSchema = z.object({
   v: schemaVersion,
   ts: deviceTimestamp,
   seq: sequenceNumber,
-  type: z.nativeEnum(DeviceEventType),
-  severity: z.nativeEnum(DeviceEventSeverity),
+  type: z.enum(DeviceEventType),
+  severity: z.enum(DeviceEventSeverity),
   /** For `fault_cleared`: the event type that cleared. */
-  clears: z.nativeEnum(DeviceEventType).optional(),
+  clears: z.enum(DeviceEventType).optional(),
   /** Readings at the moment of the event, for diagnosis. */
   snapshot: z
     .object({
@@ -151,7 +151,7 @@ export const SCHEDULE_MAX_STEPS = 12;
 const commandBase = {
   v: schemaVersion,
   /** UUID used to correlate the acknowledgement and for idempotency on retries. */
-  cmdId: z.string().uuid(),
+  cmdId: z.uuid(),
   issuedAt: deviceTimestamp,
   /** Device must reject commands received after this time (stale command protection). */
   expiresAt: deviceTimestamp,
@@ -190,7 +190,7 @@ export const deviceCommandSchema = z.discriminatedUnion('action', [
     action: z.literal('ota_update'),
     firmwareVersion: z.string().min(1).max(32),
     /** HTTPS URL of the signed firmware image. */
-    url: z.string().url().startsWith('https://'),
+    url: z.url({ protocol: /^https$/ }),
     sha256: z.string().regex(/^[a-f0-9]{64}$/),
   }),
   z.object({
@@ -218,8 +218,8 @@ export enum CommandAckStatus {
 export const commandAckPayloadSchema = z.object({
   v: schemaVersion,
   ts: deviceTimestamp,
-  cmdId: z.string().uuid(),
-  status: z.nativeEnum(CommandAckStatus),
+  cmdId: z.uuid(),
+  status: z.enum(CommandAckStatus),
   reason: z.string().max(120).optional(),
 });
 
