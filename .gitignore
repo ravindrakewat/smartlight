@@ -54,3 +54,13 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# ESP-IDF firmware (generated config may contain dev credentials)
+firmware/**/sdkconfig
+firmware/**/sdkconfig.old
+firmware/**/managed_components/
+firmware/**/dependencies.lock
+# Per-device factory provisioning files contain secrets
+firmware/**/*.csv
+!firmware/**/partitions.csv
+firmware/**/provisioning/

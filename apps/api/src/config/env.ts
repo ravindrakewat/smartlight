@@ -13,6 +13,7 @@ const apiEnvSchema = z.object({
   LOG_LEVEL: logLevelSchema.default('info'),
   SERVICE_NAME: z.string().min(1).default('smart-light-api'),
   APP_VERSION: z.string().min(1).default('0.1.0'),
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
   CORS_ORIGINS: z
     .string()
     .default('http://localhost:3000,http://localhost:3001,http://localhost:3002')

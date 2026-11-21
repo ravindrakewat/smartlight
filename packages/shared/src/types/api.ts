@@ -1,4 +1,3 @@
-import type { HealthStatus, NodeEnvironment } from '../enums';
 import type { IsoTimestamp, PaginationMeta } from './common';
 
 export interface ApiErrorDetail {
@@ -30,12 +29,3 @@ export interface ApiErrorResponse {
 }
 
 export type ApiResponse<TData> = ApiSuccessResponse<TData> | ApiErrorResponse;
-
-export interface HealthCheckData {
-  status: HealthStatus;
-  service: string;
-  version: string;
-  environment: NodeEnvironment;
-  uptimeSeconds: number;
-  timestamp: IsoTimestamp;
-}

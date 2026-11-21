@@ -2,11 +2,17 @@ import crypto from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { logger } from '../utils/logger';
 
+/** Client-supplied request IDs are accepted only if they are short and log-safe. */
+const SAFE_REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{1,128}$/;
+
+function resolveRequestId(incoming: string | undefined): string {
+  const trimmed = incoming?.trim();
+  return trimmed && SAFE_REQUEST_ID_PATTERN.test(trimmed) ? trimmed : crypto.randomUUID();
+}
+
 export function requestLogger(req: Request, res: Response, next: NextFunction): void {
   const startTime = process.hrtime.bigint();
-  const incomingId = req.header('x-request-id');
-  const requestId =
-    incomingId && incomingId.trim().length > 0 ? incomingId.trim() : crypto.randomUUID();
+  const requestId = resolveRequestId(req.header('x-request-id'));
 
   res.locals.requestId = requestId;
   res.setHeader('x-request-id', requestId);

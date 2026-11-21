@@ -21,4 +21,5 @@ export const healthResponseSchema = z.object({
     .optional(),
 });
 
-export type HealthCheckPayload = z.infer<typeof healthCheckDataSchema>;
+/** Single source of truth: the type is derived from the Zod schema. */
+export type HealthCheckData = z.infer<typeof healthCheckDataSchema>;

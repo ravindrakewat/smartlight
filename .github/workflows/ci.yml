@@ -8,7 +8,7 @@ on:
 
 jobs:
   verify:
-    name: Typecheck, Lint, Format & Build
+    name: Typecheck, Lint, Format, Test & Build
     runs-on: ubuntu-latest
 
     steps:
@@ -36,5 +36,23 @@ jobs:
       - name: Lint all workspaces
         run: npm run lint
 
+      - name: Run tests
+        run: npm run test
+
       - name: Build supported applications
         run: npm run build
+
+  firmware:
+    name: Firmware build (ESP32-S3, ESP-IDF v5.4)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build street-light-controller
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v5.4.1
+          target: esp32s3
+          path: firmware/street-light-controller

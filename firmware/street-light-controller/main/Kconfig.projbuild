@@ -1,0 +1,122 @@
+menu "Smart Street Light Controller"
+
+    menu "Board pin map"
+        comment "PLACEHOLDER DEFAULTS - confirm every GPIO against the PCB schematic"
+
+        config SL_PIN_RELAY
+            int "Relay / contactor driver GPIO"
+            range 0 48
+            default 10
+
+        config SL_RELAY_ACTIVE_HIGH
+            bool "Relay energises when the GPIO is HIGH"
+            default y
+
+        config SL_PIN_DIM_PWM
+            int "Dimming PWM output GPIO (0-10V / PWM stage)"
+            range 0 48
+            default 11
+
+        config SL_DIM_PWM_INVERTED
+            bool "Invert dimming PWM (e.g. opto-isolated output stage)"
+            default n
+
+        config SL_PIN_LDR_ADC
+            int "LDR analog output GPIO (must be ADC1: GPIO1-GPIO10)"
+            range 1 10
+            default 4
+
+        config SL_PIN_CURRENT_ADC
+            int "Current sensor analog output GPIO (must be ADC1: GPIO1-GPIO10)"
+            range 1 10
+            default 5
+
+        config SL_PIN_VOLTAGE_ADC
+            int "Voltage sensor analog output GPIO (must be ADC1: GPIO1-GPIO10)"
+            range 1 10
+            default 6
+    endmenu
+
+    menu "Sensor calibration"
+        config SL_VOLTAGE_SCALE_X100
+            int "Mains volts per sensor-output volt (x100)"
+            default 23000
+            help
+                RMS mains voltage divided by RMS sensor output voltage, multiplied by 100.
+                Calibrate per board against a reference meter.
+
+        config SL_CURRENT_SCALE_X100
+            int "Lamp amps per sensor-output volt (x100)"
+            default 3000
+            help
+                RMS lamp current divided by RMS sensor output voltage, multiplied by 100
+                (e.g. 30 A/V current transformer = 3000).
+
+        config SL_CURRENT_NOISE_FLOOR_MA
+            int "Current readings below this are treated as zero (mA)"
+            default 30
+
+        config SL_LDR_DARK_IS_HIGH
+            bool "LDR output voltage rises when it gets dark"
+            default y
+
+        config SL_LDR_DARK_MV
+            int "LDR threshold to switch to DARK (mV)"
+            default 2000
+
+        config SL_LDR_LIGHT_MV
+            int "LDR threshold to switch back to LIGHT (mV, hysteresis)"
+            default 1500
+    endmenu
+
+    menu "Fault thresholds"
+        config SL_LAMP_MIN_CURRENT_MA
+            int "Minimum current of a working lamp (mA)"
+            default 50
+
+        config SL_OVER_CURRENT_MA
+            int "Over-current threshold (mA)"
+            default 2000
+
+        config SL_OVER_VOLTAGE_V
+            int "Over-voltage threshold (V)"
+            default 270
+
+        config SL_UNDER_VOLTAGE_V
+            int "Under-voltage threshold (V)"
+            default 180
+    endmenu
+
+    menu "Development defaults (used only when the fctry partition is empty)"
+        comment "Never use these for field devices - provision the fctry partition instead"
+
+        config SL_DEV_TENANT_ID
+            string "Tenant ID"
+            default "dev-tenant"
+
+        config SL_DEV_DEVICE_ID
+            string "Device ID"
+            default "sl-dev-0001"
+
+        config SL_DEV_MQTT_URI
+            string "MQTT broker URI"
+            default "mqtts://broker.example.com:8883"
+
+        config SL_DEV_MQTT_PASSWORD
+            string "MQTT device password"
+            default ""
+
+        config SL_DEV_WIFI_SSID
+            string "Wi-Fi SSID"
+            default ""
+
+        config SL_DEV_WIFI_PASSWORD
+            string "Wi-Fi password"
+            default ""
+
+        config SL_ALLOW_INSECURE_MQTT
+            bool "Allow plain mqtt:// (no TLS) - local bench testing only"
+            default n
+    endmenu
+
+endmenu

@@ -1,0 +1,9 @@
+{
+  "v": 1,
+  "ts": 1763836260,
+  "seq": 43,
+  "type": "lamp_failure",
+  "severity": "critical",
+  "snapshot": { "voltageV": 230.8, "currentA": 0.01, "lampOn": true },
+  "message": "Relay ON for 30s but lamp current below 0.05 A"
+}

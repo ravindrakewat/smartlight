@@ -5,9 +5,39 @@ import { env } from '../config/env';
 import { AppError } from '../utils/app-error';
 import { logger } from '../utils/logger';
 
-function isJsonSyntaxError(err: unknown): err is SyntaxError & { status?: number } {
+/**
+ * Errors raised by Express body parsers (`express.json`, `express.urlencoded`).
+ * They carry an HTTP 4xx `status` and a machine-readable `type`.
+ */
+interface BodyParserError extends Error {
+  status: number;
+  type: string;
+}
+
+const BODY_PARSER_ERROR_CODES: Record<string, { code: string; message: string }> = {
+  'entity.parse.failed': { code: 'INVALID_JSON', message: 'Malformed JSON request body' },
+  'entity.too.large': { code: 'PAYLOAD_TOO_LARGE', message: 'Request body exceeds size limit' },
+  'charset.unsupported': {
+    code: 'UNSUPPORTED_CHARSET',
+    message: 'Unsupported request body charset',
+  },
+  'encoding.unsupported': {
+    code: 'UNSUPPORTED_ENCODING',
+    message: 'Unsupported request body encoding',
+  },
+  'request.aborted': { code: 'REQUEST_ABORTED', message: 'Request was aborted by the client' },
+};
+
+function isBodyParserError(err: unknown): err is BodyParserError {
+  if (!(err instanceof Error)) {
+    return false;
+  }
+  const candidate = err as Partial<BodyParserError>;
   return (
-    err instanceof SyntaxError && 'status' in err && (err as { status?: number }).status === 400
+    typeof candidate.type === 'string' &&
+    typeof candidate.status === 'number' &&
+    candidate.status >= 400 &&
+    candidate.status < 500
   );
 }
 
@@ -57,17 +87,18 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     return;
   }
 
-  if (isJsonSyntaxError(err)) {
+  if (isBodyParserError(err)) {
+    const mapped = BODY_PARSER_ERROR_CODES[err.type] ?? {
+      code: 'BAD_REQUEST',
+      message: 'Invalid request body',
+    };
     const payload: ApiErrorResponse = {
       success: false,
-      error: {
-        code: 'INVALID_JSON',
-        message: 'Malformed JSON request body',
-      },
+      error: mapped,
       meta: { timestamp, requestId },
     };
 
-    res.status(400).json(payload);
+    res.status(err.status).json(payload);
     return;
   }
 

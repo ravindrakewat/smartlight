@@ -1,0 +1,11 @@
+# Partition table for 4 MB flash ESP32-S3 modules.
+# Two OTA slots allow safe over-the-air updates with automatic rollback.
+# `fctry` holds the per-device identity written at the factory (never erased by OTA
+# or by a runtime NVS reset). See README.md -> "Factory provisioning".
+# Name,   Type, SubType, Offset,   Size
+nvs,      data, nvs,     0x9000,   0x6000
+otadata,  data, ota,     0xf000,   0x2000
+phy_init, data, phy,     0x11000,  0x1000
+ota_0,    app,  ota_0,   0x20000,  0x1E0000
+ota_1,    app,  ota_1,   0x200000, 0x1E0000
+fctry,    data, nvs,     0x3E0000, 0x6000

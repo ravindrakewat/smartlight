@@ -1,26 +1,32 @@
 # Render Blueprint — Smart Street Light Management System
-# Phase 0 foundation blueprint. Do not commit real secrets here; configure secret
-# values via Render Dashboard / Environment Groups when deploying.
+# Do not commit real secrets here; configure secret values via the Render Dashboard /
+# Environment Groups (`sync: false` entries) when deploying.
+#
+# Region: Render has no India region. Singapore is the closest (lowest latency for
+# Indore / Delhi). Confirm data-residency requirements with each municipal tender.
 
 services:
   - type: web
     name: smart-light-api
     runtime: node
     plan: starter
-    region: oregon
-    buildCommand: npm ci && npm run build -w @smart-light/shared && npm run build -w @smart-light/api
+    region: singapore
+    # --include=dev is required: NODE_ENV=production would otherwise skip devDependencies
+    # (typescript, @smart-light/config) and the TypeScript build would fail.
+    buildCommand: npm ci --include=dev && npm run build -w @smart-light/shared && npm run build -w @smart-light/api
     startCommand: npm run start -w @smart-light/api
     healthCheckPath: /api/health
     autoDeploy: true
     envVars:
+      # PORT is injected by Render automatically; do not hardcode it.
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: '4000'
       - key: LOG_LEVEL
         value: info
       - key: SERVICE_NAME
         value: smart-light-api
+      - key: TRUST_PROXY_HOPS
+        value: '1'
       - key: CORS_ORIGINS
         sync: false
 

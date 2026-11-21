@@ -37,7 +37,7 @@ Mobile App (Expo / RN)      ─┘                                      │
 | `packages/shared`      | `@smart-light/shared`          | TypeScript, Zod                         | Platform-agnostic types, enums, API contracts, Zod schemas |
 | `packages/ui`          | `@smart-light/ui`              | React, TypeScript                       | Shared **web-only** UI component library for Next.js apps  |
 | `packages/config`      | `@smart-light/config`          | JSON, ESM                               | Shared TypeScript, ESLint, and Prettier configurations     |
-| `firmware/`            | —                              | Embedded (future phase)                 | Street light controller firmware & MQTT payload specs      |
+| `firmware/`            | —                              | ESP-IDF v5.4 (C), ESP32-S3              | Street light controller firmware (MQTT over TLS)           |
 | `infra/docker/`        | —                              | Docker / Compose (future)               | Local development infrastructure definitions               |
 | `infra/mqtt/`          | —                              | MQTT Broker config (future)             | TLS certificates template, ACLs, topic hierarchy           |
 | `infra/deployment/`    | —                              | Render / Vercel configs                 | Deployment blueprints and platform guides                  |
@@ -112,7 +112,8 @@ Mobile App (Expo / RN)      ─┘                                      │
 - Throw typed `AppError` instances for operational/expected errors (validation failures, not found, unauthorized, conflict).
 - Never leak stack traces, internal SQL/ORM details, or environment values in production error responses.
 - Every API error response must conform to the `ApiErrorResponse` contract in `@smart-light/shared`.
-- Validate all external inputs (HTTP params/query/body, environment variables, future MQTT payloads) using Zod at the boundary.
+- Validate all external inputs (HTTP params/query/body, environment variables, MQTT payloads) using Zod at the boundary.
+- The device ↔ cloud MQTT contract lives in `packages/shared/src/iot` and is mirrored in `firmware/street-light-controller/main/include/sl_protocol.h`. Change both together and update `docs/iot/mqtt-protocol.md`.
 
 ---
 
@@ -132,6 +133,7 @@ Mobile App (Expo / RN)      ─┘                                      │
 - Every phase must pass full repository verification before handoff:
   - `npm run typecheck` (all workspaces)
   - `npm run lint` (all workspaces)
+  - `npm run test` (Vitest: API routes, shared schemas and IoT contract)
   - `npm run build` (packages, API, and all three Next.js apps)
   - Runtime verification of `apps/api` (`GET /api/health`) and `apps/mobile` Expo configuration.
 - Future business phases must add:
