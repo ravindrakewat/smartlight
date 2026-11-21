@@ -64,3 +64,7 @@ firmware/**/dependencies.lock
 firmware/**/*.csv
 !firmware/**/partitions.csv
 firmware/**/provisioning/
+
+# Database package: local PostgreSQL data and generated Prisma client
+packages/db/.pgdata/
+packages/db/src/generated/

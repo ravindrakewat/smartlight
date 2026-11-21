@@ -17,7 +17,7 @@
     "dev:municipal": "npm run dev -w @smart-light/municipal-admin",
     "dev:super-admin": "npm run dev -w @smart-light/super-admin",
     "dev:mobile": "npm run start -w @smart-light/mobile",
-    "build:packages": "npm run build -w @smart-light/shared",
+    "build:packages": "npm run build -w @smart-light/shared && npm run build -w @smart-light/db",
     "build:api": "npm run build -w @smart-light/api",
     "build:citizen": "npm run build -w @smart-light/citizen-web",
     "build:municipal": "npm run build -w @smart-light/municipal-admin",
@@ -29,7 +29,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "npm run build:packages && npm run test --workspaces --if-present",
-    "check:i18n": "node scripts/check-i18n.mjs"
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "db:dev": "npm run db:dev -w @smart-light/db"
   },
   "devDependencies": {
     "prettier": "^3.5.3",

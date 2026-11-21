@@ -1,0 +1,513 @@
+// Smart Street Light Management System — PostgreSQL schema
+//
+// Conventions
+// - Every tenant-owned row carries `tenantId`; every query on it MUST filter by tenant.
+// - Primary keys are UUIDv7 (time-ordered → good index locality).
+// - Timestamps are `timestamptz` with millisecond precision.
+// - Human-facing reference numbers (pole codes, complaint and work-order numbers)
+//   are generated from per-tenant counters (see `TenantCounter`).
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Tenancy ──────────────────────────────────────────────────────────────────
+
+enum TenantStatus {
+  ONBOARDING
+  ACTIVE
+  SUSPENDED
+}
+
+/// A municipal corporation using the platform (e.g. Indore, Delhi).
+model Tenant {
+  id        String       @id @default(uuid(7)) @db.Uuid
+  /// URL / MQTT-safe identifier, e.g. `indore-mc` (subdomain + MQTT topics).
+  slug      String       @unique
+  /// 3-letter prefix of pole codes and reference numbers, e.g. `IND`.
+  code      String       @unique @db.VarChar(3)
+  name      String
+  nameHi    String
+  status    TenantStatus @default(ONBOARDING)
+  timezone  String       @default("Asia/Kolkata")
+  /// Repair deadline for work orders, in hours.
+  slaHours  Int          @default(24)
+  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime     @updatedAt @db.Timestamptz(3)
+
+  agencies   Agency[]
+  users      User[]
+  zones      Zone[]
+  poles      Pole[]
+  devices    Device[]
+  complaints Complaint[]
+  workOrders WorkOrder[]
+  counters   TenantCounter[]
+  auditLogs  AuditLog[]
+
+  @@map("tenants")
+}
+
+/// Per-tenant monotonic counters for human-readable numbers.
+model TenantCounter {
+  tenantId String @db.Uuid
+  /// `pole`, `complaint`, `work_order`
+  name     String
+  value    Int    @default(0)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@id([tenantId, name])
+  @@map("tenant_counters")
+}
+
+// ─── People ───────────────────────────────────────────────────────────────────
+
+enum AgencyType {
+  /// The municipal corporation's own maintenance staff.
+  MUNICIPAL
+  /// An outsourced maintenance contractor.
+  CONTRACTOR
+}
+
+/// A maintenance organisation that employs technicians.
+model Agency {
+  id           String     @id @default(uuid(7)) @db.Uuid
+  tenantId     String     @db.Uuid
+  name         String
+  type         AgencyType
+  contactPhone String?
+  active       Boolean    @default(true)
+  createdAt    DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime   @updatedAt @db.Timestamptz(3)
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  users      User[]
+  workOrders WorkOrder[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("agencies")
+}
+
+enum UserRole {
+  /// Platform operator (no tenant).
+  SUPER_ADMIN
+  /// Full control of one municipality.
+  MUNICIPAL_ADMIN
+  /// Assigns and verifies work orders (e.g. Junior Engineer).
+  SUPERVISOR
+  /// Control-room operator: monitors lights and alerts.
+  OPERATOR
+  /// Manages one agency's technicians and work.
+  AGENCY_MANAGER
+  /// Field technician using the mobile app.
+  TECHNICIAN
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+/// Staff account (web consoles and mobile app). Citizens are separate (`Citizen`).
+model User {
+  id               String     @id @default(uuid(7)) @db.Uuid
+  /// Null only for SUPER_ADMIN.
+  tenantId         String?    @db.Uuid
+  /// Required for AGENCY_MANAGER and TECHNICIAN.
+  agencyId         String?    @db.Uuid
+  role             UserRole
+  status           UserStatus @default(ACTIVE)
+  name             String
+  /// Stored lower-cased.
+  email            String     @unique
+  phone            String?
+  passwordHash     String
+  /// Base32 TOTP secret (encrypted at rest in a later phase); null = 2FA not set up.
+  totpSecret       String?
+  totpEnabled      Boolean    @default(false)
+  failedLoginCount Int        @default(0)
+  lockedUntil      DateTime?  @db.Timestamptz(3)
+  lastLoginAt      DateTime?  @db.Timestamptz(3)
+  createdAt        DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime   @updatedAt @db.Timestamptz(3)
+
+  tenant             Tenant?          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  agency             Agency?          @relation(fields: [agencyId], references: [id], onDelete: Restrict)
+  sessions           Session[]
+  assignedWorkOrders WorkOrder[]      @relation("WorkOrderAssignee")
+  createdWorkOrders  WorkOrder[]      @relation("WorkOrderCreator")
+  workOrderEvents    WorkOrderEvent[]
+  workOrderPhotos    WorkOrderPhoto[]
+
+  @@index([tenantId, role])
+  @@index([agencyId])
+  @@map("users")
+}
+
+/// Refresh-token session. Tokens rotate on every use; reuse of a rotated token
+/// revokes the whole family (stolen-token detection).
+model Session {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  userId     String    @db.Uuid
+  /// SHA-256 of the opaque refresh token (the token itself is never stored).
+  tokenHash  String    @unique
+  familyId   String    @db.Uuid
+  /// `web` or `mobile`
+  client     String
+  userAgent  String?
+  ip         String?
+  expiresAt  DateTime  @db.Timestamptz(3)
+  revokedAt  DateTime? @db.Timestamptz(3)
+  rotatedAt  DateTime? @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("sessions")
+}
+
+/// Member of the public, identified by a verified mobile number (OTP).
+model Citizen {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  /// E.164, e.g. +919876543210
+  phone       String    @unique
+  name        String?
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  lastLoginAt DateTime? @db.Timestamptz(3)
+
+  complaints Complaint[]
+
+  @@map("citizens")
+}
+
+/// One-time password challenge (SMS). Only a hash of the code is stored.
+model OtpChallenge {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  phone      String
+  /// `citizen_login`
+  purpose    String
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime  @db.Timestamptz(3)
+  consumedAt DateTime? @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([phone, createdAt])
+  @@map("otp_challenges")
+}
+
+// ─── Assets ───────────────────────────────────────────────────────────────────
+
+model Zone {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  tenantId  String   @db.Uuid
+  /// Short code, e.g. `Z03`
+  code      String
+  name      String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  poles  Pole[]
+
+  @@unique([tenantId, code])
+  @@map("zones")
+}
+
+enum AssetStatus {
+  ACTIVE
+  DECOMMISSIONED
+}
+
+/// Operational state of the light, derived from telemetry and work orders.
+enum LightStatus {
+  UNKNOWN
+  ON
+  DIMMED
+  OFF
+  FAULT
+  OFFLINE
+}
+
+model Pole {
+  id            String      @id @default(uuid(7)) @db.Uuid
+  tenantId      String      @db.Uuid
+  zoneId        String?     @db.Uuid
+  /// Printed on the QR plate, e.g. `IND-004182-7` (prefix, serial, check digit).
+  code          String      @unique
+  serial        Int
+  latitude      Float
+  longitude     Float
+  address       String?
+  ward          String?
+  /// e.g. `LED`
+  lampType      String?
+  wattage       Int?
+  installedAt   DateTime?   @db.Timestamptz(3)
+  assetStatus   AssetStatus @default(ACTIVE)
+  lightStatus   LightStatus @default(UNKNOWN)
+  lightStatusAt DateTime?   @db.Timestamptz(3)
+  createdAt     DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime    @updatedAt @db.Timestamptz(3)
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  zone       Zone?       @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  device     Device?
+  complaints Complaint[]
+  workOrders WorkOrder[]
+
+  @@unique([tenantId, serial])
+  @@index([tenantId, zoneId])
+  @@index([tenantId, lightStatus])
+  @@index([tenantId, latitude, longitude])
+  @@map("poles")
+}
+
+/// Street light controller (ESP32-S3) installed on a pole.
+model Device {
+  id              String    @id @default(uuid(7)) @db.Uuid
+  tenantId        String    @db.Uuid
+  poleId          String?   @unique @db.Uuid
+  /// MQTT client id / topic segment, e.g. `sl-000123`
+  deviceId        String    @unique
+  serialNumber    String?
+  firmwareVersion String?
+  online          Boolean   @default(false)
+  lastSeenAt      DateTime? @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  pole   Pole?  @relation(fields: [poleId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@map("devices")
+}
+
+// ─── Complaints ───────────────────────────────────────────────────────────────
+
+enum ComplaintCategory {
+  LIGHT_OFF
+  FLICKERING
+  DAY_BURNING
+  DAMAGED_POLE
+  EXPOSED_WIRING
+  OTHER
+}
+
+enum ComplaintStatus {
+  SUBMITTED
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+enum ComplaintSource {
+  WEB
+  MOBILE
+  SMS
+  WHATSAPP
+  CALL_CENTRE
+}
+
+model Complaint {
+  id          String            @id @default(uuid(7)) @db.Uuid
+  tenantId    String            @db.Uuid
+  /// Shown to the citizen, e.g. `IND-C-000123`
+  number      String            @unique
+  poleId      String?           @db.Uuid
+  citizenId   String?           @db.Uuid
+  workOrderId String?           @db.Uuid
+  category    ComplaintCategory
+  description String?
+  status      ComplaintStatus   @default(SUBMITTED)
+  source      ComplaintSource
+  latitude    Float?
+  longitude   Float?
+  photoUrl    String?
+  resolvedAt  DateTime?         @db.Timestamptz(3)
+  createdAt   DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime          @updatedAt @db.Timestamptz(3)
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  pole      Pole?      @relation(fields: [poleId], references: [id], onDelete: SetNull)
+  citizen   Citizen?   @relation(fields: [citizenId], references: [id], onDelete: SetNull)
+  workOrder WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status, createdAt])
+  @@index([poleId])
+  @@index([citizenId])
+  @@map("complaints")
+}
+
+// ─── Work orders ──────────────────────────────────────────────────────────────
+
+enum WorkOrderStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  /// Technician marked done; waiting for IoT or supervisor verification.
+  PENDING_VERIFICATION
+  RESOLVED
+  CANCELLED
+}
+
+enum WorkOrderSource {
+  IOT_ALERT
+  CITIZEN_COMPLAINT
+  INSPECTION
+  MANUAL
+}
+
+enum WorkOrderPriority {
+  CRITICAL
+  HIGH
+  NORMAL
+  LOW
+}
+
+enum VerificationMethod {
+  /// Controller telemetry confirms the lamp draws current when switched on.
+  IOT_TELEMETRY
+  /// Supervisor checked the evidence (pole without a controller).
+  SUPERVISOR
+}
+
+model WorkOrder {
+  id                   String              @id @default(uuid(7)) @db.Uuid
+  tenantId             String              @db.Uuid
+  /// e.g. `IND-W-000123`
+  number               String              @unique
+  poleId               String              @db.Uuid
+  source               WorkOrderSource
+  priority             WorkOrderPriority   @default(NORMAL)
+  status               WorkOrderStatus     @default(OPEN)
+  /// DeviceEventType or ComplaintCategory that triggered it.
+  faultType            String?
+  description          String?
+  assignedAgencyId     String?             @db.Uuid
+  assignedTechnicianId String?             @db.Uuid
+  createdById          String?             @db.Uuid
+  slaDueAt             DateTime            @db.Timestamptz(3)
+  startedAt            DateTime?           @db.Timestamptz(3)
+  completedAt          DateTime?           @db.Timestamptz(3)
+  verifiedAt           DateTime?           @db.Timestamptz(3)
+  verificationMethod   VerificationMethod?
+  /// e.g. `LAMP_REPLACED`, `DRIVER_REPLACED`, `WIRING_REPAIRED`
+  resolutionCode       String?
+  resolutionNotes      String?
+  createdAt            DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime            @updatedAt @db.Timestamptz(3)
+
+  tenant     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  pole       Pole             @relation(fields: [poleId], references: [id], onDelete: Restrict)
+  agency     Agency?          @relation(fields: [assignedAgencyId], references: [id], onDelete: SetNull)
+  technician User?            @relation("WorkOrderAssignee", fields: [assignedTechnicianId], references: [id], onDelete: SetNull)
+  createdBy  User?            @relation("WorkOrderCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  complaints Complaint[]
+  events     WorkOrderEvent[]
+  photos     WorkOrderPhoto[]
+
+  @@index([tenantId, status, slaDueAt])
+  @@index([assignedTechnicianId, status])
+  @@index([assignedAgencyId, status])
+  @@index([poleId, status])
+  @@map("work_orders")
+}
+
+enum WorkOrderEventType {
+  CREATED
+  ASSIGNED
+  STARTED
+  COMPLETED
+  VERIFIED
+  VERIFICATION_FAILED
+  REOPENED
+  CANCELLED
+  COMMENT
+  SLA_BREACHED
+}
+
+/// Immutable timeline of everything that happened to a work order.
+model WorkOrderEvent {
+  id          String             @id @default(uuid(7)) @db.Uuid
+  workOrderId String             @db.Uuid
+  type        WorkOrderEventType
+  actorUserId String?            @db.Uuid
+  latitude    Float?
+  longitude   Float?
+  note        String?
+  metadata    Json?
+  createdAt   DateTime           @default(now()) @db.Timestamptz(3)
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  actor     User?     @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([workOrderId, createdAt])
+  @@map("work_order_events")
+}
+
+enum PhotoKind {
+  BEFORE
+  AFTER
+}
+
+model WorkOrderPhoto {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  workOrderId  String    @db.Uuid
+  kind         PhotoKind
+  /// Object-storage key (S3-compatible), not a public URL.
+  storageKey   String
+  latitude     Float?
+  longitude    Float?
+  takenAt      DateTime  @db.Timestamptz(3)
+  uploadedById String    @db.Uuid
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+
+  workOrder  WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  uploadedBy User      @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  @@index([workOrderId])
+  @@map("work_order_photos")
+}
+
+// ─── Audit ────────────────────────────────────────────────────────────────────
+
+enum ActorType {
+  USER
+  CITIZEN
+  SYSTEM
+  DEVICE
+}
+
+/// Append-only audit trail. UPDATE and DELETE are blocked by a database trigger.
+model AuditLog {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  tenantId   String?   @db.Uuid
+  actorType  ActorType
+  actorId    String?
+  /// e.g. `auth.login`, `work_order.assign`
+  action     String
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}

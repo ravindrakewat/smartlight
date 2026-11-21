@@ -13,7 +13,9 @@ services:
     region: singapore
     # --include=dev is required: NODE_ENV=production would otherwise skip devDependencies
     # (typescript, @smart-light/config) and the TypeScript build would fail.
-    buildCommand: npm ci --include=dev && npm run build -w @smart-light/shared && npm run build -w @smart-light/api
+    buildCommand: npm ci --include=dev && npm run build:packages && npm run build -w @smart-light/api
+    # Apply pending database migrations before the new version starts serving traffic.
+    preDeployCommand: npm run migrate:deploy -w @smart-light/db
     startCommand: npm run start -w @smart-light/api
     healthCheckPath: /api/health
     autoDeploy: true
@@ -28,6 +30,9 @@ services:
       - key: TRUST_PROXY_HOPS
         value: '1'
       - key: CORS_ORIGINS
+        sync: false
+      # Use the INTERNAL database URL from the Render dashboard.
+      - key: DATABASE_URL
         sync: false
 
   # Future phases:

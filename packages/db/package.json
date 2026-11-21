@@ -1,0 +1,41 @@
+{
+  "name": "@smart-light/db",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PostgreSQL schema, migrations and Prisma client shared by the API and background workers",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "generate": "prisma generate",
+    "build": "prisma generate && tsc",
+    "typecheck": "prisma generate && tsc --noEmit -p tsconfig.check.json",
+    "lint": "eslint .",
+    "db:dev": "node scripts/dev-db.mjs",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "seed": "prisma db seed",
+    "studio": "prisma studio"
+  },
+  "devDependencies": {
+    "@smart-light/config": "^0.1.0",
+    "@types/pg": "^8.23.1",
+    "dotenv": "^16.6.1",
+    "embedded-postgres": "^17.12.0-beta.19",
+    "prisma": "^7.10.1",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@node-rs/argon2": "^2.2.2",
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "@smart-light/shared": "^0.1.0",
+    "pg": "^8.23.1"
+  }
+}
