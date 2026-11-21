@@ -1,4 +1,4 @@
-import { AUTH_COOKIES } from '@smart-light/shared';
+import { AUTH_COOKIES, CITIZEN_COOKIE } from '@smart-light/shared';
 import type { NextFunction, Request, Response } from 'express';
 import { env } from '../config/env';
 import { errors } from '../utils/errors';
@@ -18,7 +18,8 @@ export function csrfOriginCheck(req: Request, _res: Response, next: NextFunction
   }
   const usesCookies =
     req.cookies?.[AUTH_COOKIES.accessToken] !== undefined ||
-    req.cookies?.[AUTH_COOKIES.refreshToken] !== undefined;
+    req.cookies?.[AUTH_COOKIES.refreshToken] !== undefined ||
+    req.cookies?.[CITIZEN_COOKIE] !== undefined;
   if (!usesCookies) {
     next();
     return;

@@ -11,3 +11,5 @@ export * from './api/auth';
 export * from './api/envelope';
 export * from './api/org';
 export * from './api/assets';
+export * from './api/complaints';
+export * from './api/work-orders';

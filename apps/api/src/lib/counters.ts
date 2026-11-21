@@ -24,3 +24,15 @@ export async function nextCounterValue(
   }
   return value;
 }
+
+const REFERENCE_LETTERS = { complaint: 'C', work_order: 'W' } as const;
+
+/** Human reference number, e.g. `IND-C-000123` (complaint) or `IND-W-000045` (work order). */
+export async function nextReference(
+  db: DbClient,
+  tenant: { id: string; code: string },
+  name: 'complaint' | 'work_order',
+): Promise<string> {
+  const value = await nextCounterValue(db, tenant.id, name);
+  return `${tenant.code}-${REFERENCE_LETTERS[name]}-${String(value).padStart(6, '0')}`;
+}

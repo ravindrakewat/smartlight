@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { env } from '../config/env';
 import { agenciesRouter } from '../modules/agencies/agencies.routes';
 import { authRouter } from '../modules/auth/auth.routes';
+import { citizenAuthRouter } from '../modules/citizen-auth/citizen-auth.module';
+import { complaintsRouter, publicComplaintsRouter } from '../modules/complaints/complaints.routes';
 import { dashboardRouter } from '../modules/dashboard/dashboard.module';
 import { devicesRouter } from '../modules/devices/devices.module';
 import { createDocsRouter } from '../modules/docs/docs.routes';
@@ -9,11 +11,14 @@ import { healthRouter } from '../modules/health/health.routes';
 import { polesRouter } from '../modules/poles/poles.routes';
 import { publicTenantsRouter, tenantsRouter } from '../modules/tenants/tenants.routes';
 import { usersRouter } from '../modules/users/users.routes';
+import { workOrdersRouter } from '../modules/work-orders/work-orders.routes';
 import { zonesRouter } from '../modules/zones/zones.module';
 
 /** Unauthenticated endpoints for the citizen portal. */
 const publicRouter = Router();
 publicRouter.use('/tenants', publicTenantsRouter);
+publicRouter.use(citizenAuthRouter);
+publicRouter.use(publicComplaintsRouter);
 
 /** Versioned business API: /api/v1/... */
 const v1Router = Router();
@@ -26,6 +31,8 @@ v1Router.use('/zones', zonesRouter);
 v1Router.use('/poles', polesRouter);
 v1Router.use('/devices', devicesRouter);
 v1Router.use('/dashboard', dashboardRouter);
+v1Router.use('/work-orders', workOrdersRouter);
+v1Router.use('/complaints', complaintsRouter);
 
 /** Everything under /api. Health stays unversioned for infrastructure probes. */
 export const apiRouter = Router();
