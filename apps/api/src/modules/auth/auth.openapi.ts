@@ -1,5 +1,6 @@
 import {
   authUserSchema,
+  changePasswordSchema,
   loginRequestSchema,
   loginResponseSchema,
   refreshRequestSchema,
@@ -57,5 +58,18 @@ registry.registerPath({
   responses: {
     200: { description: 'Current user', content: jsonContent(successEnvelope(authUserSchema)) },
     ...errorResponses(401),
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/auth/change-password',
+  tags: [TAG],
+  summary: 'Change your own password (other devices are signed out)',
+  security: AUTHENTICATED,
+  request: { body: { content: jsonContent(changePasswordSchema) } },
+  responses: {
+    204: { description: 'Password changed' },
+    ...errorResponses(400, 401, 429),
   },
 });

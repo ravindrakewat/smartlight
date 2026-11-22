@@ -142,6 +142,18 @@ export const createUserSchema = z
   })
   .meta({ id: 'CreateUserRequest' });
 
+/** A signed-in staff member changes their own password. */
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1).max(200),
+    newPassword: newPasswordSchema,
+  })
+  .refine((value) => value.currentPassword !== value.newPassword, {
+    path: ['newPassword'],
+    error: 'The new password must be different',
+  })
+  .meta({ id: 'ChangePasswordRequest' });
+
 /** An administrator sets a new password for a staff member who forgot theirs. */
 export const resetPasswordSchema = z
   .object({ password: newPasswordSchema })

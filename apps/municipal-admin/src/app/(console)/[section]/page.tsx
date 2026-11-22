@@ -9,7 +9,6 @@ import { getTranslations } from 'next-intl/server';
 const SECTIONS = {
   map: 'map',
   reports: 'reports',
-  settings: 'settings',
 } as const;
 
 type SectionKey = (typeof SECTIONS)[keyof typeof SECTIONS];

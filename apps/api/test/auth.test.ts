@@ -211,4 +211,48 @@ describe('auth', () => {
       expect(legitimate.status).toBe(204);
     });
   });
+
+  describe('POST /api/v1/auth/change-password', () => {
+    it('changes the password, keeps this device and signs out the others', async () => {
+      const user = await createUser({ role: 'SUPERVISOR', tenantId });
+      const phone = await loginMobile(user.email);
+      const laptop = await loginMobile(user.email);
+      const auth = { Authorization: `Bearer ${phone.accessToken}` };
+
+      const wrong = await request(app)
+        .post('/api/v1/auth/change-password')
+        .set(auth)
+        .send({ currentPassword: 'not-it', newPassword: 'Brand-New-2026' });
+      expect(wrong.body.error.code).toBe('INVALID_CURRENT_PASSWORD');
+
+      const same = await request(app)
+        .post('/api/v1/auth/change-password')
+        .set(auth)
+        .send({ currentPassword: TEST_PASSWORD, newPassword: TEST_PASSWORD });
+      expect(same.body.error.code).toBe('VALIDATION_ERROR');
+
+      const changed = await request(app)
+        .post('/api/v1/auth/change-password')
+        .set(auth)
+        .send({ currentPassword: TEST_PASSWORD, newPassword: 'Brand-New-2026' });
+      expect(changed.status).toBe(204);
+
+      expect((await request(app).get('/api/v1/auth/me').set(auth)).status).toBe(200);
+      const other = { Authorization: `Bearer ${laptop.accessToken}` };
+      expect((await request(app).get('/api/v1/auth/me').set(other)).status).toBe(401);
+
+      const oldLogin = await request(app)
+        .post('/api/v1/auth/login')
+        .send({ email: user.email, password: TEST_PASSWORD, client: 'mobile' });
+      expect(oldLogin.status).toBe(401);
+      expect((await loginMobile(user.email, 'Brand-New-2026')).accessToken).toBeTruthy();
+    });
+
+    it('requires sign-in', async () => {
+      const response = await request(app)
+        .post('/api/v1/auth/change-password')
+        .send({ currentPassword: 'x', newPassword: 'Brand-New-2026' });
+      expect(response.status).toBe(401);
+    });
+  });
 });

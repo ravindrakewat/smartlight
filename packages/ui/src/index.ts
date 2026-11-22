@@ -37,3 +37,8 @@ export {
   type AlertProps,
   type PaginationProps,
 } from './components/Feedback';
+export {
+  ChangePasswordForm,
+  type ChangePasswordFormProps,
+  type ChangePasswordLabels,
+} from './components/ChangePasswordForm';

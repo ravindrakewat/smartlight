@@ -12,7 +12,6 @@ const SECTIONS = {
   users: 'users',
   audit: 'audit',
   health: 'health',
-  settings: 'settings',
 } as const;
 
 type SectionKey = (typeof SECTIONS)[keyof typeof SECTIONS];

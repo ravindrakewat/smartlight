@@ -144,5 +144,31 @@
         "generic": "The administrator could not be created. Please try again."
       }
     }
+  },
+  "Settings": {
+    "title": "Settings",
+    "description": "Your account and sign-in security.",
+    "account": {
+      "title": "My account",
+      "name": "Name",
+      "email": "E-mail",
+      "role": "Role",
+      "organisation": "Organisation"
+    },
+    "password": {
+      "title": "Change password",
+      "description": "You stay signed in here; every other device is signed out.",
+      "current": "Current password",
+      "next": "New password",
+      "nextHint": "At least 10 characters with upper case, lower case and a digit.",
+      "repeat": "Repeat new password",
+      "mismatch": "The new passwords do not match.",
+      "submit": "Change password",
+      "success": "Password changed. Other devices have been signed out.",
+      "wrongCurrent": "The current password is not correct.",
+      "weak": "The new password does not meet the rules, or is the same as the current one.",
+      "tooMany": "Too many attempts. Please wait a few minutes.",
+      "failed": "The password could not be changed. Please try again."
+    }
   }
 }

@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { hashPassword, verifyPassword } from '@smart-light/db';
-import type { AuthClient, AuthUser, TokenPair } from '@smart-light/shared';
+import type { AuthClient, AuthUser, changePasswordSchema, TokenPair } from '@smart-light/shared';
 import type { Request } from 'express';
+import type { z } from 'zod';
 import { env } from '../../config/env';
 import { clientInfo } from '../../lib/http';
 import { prisma } from '../../lib/prisma';
@@ -204,6 +205,50 @@ export const authService = {
       actorId: auth.userId,
       action: 'auth.logout',
       request,
+    });
+  },
+
+  /**
+   * Changes the signed-in user's password after checking the current one. This
+   * device stays signed in; every other session of the user is ended.
+   */
+  async changePassword(
+    auth: AuthContext,
+    input: z.output<typeof changePasswordSchema>,
+    request: Request,
+  ): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { id: auth.userId } });
+    if (!user || !(await verifyPassword(user.passwordHash, input.currentPassword))) {
+      throw errors.badRequest('INVALID_CURRENT_PASSWORD', 'The current password is not correct');
+    }
+    const passwordHash = await hashPassword(input.newPassword);
+    const current = await prisma.session.findUnique({
+      where: { id: auth.sessionId },
+      select: { familyId: true },
+    });
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: auth.userId },
+        data: { passwordHash, failedLoginCount: 0, lockedUntil: null },
+      });
+      await tx.session.updateMany({
+        where: {
+          userId: auth.userId,
+          revokedAt: null,
+          ...(current ? { NOT: { familyId: current.familyId } } : {}),
+        },
+        data: { revokedAt: new Date() },
+      });
+      await recordAudit(
+        {
+          tenantId: auth.tenantId,
+          actorType: 'USER',
+          actorId: auth.userId,
+          action: 'auth.password_change',
+          request,
+        },
+        tx,
+      );
     });
   },
 

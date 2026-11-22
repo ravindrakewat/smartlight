@@ -1,5 +1,6 @@
 import {
   AUTH_COOKIES,
+  changePasswordSchema,
   loginRequestSchema,
   refreshRequestSchema,
   type LoginResponse,
@@ -41,6 +42,12 @@ export const authController = {
   async logout(req: Request, res: Response): Promise<void> {
     await authService.logout(getAuth(res), req);
     clearAuthCookies(res);
+    res.status(204).end();
+  },
+
+  async changePassword(req: Request, res: Response): Promise<void> {
+    const input = changePasswordSchema.parse(req.body);
+    await authService.changePassword(getAuth(res), input, req);
     res.status(204).end();
   },
 
