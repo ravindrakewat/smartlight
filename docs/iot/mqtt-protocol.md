@@ -43,10 +43,13 @@ sl/v1/{tenantId}/{deviceId}/{channel}
 Priority, highest first:
 
 1. **`manual`** – operator override (`set_output`) until its duration elapses.
-2. **`auto`** – the downloaded daily schedule (needs a synced clock).
-3. **`failsafe`** – no schedule or no clock: LDR decides (dark → ON at 100 %).
+2. **`auto`** – the downloaded daily schedule (needs a valid clock: RTC or network time).
+3. **`failsafe`** – no schedule or no valid clock: the lamp stays **ON at 100 %**.
 
-Lighting never depends on connectivity. If the LDR is unavailable the lamp fails **ON**.
+Day and night come from an **astronomical clock**: the controller computes today's sunrise and
+sunset at the pole from its coordinates (sent with the schedule). There is no light sensor on
+the pole. Daytime darkness (storms, smog, fog) is handled in the cloud as a zone override
+(`set_output`). Lighting never depends on connectivity, and any doubt leaves the street lit.
 
 ## Commands
 
@@ -56,17 +59,34 @@ All commands carry `v`, `cmdId` (UUID), `issuedAt`, `expiresAt`, `action`. The d
 - treats a repeated `cmdId` as already applied and re-sends `accepted` (QoS 1 redelivery);
 - always answers on `cmd/ack` when `cmdId` is readable.
 
-| `action`       | Fields                                                      | Notes                                            |
-| -------------- | ----------------------------------------------------------- | ------------------------------------------------ |
-| `set_output`   | `on`, `dimPercent`, `overrideUntil`                         | Duration = `overrideUntil - issuedAt`, max 7 d   |
-| `set_auto`     | –                                                           | Ends a manual override                           |
-| `set_schedule` | `scheduleId`, `utcOffsetMinutes` (IST = 330), `steps[1-12]` | Step = `{ atMinute, on, dimPercent }`, persisted |
-| `set_config`   | `telemetryIntervalSec` (30–3600), `motionBoostPercent`      | Persisted                                        |
-| `reboot`       | –                                                           | Acknowledged, then restarts after 3 s            |
-| `ota_update`   | `firmwareVersion`, `url` (HTTPS), `sha256`                  | Contract defined; firmware support pending       |
+| `action`       | Fields                                                                  | Notes                                          |
+| -------------- | ----------------------------------------------------------------------- | ---------------------------------------------- |
+| `set_output`   | `on`, `dimPercent`, `overrideUntil`                                     | Duration = `overrideUntil - issuedAt`, max 7 d |
+| `set_auto`     | –                                                                       | Ends a manual override                         |
+| `set_schedule` | `scheduleId`, `utcOffsetMinutes` (IST = 330), `location`, `steps[1-12]` | See below; persisted                           |
+| `set_config`   | `telemetryIntervalSec` (30–3600), `motionBoostPercent`                  | Persisted                                      |
+| `reboot`       | –                                                                       | Acknowledged, then restarts after 3 s          |
+| `ota_update`   | `firmwareVersion`, `url` (HTTPS), `sha256`                              | Contract defined; firmware support pending     |
 
-Schedule steps may arrive in any order. The active step is the latest one at or before the
-current local minute, wrapping to the last step of the previous day.
+### Schedule steps
+
+Each step is anchored to a fixed local time or to today's sunset/sunrise at the pole:
+
+```json
+{ "anchor": "sunset",  "offsetMinutes": 10,  "on": true,  "dimPercent": 100 }
+{ "anchor": "clock",   "atMinute": 1380,     "on": true,  "dimPercent": 60 }
+{ "anchor": "sunrise", "offsetMinutes": -10, "on": false, "dimPercent": 0 }
+```
+
+- `clock`: `atMinute` = minutes after local midnight (0–1439).
+- `sunset` / `sunrise`: `offsetMinutes` from the event, −240…240.
+- `location` (`{ latitude, longitude }`) is required when any step uses sunset/sunrise; the
+  controller stores it with the schedule.
+- `scheduleId` identifies one version of a schedule (`<uuid>@<version>`); the platform compares
+  it with the id the controller last accepted to show whether the controller is up to date.
+
+Each day the controller turns every step into a local minute, then applies the latest step at or
+before the current minute, wrapping to the last step of the previous day.
 
 ## Fault events
 
@@ -80,5 +100,13 @@ current local minute, wrapping to the last step of the previous day.
 | `fault_cleared` | Condition gone; `clears` names the fault                     | –     | info     |
 | `boot`          | First broker connection after boot; `message` = reset reason | –     | info     |
 
-`day_burning` and `sensor_fault` are part of the contract and will be derived server-side
-(schedule + lux) or added to firmware in a later phase.
+`day_burning` and `sensor_fault` are part of the contract and will be derived server-side or
+added to firmware in a later phase.
+
+## Platform side
+
+The IoT worker (`apps/api/src/worker.ts`) subscribes to `sl/v1/+/+/{telemetry,status,event,cmd/ack}`
+with a backend credential, stores readings and events, opens a work order for `lamp_failure`,
+`relay_stuck` and `over_current` (one per pole), verifies repairs from telemetry, and publishes
+commands from the database outbox (`device_commands`). A controller that comes back online is
+sent its current schedule if it does not have it.

@@ -9,6 +9,7 @@ import {
   DeviceTopicChannel,
   parseDeviceTopic,
   telemetryPayloadSchema,
+  validDeviceCommandSchema,
 } from '../src';
 
 function loadFixture(name: string): unknown {
@@ -47,10 +48,58 @@ describe('IoT payload fixtures', () => {
   });
 
   it('accepts the reference schedule command and ack', () => {
-    expect(deviceCommandSchema.safeParse(loadFixture('command-set-schedule.json')).success).toBe(
-      true,
-    );
+    expect(
+      validDeviceCommandSchema.safeParse(loadFixture('command-set-schedule.json')).success,
+    ).toBe(true);
     expect(commandAckPayloadSchema.safeParse(loadFixture('command-ack.json')).success).toBe(true);
+  });
+});
+
+describe('astronomical schedules', () => {
+  const base = {
+    v: 1,
+    cmdId: '7b0f3c2e-5d4a-4b8e-9f1a-2c3d4e5f6a7b',
+    issuedAt: 1763836300,
+    expiresAt: 1763836600,
+    action: 'set_schedule',
+    scheduleId: 's1',
+    utcOffsetMinutes: 330,
+  };
+
+  it('requires the pole location for sunset/sunrise steps', () => {
+    const solar = {
+      ...base,
+      steps: [{ anchor: 'sunset', offsetMinutes: 0, on: true, dimPercent: 100 }],
+    };
+    expect(validDeviceCommandSchema.safeParse(solar).success).toBe(false);
+    expect(
+      validDeviceCommandSchema.safeParse({
+        ...solar,
+        location: { latitude: 22.7, longitude: 75.8 },
+      }).success,
+    ).toBe(true);
+  });
+
+  it('allows clock-only schedules without a location', () => {
+    const clock = {
+      ...base,
+      steps: [{ anchor: 'clock', atMinute: 1080, on: true, dimPercent: 100 }],
+    };
+    expect(validDeviceCommandSchema.safeParse(clock).success).toBe(true);
+  });
+
+  it('rejects offsets beyond four hours and mixed-up fields', () => {
+    const far = {
+      ...base,
+      location: { latitude: 22.7, longitude: 75.8 },
+      steps: [{ anchor: 'sunrise', offsetMinutes: 300, on: false, dimPercent: 0 }],
+    };
+    expect(validDeviceCommandSchema.safeParse(far).success).toBe(false);
+    const mixed = {
+      ...base,
+      steps: [{ anchor: 'clock', offsetMinutes: 10, on: true, dimPercent: 100 }],
+    };
+    expect(validDeviceCommandSchema.safeParse(mixed).success).toBe(false);
   });
 });
 

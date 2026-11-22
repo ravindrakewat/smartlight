@@ -34,6 +34,7 @@ const zonesService = {
       code: zone.code,
       name: zone.name,
       poleCount: zone._count.poles,
+      scheduleId: zone.scheduleId,
     }));
   },
 
@@ -58,7 +59,13 @@ const zonesService = {
         },
         tx,
       );
-      return { id: zone.id, code: zone.code, name: zone.name, poleCount: 0 };
+      return {
+        id: zone.id,
+        code: zone.code,
+        name: zone.name,
+        poleCount: 0,
+        scheduleId: zone.scheduleId,
+      };
     });
   },
 };

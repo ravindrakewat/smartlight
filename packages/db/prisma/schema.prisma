@@ -41,15 +41,18 @@ model Tenant {
   createdAt DateTime     @default(now()) @db.Timestamptz(3)
   updatedAt DateTime     @updatedAt @db.Timestamptz(3)
 
-  agencies   Agency[]
-  users      User[]
-  zones      Zone[]
-  poles      Pole[]
-  devices    Device[]
-  complaints Complaint[]
-  workOrders WorkOrder[]
-  counters   TenantCounter[]
-  auditLogs  AuditLog[]
+  agencies       Agency[]
+  users          User[]
+  zones          Zone[]
+  poles          Pole[]
+  devices        Device[]
+  complaints     Complaint[]
+  workOrders     WorkOrder[]
+  counters       TenantCounter[]
+  auditLogs      AuditLog[]
+  schedules      Schedule[]
+  deviceEvents   DeviceEvent[]
+  deviceCommands DeviceCommand[]
 
   @@map("tenants")
 }
@@ -155,19 +158,19 @@ model User {
 /// Refresh-token session. Tokens rotate on every use; reuse of a rotated token
 /// revokes the whole family (stolen-token detection).
 model Session {
-  id         String    @id @default(uuid(7)) @db.Uuid
-  userId     String    @db.Uuid
+  id        String    @id @default(uuid(7)) @db.Uuid
+  userId    String    @db.Uuid
   /// SHA-256 of the opaque refresh token (the token itself is never stored).
-  tokenHash  String    @unique
-  familyId   String    @db.Uuid
+  tokenHash String    @unique
+  familyId  String    @db.Uuid
   /// `web` or `mobile`
-  client     String
-  userAgent  String?
-  ip         String?
-  expiresAt  DateTime  @db.Timestamptz(3)
-  revokedAt  DateTime? @db.Timestamptz(3)
-  rotatedAt  DateTime? @db.Timestamptz(3)
-  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  client    String
+  userAgent String?
+  ip        String?
+  expiresAt DateTime  @db.Timestamptz(3)
+  revokedAt DateTime? @db.Timestamptz(3)
+  rotatedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -217,8 +220,12 @@ model Zone {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  poles  Pole[]
+  /// Lighting schedule for every controller in the zone; null = the city's default schedule.
+  scheduleId String? @db.Uuid
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  schedule Schedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  poles    Pole[]
 
   @@unique([tenantId, code])
   @@map("zones")
@@ -275,20 +282,34 @@ model Pole {
 
 /// Street light controller (ESP32-S3) installed on a pole.
 model Device {
-  id              String    @id @default(uuid(7)) @db.Uuid
-  tenantId        String    @db.Uuid
-  poleId          String?   @unique @db.Uuid
+  id                String    @id @default(uuid(7)) @db.Uuid
+  tenantId          String    @db.Uuid
+  poleId            String?   @unique @db.Uuid
   /// MQTT client id / topic segment, e.g. `sl-000123`
-  deviceId        String    @unique
-  serialNumber    String?
-  firmwareVersion String?
-  online          Boolean   @default(false)
-  lastSeenAt      DateTime? @db.Timestamptz(3)
-  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime  @updatedAt @db.Timestamptz(3)
+  deviceId          String    @unique
+  serialNumber      String?
+  firmwareVersion   String?
+  online            Boolean   @default(false)
+  lastSeenAt        DateTime? @db.Timestamptz(3)
+  /// Latest reported operating state (from telemetry).
+  lampOn            Boolean?
+  dimPercent        Int?
+  /// `auto` | `manual` | `failsafe` (LightOperatingMode)
+  mode              String?
+  /// Most recent telemetry payload as received (validated), for the console.
+  lastTelemetry     Json?
+  lastTelemetryAt   DateTime? @db.Timestamptz(3)
+  resetReason       String?
+  /// Schedule id the controller last acknowledged.
+  appliedScheduleId String?
+  createdAt         DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @db.Timestamptz(3)
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  pole   Pole?  @relation(fields: [poleId], references: [id], onDelete: SetNull)
+  tenant   Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  pole     Pole?           @relation(fields: [poleId], references: [id], onDelete: SetNull)
+  readings DeviceReading[]
+  events   DeviceEvent[]
+  commands DeviceCommand[]
 
   @@index([tenantId])
   @@map("devices")
@@ -510,4 +531,121 @@ model AuditLog {
   @@index([tenantId, createdAt])
   @@index([entityType, entityId])
   @@map("audit_logs")
+}
+
+// ─── IoT: telemetry, events, commands, schedules ─────────────────────────────
+
+/// Telemetry history (one row per accepted telemetry message).
+model DeviceReading {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  deviceId   String   @db.Uuid
+  tenantId   String   @db.Uuid
+  receivedAt DateTime @default(now()) @db.Timestamptz(3)
+  /// Device clock (Unix seconds); 0 when the clock was not synced.
+  deviceTs   Int
+  lampOn     Boolean
+  dimPercent Int
+  mode       String
+  voltageV   Float
+  currentA   Float
+  powerW     Float
+  energyWh   Float
+  rssiDbm    Int
+  boardTempC Float?
+  motion     Boolean  @default(false)
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, receivedAt])
+  @@index([tenantId, receivedAt])
+  @@map("device_readings")
+}
+
+/// Faults and notable events reported by controllers.
+model DeviceEvent {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  tenantId    String    @db.Uuid
+  deviceId    String    @db.Uuid
+  poleId      String?   @db.Uuid
+  /// DeviceEventType, e.g. `lamp_failure`
+  type        String
+  /// `info` | `warning` | `critical`
+  severity    String
+  /// For `fault_cleared`: the fault that cleared.
+  clears      String?
+  message     String?
+  snapshot    Json?
+  deviceTs    Int
+  /// Per-boot message counter from the payload; with deviceTs it detects QoS 1 redeliveries.
+  seq         Int       @default(0)
+  receivedAt  DateTime  @default(now()) @db.Timestamptz(3)
+  /// Work order opened because of this event, if any.
+  workOrderId String?   @db.Uuid
+  /// Set when the fault cleared or an operator acknowledged it.
+  resolvedAt  DateTime? @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, receivedAt])
+  @@index([deviceId, type, resolvedAt])
+  @@map("device_events")
+}
+
+enum DeviceCommandStatus {
+  /// Written by the API; the MQTT bridge has not published it yet.
+  PENDING
+  SENT
+  ACCEPTED
+  REJECTED
+  COMPLETED
+  FAILED
+  /// Not acknowledged before `expiresAt`.
+  EXPIRED
+}
+
+/// Command outbox: the API writes, the MQTT bridge publishes and records the ack.
+/// `id` is the protocol `cmdId`.
+model DeviceCommand {
+  id          String              @id @default(uuid(7)) @db.Uuid
+  tenantId    String              @db.Uuid
+  deviceId    String              @db.Uuid
+  /// e.g. `set_output`, `set_schedule`
+  action      String
+  /// Full protocol payload (deviceCommandSchema), ready to publish.
+  payload     Json
+  status      DeviceCommandStatus @default(PENDING)
+  reason      String?
+  createdById String?             @db.Uuid
+  createdAt   DateTime            @default(now()) @db.Timestamptz(3)
+  sentAt      DateTime?           @db.Timestamptz(3)
+  ackAt       DateTime?           @db.Timestamptz(3)
+  expiresAt   DateTime            @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([deviceId, createdAt])
+  @@map("device_commands")
+}
+
+/// Daily lighting plan sent to controllers. Steps are validated against the shared
+/// schedule schema (clock time or offset from sunset/sunrise).
+model Schedule {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  tenantId  String   @db.Uuid
+  name      String
+  /// ScheduleStep[] (see @smart-light/shared)
+  steps     Json
+  /// The city's default schedule (poles without a zone schedule). One per tenant.
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  zones  Zone[]
+
+  @@unique([tenantId, name])
+  @@map("schedules")
 }

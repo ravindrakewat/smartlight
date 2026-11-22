@@ -2,7 +2,11 @@
   "v": 1,
   "ts": 1763836200,
   "seq": 42,
-  "lamp": { "on": true, "dimPercent": 70, "mode": "auto" },
+  "lamp": {
+    "on": true,
+    "dimPercent": 70,
+    "mode": "auto"
+  },
   "electrical": {
     "voltageV": 231.4,
     "currentA": 0.42,
@@ -10,7 +14,10 @@
     "energyWh": 15234.5,
     "powerFactor": 0.95
   },
-  "environment": { "isDark": true, "ambientLux": 3.2, "motionDetected": false },
+  "environment": {
+    "isDark": true,
+    "motionDetected": false
+  },
   "device": {
     "firmwareVersion": "1.0.0",
     "uptimeSec": 86400,

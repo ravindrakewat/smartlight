@@ -4,12 +4,13 @@
   "issuedAt": 1763836300,
   "expiresAt": 1763836600,
   "action": "set_schedule",
-  "scheduleId": "indore-zone-4-winter",
+  "scheduleId": "01a20b3c-4d5e-7f60-8a9b-0c1d2e3f4a5b",
   "utcOffsetMinutes": 330,
+  "location": { "latitude": 22.7196, "longitude": 75.8577 },
   "steps": [
-    { "atMinute": 1080, "on": true, "dimPercent": 100 },
-    { "atMinute": 1380, "on": true, "dimPercent": 60 },
-    { "atMinute": 300, "on": true, "dimPercent": 100 },
-    { "atMinute": 390, "on": false, "dimPercent": 0 }
+    { "anchor": "sunset", "offsetMinutes": 10, "on": true, "dimPercent": 100 },
+    { "anchor": "clock", "atMinute": 1380, "on": true, "dimPercent": 60 },
+    { "anchor": "clock", "atMinute": 270, "on": true, "dimPercent": 100 },
+    { "anchor": "sunrise", "offsetMinutes": -10, "on": false, "dimPercent": 0 }
   ]
 }

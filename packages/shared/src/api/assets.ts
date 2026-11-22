@@ -13,7 +13,14 @@ export const longitudeSchema = z.number().min(68).max(98);
 // ─── Zones ────────────────────────────────────────────────────────────────────
 
 export const zoneSchema = z
-  .object({ id: z.uuid(), code: z.string(), name: z.string(), poleCount: z.number().int() })
+  .object({
+    id: z.uuid(),
+    code: z.string(),
+    name: z.string(),
+    poleCount: z.number().int(),
+    /** Schedule assigned to the zone; null = the city default applies. */
+    scheduleId: z.uuid().nullable(),
+  })
   .meta({ id: 'Zone' });
 
 export type ZoneDto = z.infer<typeof zoneSchema>;

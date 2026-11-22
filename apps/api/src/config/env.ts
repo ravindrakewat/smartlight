@@ -75,8 +75,28 @@ const apiEnvSchema = z
         }
         return numbers;
       }),
+
+    /**
+     * MQTT broker for the IoT worker (src/worker.ts), e.g. mqtts://broker.example.in:8883.
+     * The HTTP API does not use it: commands go through the database outbox.
+     */
+    MQTT_URL: z
+      .string()
+      .regex(/^mqtts?:\/\/.+/, { error: 'Use mqtts://host:8883 (or mqtt:// locally)' })
+      .optional(),
+    MQTT_USERNAME: z.string().min(1).optional(),
+    MQTT_PASSWORD: z.string().min(1).optional(),
+    /** Fixed id so the broker keeps the worker's session across restarts. */
+    MQTT_CLIENT_ID: z.string().min(1).default('sl-backend-worker'),
   })
   .superRefine((value, context) => {
+    if (value.NODE_ENV === NodeEnvironment.Production && value.MQTT_URL?.startsWith('mqtt://')) {
+      context.addIssue({
+        code: 'custom',
+        path: ['MQTT_URL'],
+        message: 'Production must use TLS (mqtts://)',
+      });
+    }
     if (value.SMS_PROVIDER !== 'msg91') {
       return;
     }

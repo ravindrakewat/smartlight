@@ -50,10 +50,33 @@ services:
       - key: MSG91_TEMPLATE_COMPLAINT_RESOLVED
         sync: false
 
-  # Future phases:
-  # - type: worker
-  #   name: smart-light-mqtt-worker
-  #   runtime: node
-  # - type: worker
-  #   name: smart-light-queue-worker
-  #   runtime: node
+  # IoT worker: MQTT bridge between the controllers and the platform (same code as the API,
+  # different entry point). Render background workers need a paid instance type.
+  - type: worker
+    name: smart-light-iot-worker
+    runtime: node
+    plan: starter
+    region: singapore
+    buildCommand: npm ci --include=dev && npm run build:packages && npm run build -w @smart-light/api
+    startCommand: npm run start:worker -w @smart-light/api
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      # Same database and secret as the API (use the INTERNAL database URL).
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      # Broker (EMQX Cloud or a VPS in India): mqtts://host:8883 and a backend-only credential
+      # whose ACL allows publish/subscribe on sl/v1/#.
+      - key: MQTT_URL
+        sync: false
+      - key: MQTT_USERNAME
+        sync: false
+      - key: MQTT_PASSWORD
+        sync: false
+
+  # Future: smart-light-queue-worker (SLA breach alerts, reports)

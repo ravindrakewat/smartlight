@@ -23,8 +23,9 @@ export enum LightOperatingMode {
   /** Operator override from the municipal console; expires at `overrideUntil`. */
   Manual = 'manual',
   /**
-   * No schedule or no valid clock: device switches by LDR (on when dark, full brightness).
-   * Lighting never depends on connectivity; if the LDR fails the lamp fails ON.
+   * No schedule or no valid clock (RTC and network time both unavailable): the lamp
+   * stays ON at full brightness. Lighting never depends on connectivity and a
+   * fault always leaves the street lit.
    */
   FailSafe = 'failsafe',
 }
@@ -56,9 +57,9 @@ export const telemetryPayloadSchema = z.object({
     powerFactor: z.number().min(0).max(1).optional(),
   }),
   environment: z.object({
-    /** LDR verdict after hysteresis. */
-    isDark: z.boolean(),
-    /** BH1750 reading; absent when the optional sensor is not fitted. */
+    /** Sun below the horizon at the pole (astronomical clock); absent without a valid clock. */
+    isDark: z.boolean().optional(),
+    /** Ambient light sensor reading; absent when no sensor is fitted. */
     ambientLux: z.number().nonnegative().optional(),
     /** Radar presence detected within the reporting window. */
     motionDetected: z.boolean(),
@@ -137,16 +138,49 @@ export type DeviceEventPayload = z.infer<typeof deviceEventPayloadSchema>;
 
 // ─── Commands (cloud → device) ────────────────────────────────────────────────
 
-/** Daily schedule entry, minutes after local midnight (device timezone, e.g. IST). */
-export const scheduleStepSchema = z.object({
-  atMinute: z.number().int().min(0).max(1439),
+export const SCHEDULE_ANCHORS = ['clock', 'sunset', 'sunrise'] as const;
+export type ScheduleAnchor = (typeof SCHEDULE_ANCHORS)[number];
+
+/** Largest offset from sunset/sunrise a step may use, in minutes. */
+export const SOLAR_OFFSET_LIMIT_MINUTES = 240;
+
+const stepOutput = {
   on: z.boolean(),
   dimPercent: z.number().int().min(0).max(100),
-});
+};
+
+/**
+ * Daily schedule entry. Either a fixed local time (`clock`, minutes after local
+ * midnight) or an offset from today's sunset/sunrise at the pole, which the
+ * controller computes itself from the pole's coordinates (astronomical clock).
+ */
+export const scheduleStepSchema = z.discriminatedUnion('anchor', [
+  z.object({
+    anchor: z.literal('clock'),
+    atMinute: z.number().int().min(0).max(1439),
+    ...stepOutput,
+  }),
+  z.object({
+    anchor: z.enum(['sunset', 'sunrise']),
+    /** Minutes after (+) or before (−) the event. */
+    offsetMinutes: z
+      .number()
+      .int()
+      .min(-SOLAR_OFFSET_LIMIT_MINUTES)
+      .max(SOLAR_OFFSET_LIMIT_MINUTES),
+    ...stepOutput,
+  }),
+]);
 
 export type ScheduleStep = z.infer<typeof scheduleStepSchema>;
 
 export const SCHEDULE_MAX_STEPS = 12;
+
+/** Pole position for the astronomical clock (WGS 84). */
+export const deviceLocationSchema = z.object({
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+});
 
 const commandBase = {
   v: schemaVersion,
@@ -176,6 +210,8 @@ export const deviceCommandSchema = z.discriminatedUnion('action', [
     scheduleId: z.string().min(1).max(64),
     /** Offset from UTC in minutes (IST = 330). */
     utcOffsetMinutes: z.number().int().min(-720).max(840),
+    /** Required when any step is anchored to sunset or sunrise. */
+    location: deviceLocationSchema.optional(),
     steps: z.array(scheduleStepSchema).min(1).max(SCHEDULE_MAX_STEPS),
   }),
   z.object({
@@ -198,6 +234,24 @@ export const deviceCommandSchema = z.discriminatedUnion('action', [
     action: z.literal('reboot'),
   }),
 ]);
+
+/** Full command validation, including rules that span fields. */
+export const validDeviceCommandSchema = deviceCommandSchema.superRefine((command, context) => {
+  if (
+    command.action === 'set_schedule' &&
+    !command.location &&
+    command.steps.some((step) => step.anchor !== 'clock')
+  ) {
+    context.addIssue({
+      code: 'custom',
+      path: ['location'],
+      message: 'Sunset/sunrise steps need the pole location',
+    });
+  }
+  if (command.expiresAt !== 0 && command.issuedAt !== 0 && command.expiresAt < command.issuedAt) {
+    context.addIssue({ code: 'custom', path: ['expiresAt'], message: 'Expires before issued' });
+  }
+});
 
 export type DeviceCommand = z.infer<typeof deviceCommandSchema>;
 export type DeviceCommandAction = DeviceCommand['action'];
