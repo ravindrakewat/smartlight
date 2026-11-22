@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
-import { ConsoleShell } from '@/components/ConsoleShell';
+import { Providers } from '@/components/Providers';
 import { inter, notoDevanagari } from './fonts';
 import './globals.css';
 
@@ -23,7 +23,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang={locale} className={`${inter.variable} ${notoDevanagari.variable}`}>
       <body>
         <NextIntlClientProvider>
-          <ConsoleShell>{children}</ConsoleShell>
+          <Providers>{children}</Providers>
         </NextIntlClientProvider>
       </body>
     </html>

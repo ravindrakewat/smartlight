@@ -11,10 +11,28 @@
     "navigation": "Main navigation",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
-    "previewData": "Preview data",
     "comingSoonTitle": "Coming soon",
     "comingSoonDescription": "This module is being built and will be available in an upcoming release.",
-    "backToDashboard": "Back to overview"
+    "backToDashboard": "Back to overview",
+    "loading": "Loading…",
+    "errorTitle": "Something went wrong",
+    "errorBody": "The data could not be loaded. Check your connection and try again.",
+    "retry": "Try again",
+    "notAllowedTitle": "No access to this console",
+    "notAllowedBody": "Only platform administrators can use this console.",
+    "signOut": "Sign out",
+    "previous": "Previous",
+    "next": "Next",
+    "pageStatus": "Page {page} of {total}",
+    "openInMaps": "Open in maps",
+    "roles": {
+      "SUPER_ADMIN": "Platform administrator",
+      "MUNICIPAL_ADMIN": "Municipal administrator",
+      "SUPERVISOR": "Supervisor",
+      "OPERATOR": "Control-room operator",
+      "AGENCY_MANAGER": "Agency manager",
+      "TECHNICIAN": "Technician"
+    }
   },
   "Nav": {
     "overview": "Overview",
@@ -25,6 +43,24 @@
     "audit": "Audit log",
     "health": "System health",
     "settings": "Settings"
+  },
+  "Login": {
+    "title": "Sign in",
+    "subtitle": "Platform Console for Smart Street Light administrators.",
+    "email": "Email address",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "notice": "Restricted to platform administrators. All activity is recorded.",
+    "errors": {
+      "INVALID_CREDENTIALS": "The email or password is incorrect.",
+      "ACCOUNT_LOCKED": "Too many failed attempts. Try again in 15 minutes.",
+      "ACCOUNT_DISABLED": "This account has been disabled. Contact your administrator.",
+      "TENANT_SUSPENDED": "This municipality is currently suspended.",
+      "WRONG_PORTAL": "This account cannot use the Platform Console.",
+      "NETWORK_ERROR": "Cannot reach the server. Check your connection.",
+      "generic": "Sign-in failed. Please try again."
+    }
   },
   "TenantStatus": {
     "active": "Active",
@@ -38,7 +74,7 @@
       "municipalities": "Municipalities",
       "devices": "Controllers",
       "online": "Online now",
-      "alerts": "Open critical alerts",
+      "poles": "Poles",
       "onlineHint": "{percent} of all controllers"
     },
     "tenants": {
@@ -47,8 +83,10 @@
       "name": "Municipality",
       "devices": "Controllers",
       "online": "Online",
+      "users": "Staff",
       "status": "Status",
-      "onboard": "Onboard municipality"
+      "onboard": "Onboard municipality",
+      "empty": "No municipalities yet."
     },
     "health": {
       "title": "System health",
@@ -58,7 +96,33 @@
       "broker": "MQTT broker",
       "queue": "Job queue",
       "operational": "Operational",
+      "down": "Not reachable",
       "notConnected": "Not connected yet"
+    }
+  },
+  "Municipalities": {
+    "title": "Municipalities",
+    "description": "Onboard municipal corporations and manage their status.",
+    "form": {
+      "title": "Onboard a municipality",
+      "name": "Name (English)",
+      "nameHi": "Name (Hindi)",
+      "slug": "Web address name",
+      "slugHint": "Lowercase letters, digits and hyphens. Used in the citizen portal address, e.g. bhopal-mc.",
+      "code": "Code",
+      "codeHint": "Exactly 3 capital letters. Printed on every pole plate, e.g. BPL.",
+      "slaHours": "Repair deadline (hours)",
+      "submit": "Onboard",
+      "created": "{name} was added in onboarding status."
+    },
+    "actions": {
+      "activate": "Activate",
+      "suspend": "Suspend"
+    },
+    "errors": {
+      "CONFLICT": "A municipality with this web address name or code already exists.",
+      "VALIDATION_ERROR": "Please check the highlighted fields.",
+      "generic": "The change could not be saved. Please try again."
     }
   }
 }

@@ -7,7 +7,6 @@ import { getTranslations } from 'next-intl/server';
 
 /** Console sections that exist in the navigation but are not built yet. */
 const SECTIONS = {
-  municipalities: 'municipalities',
   devices: 'devices',
   firmware: 'firmware',
   users: 'users',
