@@ -1,16 +1,20 @@
 # Street Light Controller Firmware (ESP32-S3)
 
 Firmware for the Smart Street Light Controller PCB: relay + 0–10 V/PWM dimming, mains voltage and
-lamp current sensing, LDR day/night detection, MQTT over TLS to the platform.
+lamp current sensing, astronomical day/night (sunrise/sunset computed on the device), MQTT over
+TLS to the platform.
 
 Protocol: [`docs/iot/mqtt-protocol.md`](../../docs/iot/mqtt-protocol.md).
 
 ## Design principles
 
 - **Lighting never depends on the network.** The control loop starts before Wi-Fi/MQTT. Without
-  provisioning, a schedule or a synced clock, the lamp follows the LDR (`failsafe` mode).
-- **Fail ON.** If the LDR or ADC fails, the controller assumes darkness — an unlit street is the
-  worst outcome.
+  provisioning, a schedule or a trustworthy clock, the lamp stays ON at 100 % (`failsafe` mode).
+- **Astronomical clock, no light sensor.** Schedules may say "10 min after sunset"; the
+  controller computes today's sunrise/sunset from the pole position (`sl_sun.c`, NOAA algorithm,
+  unit-tested on the host in CI). Daytime darkness (storms, smog) is a cloud-side zone override.
+- **Fail ON.** Any doubt (no time, unknown sun position) leaves the street lit — an unlit street is
+  the worst outcome.
 - **No secrets in code.** Device identity and credentials live in the `fctry` NVS partition,
   written once per device at the factory.
 - **Safe updates.** Two OTA slots with rollback: a new image is confirmed only after it reaches
@@ -25,7 +29,8 @@ Protocol: [`docs/iot/mqtt-protocol.md`](../../docs/iot/mqtt-protocol.md).
 | `main.c`       | NVS + event loop init, starts the app                               |
 | `sl_app.c`     | Control loop, mode priority, schedule, faults, commands, telemetry  |
 | `sl_output.c`  | Relay GPIO and LEDC dimming PWM                                     |
-| `sl_sensors.c` | ADC: RMS voltage/current, real power, power factor; LDR; board temp |
+| `sl_sensors.c` | ADC: RMS voltage/current, real power, power factor; board temp      |
+| `sl_sun.c`     | Sunrise/sunset at the pole (pure C, host-tested: `test/test_sun.c`) |
 | `sl_net.c`     | Connectivity (Wi-Fi today, 4G planned) and SNTP                     |
 | `sl_mqtt.c`    | MQTT client, TLS, Last Will, topic routing                          |
 | `sl_config.c`  | Factory identity + runtime state in NVS                             |
@@ -81,15 +86,17 @@ Without a factory identity, the Kconfig "Development defaults" are used (bench t
 
 ## Roadmap
 
-| Item                                   | Status     |
-| -------------------------------------- | ---------- |
-| Relay, dimming, fail-safe LDR control  | ✅ Done    |
-| RMS voltage/current, power, energy     | ✅ Done    |
-| Faults: lamp failure, relay stuck, V/I | ✅ Done    |
-| MQTT TLS, commands, schedule, ack      | ✅ Done    |
-| Wi-Fi + SNTP                           | ✅ Done    |
-| SIM7600 4G (primary link)              | ⏳ Next    |
-| OTA update (`ota_update` command)      | ⏳ Next    |
-| BH1750 lux, 24 GHz radar motion        | ⏳ Next    |
-| Status LEDs, offline telemetry buffer  | ⏳ Planned |
-| Secure Boot v2 + flash encryption      | ⏳ Planned |
+| Item                                    | Status     |
+| --------------------------------------- | ---------- |
+| Relay, dimming, fail-ON safety          | ✅ Done    |
+| Astronomical schedules (sunset/sunrise) | ✅ Done    |
+| RMS voltage/current, power, energy      | ✅ Done    |
+| Faults: lamp failure, relay stuck, V/I  | ✅ Done    |
+| MQTT TLS, commands, schedule, ack       | ✅ Done    |
+| Wi-Fi + SNTP                            | ✅ Done    |
+| SIM7600 4G (primary link)               | ⏳ Next    |
+| OTA update (`ota_update` command)       | ⏳ Next    |
+| RTC RV-3028 (time across power cuts)    | ⏳ Next    |
+| HLK-LD2451 radar, RGBW channel PWM      | ⏳ Next    |
+| Status LEDs, offline telemetry buffer   | ⏳ Planned |
+| Secure Boot v2 + flash encryption       | ⏳ Planned |

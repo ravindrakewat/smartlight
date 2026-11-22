@@ -30,6 +30,7 @@
 #include "sl_output.h"
 #include "sl_protocol.h"
 #include "sl_sensors.h"
+#include "sl_sun.h"
 
 static const char *TAG = "sl_app";
 
@@ -166,8 +167,57 @@ static const char *reset_reason_name(esp_reset_reason_t reason)
 
 /* ─── Schedule & mode decision ────────────────────────────────────────────── */
 
+/* Today's sunrise/sunset at the pole (local minutes), cached per local day. */
+typedef struct {
+    int64_t day;
+    float latitude;
+    float longitude;
+    int16_t utc_offset_min;
+    bool valid;
+    int sunrise;
+    int sunset;
+} sun_cache_t;
+
+static sun_cache_t s_sun = {.day = -1};
+
+static int wrap_minute(int minute)
+{
+    return ((minute % 1440) + 1440) % 1440;
+}
+
+/* Must be called with the lock held (reads the schedule). */
+static bool sun_today(const sl_schedule_t *schedule, time_t now, int *sunrise, int *sunset)
+{
+    if (!schedule->has_location) {
+        return false;
+    }
+    int64_t local_seconds = (int64_t)now + (int64_t)schedule->utc_offset_min * 60;
+    int64_t day = local_seconds >= 0 ? local_seconds / 86400 : (local_seconds - 86399) / 86400;
+    if (s_sun.day != day || s_sun.latitude != schedule->latitude ||
+        s_sun.longitude != schedule->longitude || s_sun.utc_offset_min != schedule->utc_offset_min) {
+        time_t local_time = (time_t)local_seconds;
+        struct tm date;
+        gmtime_r(&local_time, &date);
+        double rise = 0, set = 0;
+        s_sun.valid = sl_sun_times(date.tm_year + 1900, date.tm_mon + 1, date.tm_mday,
+                                   schedule->latitude, schedule->longitude,
+                                   schedule->utc_offset_min, &rise, &set);
+        s_sun.sunrise = wrap_minute((int)lround(rise));
+        s_sun.sunset = wrap_minute((int)lround(set));
+        s_sun.day = day;
+        s_sun.latitude = schedule->latitude;
+        s_sun.longitude = schedule->longitude;
+        s_sun.utc_offset_min = schedule->utc_offset_min;
+    }
+    *sunrise = s_sun.sunrise;
+    *sunset = s_sun.sunset;
+    return s_sun.valid;
+}
+
 /* Returns the active step: the latest step at or before the current local minute,
- * wrapping to the last step of the previous day. Steps may be in any order. */
+ * wrapping to the last step of the previous day. Steps may be in any order and may
+ * be anchored to sunset/sunrise, which are resolved for today first. Returns false
+ * (→ lamp fails ON) when a solar step cannot be resolved. */
 static bool schedule_lookup(const sl_schedule_t *schedule, time_t now, bool *on, uint8_t *dim)
 {
     if (schedule->count == 0) {
@@ -176,14 +226,30 @@ static bool schedule_lookup(const sl_schedule_t *schedule, time_t now, bool *on,
     int64_t local_seconds = (int64_t)now + (int64_t)schedule->utc_offset_min * 60;
     int minute_of_day = (int)((((local_seconds % 86400) + 86400) % 86400) / 60);
 
+    int sunrise = 0, sunset = 0;
+    bool sun_known = sun_today(schedule, now, &sunrise, &sunset);
+
+    int resolved[SL_SCHEDULE_MAX_STEPS];
+    for (int i = 0; i < schedule->count; i++) {
+        const sl_schedule_step_t *step = &schedule->steps[i];
+        if (step->anchor == SL_ANCHOR_AT_CLOCK) {
+            resolved[i] = step->minute;
+        } else if (!sun_known) {
+            return false;
+        } else {
+            int base = step->anchor == SL_ANCHOR_AT_SUNSET ? sunset : sunrise;
+            resolved[i] = wrap_minute(base + step->minute);
+        }
+    }
+
     int current = -1;
     int latest = -1;
     for (int i = 0; i < schedule->count; i++) {
-        uint16_t at = schedule->steps[i].at_minute;
-        if (at <= minute_of_day && (current < 0 || at > schedule->steps[current].at_minute)) {
+        int at = resolved[i];
+        if (at <= minute_of_day && (current < 0 || at > resolved[current])) {
             current = i;
         }
-        if (latest < 0 || at > schedule->steps[latest].at_minute) {
+        if (latest < 0 || at > resolved[latest]) {
             latest = i;
         }
     }
@@ -193,7 +259,29 @@ static bool schedule_lookup(const sl_schedule_t *schedule, time_t now, bool *on,
     return true;
 }
 
-/* Priority: manual override > cloud schedule (needs valid clock) > LDR fail-safe. */
+/* Sun below the horizon at the pole right now; false when unknown. */
+static bool night_now(bool *is_dark)
+{
+    if (!clock_is_valid()) {
+        return false;
+    }
+    time_t now = time(NULL);
+    int sunrise = 0, sunset = 0;
+    lock();
+    bool known = sun_today(&s_schedule, now, &sunrise, &sunset);
+    int16_t offset = s_schedule.utc_offset_min;
+    unlock();
+    if (!known) {
+        return false;
+    }
+    int64_t local_seconds = (int64_t)now + (int64_t)offset * 60;
+    int minute = (int)((((local_seconds % 86400) + 86400) % 86400) / 60);
+    *is_dark = minute < sunrise || minute >= sunset;
+    return true;
+}
+
+/* Priority: manual override > cloud schedule (needs a valid clock) > fail-safe ON.
+ * With no schedule or no trustworthy time the street stays lit at full power. */
 static void decide_outputs(int64_t now_us, bool *on, uint8_t *dim, const char **mode)
 {
     lock();
@@ -209,7 +297,7 @@ static void decide_outputs(int64_t now_us, bool *on, uint8_t *dim, const char **
     } else if (clock_is_valid() && schedule_lookup(&s_schedule, time(NULL), on, dim)) {
         *mode = SL_MODE_AUTO;
     } else {
-        *on = s_readings.is_dark;
+        *on = true;
         *dim = 100;
         *mode = SL_MODE_FAILSAFE;
     }
@@ -312,8 +400,11 @@ static void publish_telemetry(void)
     }
 
     cJSON *environment = cJSON_AddObjectToObject(root, "environment");
-    cJSON_AddBoolToObject(environment, "isDark", s_readings.is_dark);
-    /* TODO(sensors): BH1750 ambient lux (I2C) and 24 GHz radar presence (UART). */
+    bool is_dark = false;
+    if (night_now(&is_dark)) {
+        cJSON_AddBoolToObject(environment, "isDark", is_dark);
+    }
+    /* TODO(sensors): 24 GHz radar presence (HLK-LD2451, UART). */
     cJSON_AddBoolToObject(environment, "motionDetected", false);
 
     cJSON *device = cJSON_AddObjectToObject(root, "device");
@@ -472,16 +563,52 @@ static const char *handle_set_schedule(const cJSON *root)
     strlcpy(schedule.id, id->valuestring, sizeof(schedule.id));
     schedule.utc_offset_min = (int16_t)offset;
     schedule.count = (uint8_t)count;
+
+    const cJSON *location = cJSON_GetObjectItemCaseSensitive(root, "location");
+    if (location != NULL) {
+        const cJSON *lat = cJSON_GetObjectItemCaseSensitive(location, "latitude");
+        const cJSON *lng = cJSON_GetObjectItemCaseSensitive(location, "longitude");
+        if (!cJSON_IsNumber(lat) || !cJSON_IsNumber(lng) || fabs(lat->valuedouble) > 90.0 ||
+            fabs(lng->valuedouble) > 180.0) {
+            return "invalid location";
+        }
+        schedule.has_location = true;
+        schedule.latitude = (float)lat->valuedouble;
+        schedule.longitude = (float)lng->valuedouble;
+    }
+
     for (int i = 0; i < count; i++) {
         const cJSON *step = cJSON_GetArrayItem(steps, i);
-        int64_t at_minute = 0, dim = 0;
+        const cJSON *anchor = cJSON_GetObjectItemCaseSensitive(step, "anchor");
+        int64_t minute = 0, dim = 0;
         bool on = false;
-        if (!get_int(step, "atMinute", 0, 1439, &at_minute) || !get_bool(step, "on", &on) ||
+        if (!cJSON_IsString(anchor) || !get_bool(step, "on", &on) ||
             !get_int(step, "dimPercent", 0, 100, &dim)) {
             return "invalid schedule step";
         }
+        uint8_t kind;
+        if (strcmp(anchor->valuestring, SL_ANCHOR_CLOCK) == 0) {
+            kind = SL_ANCHOR_AT_CLOCK;
+            if (!get_int(step, "atMinute", 0, 1439, &minute)) {
+                return "invalid schedule step";
+            }
+        } else if (strcmp(anchor->valuestring, SL_ANCHOR_SUNSET) == 0 ||
+                   strcmp(anchor->valuestring, SL_ANCHOR_SUNRISE) == 0) {
+            kind = strcmp(anchor->valuestring, SL_ANCHOR_SUNSET) == 0 ? SL_ANCHOR_AT_SUNSET
+                                                                      : SL_ANCHOR_AT_SUNRISE;
+            if (!get_int(step, "offsetMinutes", -SL_SOLAR_OFFSET_LIMIT_MIN,
+                         SL_SOLAR_OFFSET_LIMIT_MIN, &minute)) {
+                return "invalid schedule step";
+            }
+            if (!schedule.has_location) {
+                return "sunset/sunrise steps need a location";
+            }
+        } else {
+            return "unknown schedule anchor";
+        }
         schedule.steps[i] = (sl_schedule_step_t){
-            .at_minute = (uint16_t)at_minute,
+            .anchor = kind,
+            .minute = (int16_t)minute,
             .on = on,
             .dim_percent = (uint8_t)dim,
         };

@@ -41,6 +41,12 @@
 #define SL_SEVERITY_WARNING "warning"
 #define SL_SEVERITY_CRITICAL "critical"
 
+/* Schedule step anchors (SCHEDULE_ANCHORS) and solar offset limit (SOLAR_OFFSET_LIMIT_MINUTES) */
+#define SL_ANCHOR_CLOCK "clock"
+#define SL_ANCHOR_SUNSET "sunset"
+#define SL_ANCHOR_SUNRISE "sunrise"
+#define SL_SOLAR_OFFSET_LIMIT_MIN 240
+
 /* Limits (SCHEDULE_MAX_STEPS, set_config ranges) */
 #define SL_SCHEDULE_MAX_STEPS 12
 #define SL_TELEMETRY_INTERVAL_MIN_S 30

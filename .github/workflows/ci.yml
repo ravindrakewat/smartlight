@@ -56,6 +56,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Pure-C modules are unit-tested on the host before the full ESP-IDF build.
+      - name: Host unit tests (astronomical clock)
+        working-directory: firmware/street-light-controller
+        run: |
+          gcc -std=c11 -Wall -Wextra -Werror -Imain/include test/test_sun.c main/sl_sun.c -lm -o test_sun
+          ./test_sun
+
       - name: Build street-light-controller
         uses: espressif/esp-idf-ci-action@v1
         with:

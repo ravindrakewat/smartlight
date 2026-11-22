@@ -8,5 +8,6 @@ idf_component_register(
         "sl_net.c"
         "sl_output.c"
         "sl_sensors.c"
+        "sl_sun.c"
     INCLUDE_DIRS "include"
 )

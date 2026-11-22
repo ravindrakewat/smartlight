@@ -5,9 +5,19 @@
 
 #include "sl_protocol.h"
 
-/** One daily schedule entry, minutes after local midnight. */
+typedef enum {
+    SL_ANCHOR_AT_CLOCK = 0,
+    SL_ANCHOR_AT_SUNSET = 1,
+    SL_ANCHOR_AT_SUNRISE = 2,
+} sl_anchor_t;
+
+/**
+ * One daily schedule entry: a fixed local time (`minute` after midnight) or an
+ * offset in minutes from today's sunset/sunrise at the pole.
+ */
 typedef struct {
-    uint16_t at_minute;
+    uint8_t anchor; /* sl_anchor_t */
+    int16_t minute;
     bool on;
     uint8_t dim_percent;
 } sl_schedule_step_t;
@@ -17,6 +27,10 @@ typedef struct {
     char id[65];
     int16_t utc_offset_min;
     uint8_t count;
+    /* Pole position for the astronomical clock; required by sunset/sunrise steps. */
+    bool has_location;
+    float latitude;
+    float longitude;
     sl_schedule_step_t steps[SL_SCHEDULE_MAX_STEPS];
 } sl_schedule_t;
 
@@ -28,6 +42,8 @@ typedef struct {
     float power_w;
     float power_factor;
 
+    /* Legacy LDR input (Phase 1 boards). Day/night now comes from the astronomical
+     * clock; the reading is kept for diagnostics only and never switches the lamp. */
     bool ldr_valid;
     bool is_dark;
     int ldr_mv;

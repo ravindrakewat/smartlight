@@ -19,7 +19,7 @@ static const char *TAG = "sl_config";
 #define STATE_NAMESPACE "sl_state"
 #define KEY_TELEMETRY_INTERVAL "tlm_int"
 #define KEY_MOTION_BOOST "boost"
-#define KEY_SCHEDULE "schedule"
+#define KEY_SCHEDULE "schedule_v2"
 #define KEY_ENERGY_MWH "energy_mwh"
 
 static void read_str(nvs_handle_t handle, bool opened, const char *key, char *dst, size_t dst_len,
