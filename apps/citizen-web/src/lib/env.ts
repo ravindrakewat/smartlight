@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { httpUrlSchema } from '@smart-light/shared';
+import { apiBaseUrlSchema } from '@smart-light/shared';
 
 const citizenEnvSchema = z.object({
-  NEXT_PUBLIC_API_BASE_URL: httpUrlSchema.default('http://localhost:4000/api'),
+  NEXT_PUBLIC_API_BASE_URL: apiBaseUrlSchema.default('http://localhost:4000/api'),
   NEXT_PUBLIC_APP_NAME: z.string().min(1).default('Citizen Street Light Portal'),
   /**
    * Municipality served by this deployment (one citizen portal per city,

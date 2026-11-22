@@ -41,7 +41,7 @@ function withSsl(url: string): string {
   if (!useRender || /[?&]sslmode=/.test(url)) {
     return url;
   }
-  return `${url}${url.includes('?') ? '&' : '?'}sslmode=require`;
+  return `${url}${url.includes('?') ? '&' : '?'}sslmode=verify-full`;
 }
 
 const rl = createInterface({ input: stdin, output: stdout, terminal: stdin.isTTY });
