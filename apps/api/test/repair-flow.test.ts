@@ -94,6 +94,18 @@ describe('citizen OTP sign-in', () => {
     expect(fourth.status).toBe(429);
   });
 
+  it('gives configured test numbers their fixed code without sending an SMS', async () => {
+    const phone = '+919000000001';
+    const agent = request.agent(app);
+    const before = testOutbox.length;
+    const requested = await agent.post('/api/v1/public/otp/request').send({ phone });
+    expect(requested.status).toBe(204);
+    expect(testOutbox.length).toBe(before);
+    const verified = await agent.post('/api/v1/public/otp/verify').send({ phone, code: '246810' });
+    expect(verified.status).toBe(200);
+    expect(verified.body.data.citizen.phone).toBe(phone);
+  });
+
   it('requires a verified citizen to file a complaint', async () => {
     const response = await request(app)
       .post('/api/v1/public/complaints')

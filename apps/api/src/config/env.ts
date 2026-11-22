@@ -48,6 +48,33 @@ const apiEnvSchema = z
     /** MSG91 Flow template IDs, each linked to a DLT-approved template. */
     MSG91_TEMPLATE_OTP: z.string().min(1).optional(),
     MSG91_TEMPLATE_COMPLAINT_RESOLVED: z.string().min(1).optional(),
+
+    /**
+     * Test phone numbers with a fixed OTP and no SMS, e.g.
+     * `+919000000001:246810,+919000000002:135790`. For QA and app-store review
+     * only; every other number gets a random code by SMS. Empty = off.
+     */
+    OTP_TEST_NUMBERS: z
+      .string()
+      .default('')
+      .transform((raw, context) => {
+        const numbers: Record<string, string> = {};
+        for (const entry of raw
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean)) {
+          const match = /^(\+91\d{10}):(\d{6})$/.exec(entry);
+          if (!match?.[1] || !match[2]) {
+            context.addIssue({
+              code: 'custom',
+              message: 'Each entry must look like +91XXXXXXXXXX:123456',
+            });
+            return z.NEVER;
+          }
+          numbers[match[1]] = match[2];
+        }
+        return numbers;
+      }),
   })
   .superRefine((value, context) => {
     if (value.SMS_PROVIDER !== 'msg91') {

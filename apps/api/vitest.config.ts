@@ -13,6 +13,7 @@ export default defineConfig({
       JWT_ACCESS_SECRET: 'test-only-secret-that-is-long-enough-for-hs256-signing',
       CORS_ORIGINS: 'http://localhost:3000,http://localhost:3001,http://localhost:3002',
       API_DOCS_ENABLED: 'true',
+      OTP_TEST_NUMBERS: '+919000000001:246810',
     },
   },
 });

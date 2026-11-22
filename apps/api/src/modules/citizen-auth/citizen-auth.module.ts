@@ -57,7 +57,9 @@ export const citizenAuthService = {
     if (recent >= OTP_MAX_PER_PHONE_PER_15_MIN) {
       throw errors.tooManyRequests('Too many codes requested. Please wait 15 minutes.');
     }
-    const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
+    // Configured test numbers (QA, app-store review) get their fixed code and no SMS.
+    const testCode = env.OTP_TEST_NUMBERS[phone];
+    const code = testCode ?? String(randomInt(0, 1_000_000)).padStart(6, '0');
     await prisma.otpChallenge.create({
       data: {
         phone,
@@ -66,11 +68,13 @@ export const citizenAuthService = {
         expiresAt: new Date(Date.now() + OTP_TTL_MS),
       },
     });
-    await sms.send(phone, { template: 'otp', code });
+    if (!testCode) {
+      await sms.send(phone, { template: 'otp', code });
+    }
     await recordAuditSafely({
       actorType: 'CITIZEN',
       action: 'citizen.otp_requested',
-      metadata: { phoneSuffix: phone.slice(-2) },
+      metadata: { phoneSuffix: phone.slice(-2), ...(testCode ? { testNumber: true } : {}) },
       request,
     });
   },
