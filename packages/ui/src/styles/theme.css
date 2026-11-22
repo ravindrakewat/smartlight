@@ -80,7 +80,8 @@
   --sl-neutral-subtle: #eef2f6;
 }
 
-@media (prefers-color-scheme: dark) {
+/* Screen only: printouts (QR plates, reports) always use the light palette. */
+@media screen and (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
 

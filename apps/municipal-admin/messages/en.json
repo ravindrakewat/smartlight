@@ -242,6 +242,97 @@
     "controllerOffline": "Offline",
     "noController": "Not fitted",
     "empty": "No poles match your search.",
-    "total": "{count, plural, one {# pole} other {# poles}}"
+    "total": "{count, plural, one {# pole} other {# poles}}",
+    "printPlates": "Print QR plates",
+    "importPoles": "Import poles"
+  },
+  "PoleImport": {
+    "title": "Import poles",
+    "description": "Register many poles at once from a spreadsheet. Every pole gets its QR code automatically.",
+    "back": "Back to poles",
+    "steps": {
+      "title": "Upload a CSV file",
+      "description": "Large files are checked first and then saved in batches of {max}.",
+      "one": "Download the template and fill one row per pole. Latitude and longitude are required; take them from a GPS survey or the existing asset register.",
+      "two": "In Excel or Google Sheets, save the sheet as \"CSV UTF-8\".",
+      "three": "Choose the file, check the summary and import. Nothing is saved if any row has a problem."
+    },
+    "template": "Download template",
+    "chooseFile": "Choose CSV file",
+    "missingColumns": "The file needs these columns: {columns}. Use the template.",
+    "summary": "{valid} rows ready to import · {problems} rows with problems",
+    "columns": {
+      "line": "Line",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "zone": "Zone",
+      "address": "Address",
+      "ward": "Ward",
+      "lamp_type": "Lamp type",
+      "wattage": "Wattage",
+      "row": "Row"
+    },
+    "problems": {
+      "title": "Please fix these rows and choose the file again",
+      "invalid": "Line {line}: {column} is missing or invalid.",
+      "duplicateInFile": "Line {line}: same location as line {other}.",
+      "unknownZone": "Line {line}: this zone code does not exist. Add the zone first.",
+      "exists": "Line {line}: a pole is already registered at this location.",
+      "more": "…and {count} more.",
+      "nothingSaved": "Nothing has been saved."
+    },
+    "import": "{count, plural, =0 {Import poles} one {Import # pole} other {Import # poles}}",
+    "checking": "Checking rows… {done} of {total}",
+    "importing": "Saving poles… {done} of {total}",
+    "failed": "The import could not be completed. Nothing was saved. Please try again.",
+    "partial": "{done} of {total} poles were saved before an error. The rest were not saved: remove the saved rows from the file before importing it again.",
+    "done": {
+      "title": "{count, plural, one {# pole imported} other {# poles imported}}",
+      "body": "Each pole now has a code and a QR plate. Print the plates and fix them on the poles.",
+      "print": "Print QR plates"
+    },
+    "preview": "First rows",
+    "zones": {
+      "title": "Zones",
+      "description": "Use these codes in the \"zone\" column.",
+      "empty": "No zones yet.",
+      "poleCount": "{count, plural, one {{formatted} pole} other {{formatted} poles}}",
+      "code": "Code",
+      "name": "Name",
+      "add": "Add zone",
+      "adminOnly": "Only municipal administrators can add zones.",
+      "errors": {
+        "exists": "A zone with this code already exists.",
+        "generic": "The zone could not be added. Please try again."
+      }
+    }
+  },
+  "PolePrint": {
+    "back": "Back to poles",
+    "title": "Print QR plates",
+    "description": "Each plate carries the pole number and a QR code that opens the citizen complaint page for that pole.",
+    "source": "Plates to print",
+    "sources": {
+      "import": "{count, plural, =0 {Last import (none in this tab)} one {Last import (# pole)} other {Last import (# poles)}}",
+      "all": "All poles",
+      "zone": "Zone {code} · {name}"
+    },
+    "print": "{count, plural, one {Print # plate} other {Print {formatted} plates}}",
+    "printTips": "Print on A4 at 100% scale (not \"fit to page\"), 6 plates per sheet. Use weatherproof sticker sheets or laminate the plates.",
+    "truncated": "Only the first {max} poles are shown. Print by zone for larger sets.",
+    "loadFailed": "Could not load the poles. Please try again.",
+    "empty": "No poles to print.",
+    "platesLabel": "QR plates",
+    "misconfigured": {
+      "title": "Plates would point to a test address",
+      "body": "The citizen portal address is not configured for this site (NEXT_PUBLIC_CITIZEN_PORTAL_URL). Ask the administrator to set it before printing plates."
+    },
+    "plate": {
+      "headlineHi": "लाइट खराब है? स्कैन करें",
+      "headline": "Light not working? Scan to report",
+      "qrLabel": "QR code for pole {code}",
+      "typeHi": "या {host} पर पोल नंबर डालें",
+      "type": "or enter the number at {host}"
+    }
   }
 }

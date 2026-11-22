@@ -3,6 +3,7 @@
 import { LIGHT_STATUSES, type LightStatusName, type PoleDto } from '@smart-light/shared';
 import {
   Alert,
+  Button,
   Card,
   EmptyState,
   Input,
@@ -12,19 +13,24 @@ import {
   Skeleton,
 } from '@smart-light/ui';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { Search } from 'lucide-react';
+import { FileUp, Printer, Search } from 'lucide-react';
+import Link from 'next/link';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useEffect, useId, useState } from 'react';
 import { LightStatusLabel } from '@/components/labels';
+import { useSessionUser } from '@/components/Session';
 import { api } from '@/lib/api';
 
 const PAGE_SIZE = 25;
+/** Mirrors the API's asset-editor roles; the API still enforces them. */
+const ASSET_EDITORS = new Set(['SUPER_ADMIN', 'MUNICIPAL_ADMIN', 'SUPERVISOR']);
 
 export default function PolesPage() {
   const t = useTranslations('Poles');
   const tCommon = useTranslations('Common');
   const tLight = useTranslations('LightStatus');
   const format = useFormatter();
+  const user = useSessionUser();
   const searchId = useId();
   const statusId = useId();
 
@@ -56,11 +62,27 @@ export default function PolesPage() {
         title={t('title')}
         description={t('description')}
         actions={
-          data ? (
-            <span className="text-sm text-muted-foreground">
-              {t('total', { count: data.pagination.totalItems })}
-            </span>
-          ) : null
+          <div className="flex flex-wrap items-center gap-3">
+            {data ? (
+              <span className="text-sm text-muted-foreground">
+                {t('total', { count: data.pagination.totalItems })}
+              </span>
+            ) : null}
+            <Button asChild variant="secondary">
+              <Link href="/print/poles">
+                <Printer aria-hidden="true" />
+                {t('printPlates')}
+              </Link>
+            </Button>
+            {ASSET_EDITORS.has(user.role) ? (
+              <Button asChild>
+                <Link href="/poles/import">
+                  <FileUp aria-hidden="true" />
+                  {t('importPoles')}
+                </Link>
+              </Button>
+            ) : null}
+          </div>
         }
       />
 

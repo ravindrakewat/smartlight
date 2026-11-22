@@ -20,7 +20,8 @@ function flatten(object, prefix = '') {
 }
 
 function placeholders(text) {
-  return [...text.matchAll(/\{(\w+)/g)]
+  // `{name}` or `{name, plural …`; not the text of a plural branch like `{Import poles}`.
+  return [...text.matchAll(/\{(\w+)\s*[},]/g)]
     .map((match) => match[1])
     .sort()
     .join(',');

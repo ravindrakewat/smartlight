@@ -298,6 +298,24 @@ describe('poles', () => {
     expect(outsideIndia.body.error.code).toBe('VALIDATION_ERROR');
   });
 
+  it('validates without saving on a dry run', async () => {
+    const city = await setupCity();
+    const rows = [{ latitude: 22.7301, longitude: 75.8701, zoneCode: 'Z01' }];
+    const dry = await request(app)
+      .post('/api/v1/poles/import?dryRun=true')
+      .set(city.auth)
+      .send({ rows });
+    expect(dry.status).toBe(200);
+    expect(dry.body.data).toEqual({ created: 0, poles: [] });
+    expect(await prisma.pole.count({ where: { tenantId: city.tenant.id } })).toBe(0);
+
+    const badDry = await request(app)
+      .post('/api/v1/poles/import?dryRun=true')
+      .set(city.auth)
+      .send({ rows: [{ ...rows[0], zoneCode: 'NOPE' }] });
+    expect(badDry.body.error.code).toBe('IMPORT_INVALID');
+  });
+
   it('only lets asset editors import poles', async () => {
     const city = await setupCity();
     const technician = await createUser({

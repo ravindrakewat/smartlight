@@ -3,3 +3,15 @@
 
 /* Let Tailwind see the class names used inside the shared design system. */
 @source '../../../../packages/ui/src';
+
+/* Pole QR plates: A4, 2 × 3 plates per sheet (see app/print/poles). */
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  body {
+    background-color: var(--color-surface);
+  }
+}

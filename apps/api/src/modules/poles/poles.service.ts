@@ -205,13 +205,16 @@ export const polesService = {
    * Bulk import (CSV upload). All rows are checked first and nothing is saved
    * unless every row is valid, so a file can simply be fixed and uploaded again.
    * Rows whose exact coordinates already exist (in the file or the city) are
-   * rejected, which also stops the same file being imported twice.
+   * rejected, which also stops the same file being imported twice. With dryRun
+   * the rows are only checked, so a large file can be validated batch by batch
+   * before any batch is saved.
    */
   async import(
     tenantId: string,
     input: z.output<typeof importPolesSchema>,
     auth: AuthContext,
     request: Request,
+    options: { dryRun?: boolean } = {},
   ): Promise<ImportPolesResult> {
     const { rows } = input;
     const problems: ApiErrorDetail[] = [];
@@ -264,6 +267,9 @@ export const polesService = {
         message: 'Some rows could not be imported. Nothing was saved.',
         details: problems.slice(0, 100),
       });
+    }
+    if (options.dryRun) {
+      return { created: 0, poles: [] };
     }
 
     return prisma.$transaction(

@@ -13,6 +13,7 @@ import { polesService } from './poles.service';
 
 const tenantQuery = z.object({ tenantId: z.uuid().optional() });
 const idParams = z.object({ id: z.uuid() });
+const importQuery = z.object({ dryRun: z.stringbool().optional() });
 const codeParams = z.object({ code: z.string().min(5).max(20) });
 
 function tenantOf(req: Request, res: Response): string {
@@ -48,7 +49,11 @@ export const polesController = {
 
   async import(req: Request, res: Response): Promise<void> {
     const input = importPolesSchema.parse(req.body);
-    sendData(res, await polesService.import(tenantOf(req, res), input, getAuth(res), req), 201);
+    const { dryRun = false } = importQuery.parse(req.query);
+    const result = await polesService.import(tenantOf(req, res), input, getAuth(res), req, {
+      dryRun,
+    });
+    sendData(res, result, dryRun ? 200 : 201);
   },
 
   async update(req: Request, res: Response): Promise<void> {
