@@ -45,6 +45,9 @@ jobs:
       - name: Build supported applications
         run: npm run build
 
+      - name: Bundle mobile app (Android + iOS)
+        run: npm run export -w @smart-light/mobile
+
   firmware:
     name: Firmware build (ESP32-S3, ESP-IDF v5.4)
     runs-on: ubuntu-latest

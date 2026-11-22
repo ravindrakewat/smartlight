@@ -1,110 +1,87 @@
 # Smart Street Light Management System
 
-Enterprise-grade, multi-tenant SaaS monorepo for managing municipal smart street lighting infrastructure, IoT telemetry, maintenance operations, and citizen issue reporting.
+Multi-tenant platform for municipal corporations to monitor street lights, run repairs with a
+24-hour SLA, and let citizens report faults by scanning the QR code on a pole. Built for
+government deployment (Hindi + English, GIGW 3.0 / WCAG 2.1 AA, append-only audit trail).
 
-> **Current Stage:** Phase 0 — Monorepo Foundation. Business modules, authentication, database schemas, and IoT ingestion will be implemented in subsequent phases.
+## What is in the box
 
----
+| Workspace              | What it is                                                                 | Dev port |
+| ---------------------- | -------------------------------------------------------------------------- | -------- |
+| `apps/api`             | Central REST API (Express 5, Prisma 7, PostgreSQL). Swagger at `/api/docs` | `4000`   |
+| `apps/citizen-web`     | Citizen portal: QR pole page, complaint with SMS OTP, tracking (Next.js)   | `3000`   |
+| `apps/municipal-admin` | Control centre: dashboard, work orders, poles (Next.js)                    | `3001`   |
+| `apps/super-admin`     | Platform console: municipalities, health (Next.js)                         | `3002`   |
+| `apps/mobile`          | Field technician app: jobs, GPS start/complete, QR scan (Expo)             | Metro    |
+| `packages/db`          | Prisma schema, migrations, seed, local PostgreSQL                          | `5433`   |
+| `packages/shared`      | Zod contracts, API client, pole codes, IoT MQTT contract                   | —        |
+| `packages/ui`          | Web design system (Tailwind v4 tokens, accessible components)              | —        |
+| `firmware/`            | ESP32-S3 street-light controller (ESP-IDF)                                 | —        |
 
-## Architecture Overview
+Architecture and rules for contributors: [`AGENTS.md`](./AGENTS.md) · API guide:
+[`docs/api`](./docs/api/README.md) · Device protocol: [`docs/iot/mqtt-protocol.md`](./docs/iot/mqtt-protocol.md)
 
-| Workspace              | Package                        | Stack                                   | Port (Dev) |
-| ---------------------- | ------------------------------ | --------------------------------------- | ---------- |
-| `apps/citizen-web`     | `@smart-light/citizen-web`     | Next.js (App Router), React, TypeScript | `3000`     |
-| `apps/municipal-admin` | `@smart-light/municipal-admin` | Next.js (App Router), React, TypeScript | `3001`     |
-| `apps/super-admin`     | `@smart-light/super-admin`     | Next.js (App Router), React, TypeScript | `3002`     |
-| `apps/mobile`          | `@smart-light/mobile`          | React Native, Expo, TypeScript          | Expo Metro |
-| `apps/api`             | `@smart-light/api`             | Node.js, Express.js, TypeScript, Zod    | `4000`     |
-| `packages/shared`      | `@smart-light/shared`          | TypeScript, Zod                         | —          |
-| `packages/ui`          | `@smart-light/ui`              | React, TypeScript (Web-only)            | —          |
-| `packages/config`      | `@smart-light/config`          | TSConfig, ESLint, Prettier presets      | —          |
+## Run it locally (no Docker needed)
 
-All business logic and API endpoints live exclusively in `apps/api`. Next.js apps do not define duplicate backend APIs.
-
----
-
-## Prerequisites
-
-- **Node.js**: `>= 20.18.0` (tested on Node 22 LTS)
-- **npm**: `>= 10.0.0`
-
----
-
-## Getting Started
-
-1. **Install dependencies** from the repository root:
-
-   ```bash
-   npm install
-   ```
-
-2. **Build shared packages** (required before starting `apps/api` for the first time):
-
-   ```bash
-   npm run build:packages
-   ```
-
-3. **Configure environment variables**:
-   Copy each app's `.env.example` to `.env` (or `.env.local` for Next.js) as needed. Never commit `.env` files.
-
-   - `apps/api/.env.example` → `apps/api/.env`
-   - `apps/citizen-web/.env.example` → `apps/citizen-web/.env.local`
-   - `apps/municipal-admin/.env.example` → `apps/municipal-admin/.env.local`
-   - `apps/super-admin/.env.example` → `apps/super-admin/.env.local`
-   - `apps/mobile/.env.example` → `apps/mobile/.env`
-
----
-
-## Workspace Commands
-
-### Run Applications Independently
+Requires Node.js ≥ 20.18 (22 LTS recommended).
 
 ```bash
-npm run dev:api              # Express API on http://localhost:4000
-npm run dev:citizen          # Citizen Web on http://localhost:3000
-npm run dev:municipal        # Municipal Admin on http://localhost:3001
-npm run dev:super-admin      # Super Admin on http://localhost:3002
-npm run dev:mobile           # Expo dev server for React Native app
+npm install
+npm run build:packages
+
+# 1. Database — a real PostgreSQL 17 from npm; keep this terminal open
+cp packages/db/.env.example packages/db/.env
+npm run db:dev
+
+# 2. In a second terminal: schema + demo data
+npm run migrate:deploy -w @smart-light/db
+npm run seed -w @smart-light/db
+
+# 3. API (copy apps/api/.env.example to apps/api/.env and set JWT_ACCESS_SECRET first)
+npm run dev:api            # http://localhost:4000/api/docs
+
+# 4. Any of the apps
+npm run dev:citizen        # http://localhost:3000
+npm run dev:municipal      # http://localhost:3001
+npm run dev:super-admin    # http://localhost:3002
+npm run dev:mobile         # Expo; see apps/mobile/.env.example for the API URL on a phone
 ```
 
-### Quality & Verification
+### Demo accounts (local seed only)
+
+All seeded accounts use the password `SmartLight@2026`. The seed refuses to run in production.
+
+| Role                        | Email                                | Use in                 |
+| --------------------------- | ------------------------------------ | ---------------------- |
+| Platform administrator      | `superadmin@smartlight.local`        | Super admin            |
+| Municipal administrator     | `admin@indore.smartlight.local`      | Municipal console      |
+| Supervisor (JE)             | `supervisor@indore.smartlight.local` | Municipal console, app |
+| Technician (municipal)      | `tech1@indore.smartlight.local`      | Mobile app             |
+| Technician (contractor)     | `tech2@prakash.smartlight.local`     | Mobile app             |
+| Agency manager (contractor) | `manager@prakash.smartlight.local`   | Municipal console      |
+
+Citizen OTP codes are printed in the API log in development (no SMS is sent).
+Try the QR flow at <http://localhost:3000/p/IND-000002-6>.
+
+## Quality gates (run in CI on every push)
 
 ```bash
-npm run typecheck            # TypeScript check across all apps and packages
-npm run lint                 # ESLint check across all apps and packages
-npm run format               # Format repository with Prettier
-npm run format:check         # Verify Prettier formatting
-npm run build                # Build shared packages, API, and all 3 Next.js apps
+npm run format:check   # Prettier
+npm run typecheck      # all workspaces
+npm run lint           # ESLint, zero warnings
+npm run check:i18n     # every English string has a Hindi translation
+npm run test           # API integration tests on a throwaway PostgreSQL + shared unit tests
+npm run build          # packages, API and all web apps
+npm run export -w @smart-light/mobile   # Android + iOS bundles
 ```
 
-### Health Check
+The firmware is compiled with ESP-IDF in a separate CI job.
 
-When `apps/api` is running:
+## Deployment
 
-```bash
-curl http://localhost:4000/api/health
-```
+- **API** → Render (`infra/deployment/render.yaml`; migrations run as the pre-deploy step).
+- **Web apps** → three Vercel projects (root directories `apps/citizen-web`, `apps/municipal-admin`,
+  `apps/super-admin`).
+- **Mobile** → Expo Application Services (EAS Build).
 
----
-
-## Environment Variables by Application
-
-| Application            | File                                | Variables                                                                   |
-| ---------------------- | ----------------------------------- | --------------------------------------------------------------------------- |
-| `apps/api`             | `apps/api/.env.example`             | `NODE_ENV`, `PORT`, `API_HOST`, `LOG_LEVEL`, `CORS_ORIGINS`, `SERVICE_NAME` |
-| `apps/citizen-web`     | `apps/citizen-web/.env.example`     | `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_APP_NAME`                          |
-| `apps/municipal-admin` | `apps/municipal-admin/.env.example` | `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_APP_NAME`                          |
-| `apps/super-admin`     | `apps/super-admin/.env.example`     | `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_APP_NAME`                          |
-| `apps/mobile`          | `apps/mobile/.env.example`          | `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_APP_NAME`                          |
-
-Future phases will add database (`DATABASE_URL`), Redis (`REDIS_URL`), MQTT (`MQTT_BROKER_URL`), S3 storage, and auth secret variables exclusively to `apps/api` and worker services.
-
----
-
-## Documentation
-
-- [AGENTS.md](./AGENTS.md) — Contributor & AI agent engineering rules
-- [System Overview](./docs/architecture/system-overview.md)
-- [Monorepo Structure](./docs/architecture/monorepo-structure.md)
-- [Deployment Architecture](./docs/architecture/deployment-architecture.md)
-- [Technology Decisions](./docs/architecture/technology-decisions.md)
+Never commit `.env` files. Every app documents its variables in `.env.example`.

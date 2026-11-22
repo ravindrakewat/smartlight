@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Smart Street Light Mobile",
+    "name": "Smart Light Field",
     "slug": "smart-street-light-mobile",
     "scheme": "smartlight",
     "version": "0.1.0",
@@ -14,6 +14,27 @@
     "android": {
       "package": "com.smartlight.mobile",
       "edgeToEdgeEnabled": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Smart Light uses the camera to scan the QR code on street-light poles. / खंभे पर लगा QR कोड स्कैन करने के लिए कैमरा उपयोग होता है।",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Your location confirms you are at the pole when you start or finish a repair. / मरम्मत शुरू या पूरी करते समय आप खंभे पर हैं, यह पुष्टि करने के लिए लोकेशन उपयोग होती है।"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
     }
   }
 }

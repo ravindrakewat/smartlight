@@ -30,7 +30,9 @@
     "format:check": "prettier --check .",
     "test": "npm run build:packages && npm run test --workspaces --if-present",
     "check:i18n": "node scripts/check-i18n.mjs",
-    "db:dev": "npm run db:dev -w @smart-light/db"
+    "db:dev": "npm run db:dev -w @smart-light/db",
+    "migrate:deploy": "npm run migrate:deploy -w @smart-light/db",
+    "seed": "npm run seed -w @smart-light/db"
   },
   "devDependencies": {
     "prettier": "^3.5.3",
