@@ -8,6 +8,7 @@ import {
   Lightbulb,
   Map as MapIcon,
   Settings,
+  UsersRound,
 } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
@@ -25,6 +26,7 @@ export async function ConsoleShell({ children }: { children: ReactNode }) {
     { href: '/work-orders', label: t('Nav.workOrders'), icon: <ClipboardList /> },
     { href: '/schedules', label: t('Nav.schedules'), icon: <CalendarClock /> },
     { href: '/reports', label: t('Nav.reports'), icon: <FileBarChart /> },
+    { href: '/staff', label: t('Nav.staff'), icon: <UsersRound /> },
     { href: '/settings', label: t('Nav.settings'), icon: <Settings /> },
   ];
 

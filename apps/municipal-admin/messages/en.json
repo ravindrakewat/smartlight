@@ -42,7 +42,8 @@
     "workOrders": "Work orders",
     "schedules": "Schedules",
     "reports": "Reports",
-    "settings": "Settings"
+    "settings": "Settings",
+    "staff": "Staff & agencies"
   },
   "Login": {
     "title": "Sign in",
@@ -334,5 +335,86 @@
       "typeHi": "या {host} पर पोल नंबर डालें",
       "type": "or enter the number at {host}"
     }
+  },
+  "Staff": {
+    "title": "Staff & agencies",
+    "description": "Supervisors, operators, technicians and the agencies they work for. Technicians sign in to the mobile app with these accounts.",
+    "total": "{count, plural, one {# person} other {# people}}",
+    "search": "Search by name or e-mail",
+    "roleFilter": "Role",
+    "allRoles": "All roles",
+    "empty": "No staff match your search.",
+    "never": "Never",
+    "statusFailed": "The change could not be saved. Please try again.",
+    "columns": {
+      "name": "Name",
+      "role": "Role",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "DISABLED": "Disabled"
+    },
+    "actions": {
+      "resetPassword": "Reset password",
+      "disable": "Disable",
+      "enable": "Enable"
+    },
+    "reset": {
+      "label": "New password for {name}",
+      "hint": "At least 10 characters with upper case, lower case and a digit. They will be signed out everywhere.",
+      "submit": "Set password",
+      "cancel": "Cancel",
+      "close": "Close",
+      "done": "Password changed. Share it with {name} privately.",
+      "failed": "The password could not be changed. Check the rules and try again."
+    },
+    "add": {
+      "title": "Add staff member",
+      "role": "Role",
+      "agency": "Agency",
+      "agencyHint": "Technicians and agency managers belong to a department or contractor.",
+      "chooseAgency": "Choose an agency",
+      "name": "Full name",
+      "email": "E-mail",
+      "emailHint": "Used to sign in to the console or the mobile app.",
+      "phone": "Mobile number",
+      "phoneHint": "Optional. 10 digits.",
+      "password": "Initial password",
+      "passwordHint": "At least 10 characters with upper case, lower case and a digit. Share it privately.",
+      "submit": "Add staff member",
+      "created": "{email} can now sign in.",
+      "errors": {
+        "CONFLICT": "Someone with this e-mail already exists.",
+        "VALIDATION_ERROR": "Please check the details and the password rules.",
+        "AGENCY_REQUIRED": "Choose an agency for this role.",
+        "INVALID_AGENCY": "This agency is inactive or no longer exists.",
+        "generic": "The staff member could not be added. Please try again."
+      }
+    },
+    "agencies": {
+      "title": "Agencies",
+      "description": "Municipal departments and contractors whose technicians do the repairs.",
+      "empty": "No agencies yet. Add the municipal electrical department first.",
+      "types": {
+        "MUNICIPAL": "Municipal department",
+        "CONTRACTOR": "Contractor"
+      },
+      "technicians": "{count, plural, one {# technician} other {# technicians}}",
+      "inactive": "Inactive",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "add": "Add agency",
+      "name": "Name",
+      "type": "Type",
+      "phone": "Contact mobile",
+      "submit": "Add agency",
+      "errors": {
+        "exists": "An agency with this name already exists.",
+        "generic": "The agency could not be saved. Please try again."
+      }
+    },
+    "lastLogin": "Last sign-in: {when}"
   }
 }
