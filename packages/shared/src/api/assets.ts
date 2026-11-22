@@ -90,6 +90,38 @@ export const updatePoleSchema = createPoleSchema
   .partial()
   .meta({ id: 'UpdatePoleRequest' });
 
+/** Rows accepted per import request; clients split larger files into batches. */
+export const POLE_IMPORT_MAX_ROWS = 500;
+
+/** One pole in a bulk import (one CSV row). The zone is referenced by its code. */
+export const importPoleRowSchema = createPoleSchema
+  .omit({ zoneId: true, installedAt: true })
+  .extend({
+    zoneCode: z
+      .string()
+      .trim()
+      .regex(/^[A-Z0-9-]{1,10}$/, {
+        error: 'Zone code: up to 10 capital letters, digits or hyphens',
+      })
+      .optional(),
+  });
+
+export type ImportPoleRow = z.infer<typeof importPoleRowSchema>;
+
+export const importPolesSchema = z
+  .object({ rows: z.array(importPoleRowSchema).min(1).max(POLE_IMPORT_MAX_ROWS) })
+  .meta({ id: 'ImportPolesRequest' });
+
+export const importPolesResultSchema = z
+  .object({
+    created: z.number().int(),
+    /** In row order, so row N of the request got poles[N]. */
+    poles: z.array(z.object({ id: z.uuid(), code: z.string() })),
+  })
+  .meta({ id: 'ImportPolesResult' });
+
+export type ImportPolesResult = z.infer<typeof importPolesResultSchema>;
+
 /** Minimal shape for drawing thousands of poles on the live map. */
 export const poleMapItemSchema = z
   .object({

@@ -1,5 +1,8 @@
 import {
   createPoleSchema,
+  importPolesResultSchema,
+  importPolesSchema,
+  POLE_IMPORT_MAX_ROWS,
   listPolesQuerySchema,
   paginatedEnvelope,
   poleMapItemSchema,
@@ -27,6 +30,7 @@ polesRouter.get(
 );
 polesRouter.get('/:id', requireRoles(...ROLE_GROUPS.tenantReaders), polesController.get);
 polesRouter.post('/', requireRoles(...ROLE_GROUPS.assetEditors), polesController.create);
+polesRouter.post('/import', requireRoles(...ROLE_GROUPS.assetEditors), polesController.import);
 polesRouter.patch('/:id', requireRoles(...ROLE_GROUPS.assetEditors), polesController.update);
 
 const TAG = 'Assets';
@@ -117,5 +121,23 @@ registry.registerPath({
   responses: {
     200: { description: 'Updated', content: jsonContent(successEnvelope(poleSchema)) },
     ...errorResponses(400, 401, 403, 404),
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/poles/import',
+  tags: [TAG],
+  summary: `Bulk import up to ${POLE_IMPORT_MAX_ROWS} poles (all-or-nothing); codes are generated`,
+  description:
+    'Every row is validated first. If any row is invalid (bad coordinates, unknown zone code, coordinates that already exist) nothing is saved and the response lists the rows in error.details (field = rows.<index>.<column>).',
+  security: AUTHENTICATED,
+  request: { query: tenantQuery, body: { content: jsonContent(importPolesSchema) } },
+  responses: {
+    201: {
+      description: 'Imported',
+      content: jsonContent(successEnvelope(importPolesResultSchema)),
+    },
+    ...errorResponses(400, 401, 403),
   },
 });

@@ -2,7 +2,10 @@ import type { Prisma } from '@smart-light/db';
 import {
   formatPoleCode,
   parsePoleCode,
+  type ApiErrorDetail,
   type createPoleSchema,
+  type ImportPolesResult,
+  type importPolesSchema,
   type listPolesQuerySchema,
   type PaginationMeta,
   type PoleDto,
@@ -11,10 +14,11 @@ import {
 } from '@smart-light/shared';
 import type { Request } from 'express';
 import type { z } from 'zod';
-import { nextCounterValue } from '../../lib/counters';
+import { nextCounterValue, reserveCounterRange } from '../../lib/counters';
 import { paginationMeta, toSkipTake } from '../../lib/pagination';
 import { prisma, type DbClient } from '../../lib/prisma';
 import { toIso } from '../../lib/roles';
+import { AppError } from '../../utils/app-error';
 import { errors } from '../../utils/errors';
 import { recordAudit } from '../audit/audit.service';
 import type { AuthContext } from '../auth/auth.context';
@@ -195,5 +199,114 @@ export const polesService = {
       );
       return toPoleDto(pole);
     });
+  },
+
+  /**
+   * Bulk import (CSV upload). All rows are checked first and nothing is saved
+   * unless every row is valid, so a file can simply be fixed and uploaded again.
+   * Rows whose exact coordinates already exist (in the file or the city) are
+   * rejected, which also stops the same file being imported twice.
+   */
+  async import(
+    tenantId: string,
+    input: z.output<typeof importPolesSchema>,
+    auth: AuthContext,
+    request: Request,
+  ): Promise<ImportPolesResult> {
+    const { rows } = input;
+    const problems: ApiErrorDetail[] = [];
+    const coordinateKey = (row: { latitude: number; longitude: number }) =>
+      `${row.latitude.toFixed(6)},${row.longitude.toFixed(6)}`;
+
+    const zoneCodes = [...new Set(rows.flatMap((row) => (row.zoneCode ? [row.zoneCode] : [])))];
+    const zones = await prisma.zone.findMany({
+      where: { tenantId, code: { in: zoneCodes } },
+      select: { id: true, code: true },
+    });
+    const zoneIdByCode = new Map(zones.map((zone) => [zone.code, zone.id]));
+
+    const existing = await prisma.pole.findMany({
+      where: {
+        tenantId,
+        OR: rows.map((row) => ({ latitude: row.latitude, longitude: row.longitude })),
+      },
+      select: { code: true, latitude: true, longitude: true },
+    });
+    const existingByKey = new Map(existing.map((pole) => [coordinateKey(pole), pole.code]));
+
+    const seen = new Map<string, number>();
+    rows.forEach((row, index) => {
+      if (row.zoneCode && !zoneIdByCode.has(row.zoneCode)) {
+        problems.push({ field: `rows.${index}.zoneCode`, message: `Unknown zone ${row.zoneCode}` });
+      }
+      const key = coordinateKey(row);
+      const already = existingByKey.get(key);
+      if (already) {
+        problems.push({
+          field: `rows.${index}.latitude`,
+          message: `Pole ${already} already exists at these coordinates`,
+        });
+      }
+      const earlier = seen.get(key);
+      if (earlier !== undefined) {
+        problems.push({
+          field: `rows.${index}.latitude`,
+          message: `Same coordinates as row ${earlier + 1} of this batch`,
+        });
+      } else {
+        seen.set(key, index);
+      }
+    });
+    if (problems.length > 0) {
+      throw new AppError({
+        statusCode: 400,
+        code: 'IMPORT_INVALID',
+        message: 'Some rows could not be imported. Nothing was saved.',
+        details: problems.slice(0, 100),
+      });
+    }
+
+    return prisma.$transaction(
+      async (tx) => {
+        const tenant = await tx.tenant.findUniqueOrThrow({ where: { id: tenantId } });
+        const firstSerial = await reserveCounterRange(tx, tenantId, 'pole', rows.length);
+        const created = await tx.pole.createManyAndReturn({
+          data: rows.map((row, index) => {
+            const serial = firstSerial + index;
+            const { zoneCode, ...fields } = row;
+            return {
+              ...fields,
+              tenantId,
+              serial,
+              code: formatPoleCode(tenant.code, serial),
+              zoneId: zoneCode ? (zoneIdByCode.get(zoneCode) ?? null) : null,
+            };
+          }),
+          select: { id: true, code: true, serial: true },
+        });
+        created.sort((a, b) => a.serial - b.serial);
+        await recordAudit(
+          {
+            tenantId,
+            actorType: 'USER',
+            actorId: auth.userId,
+            action: 'pole.import',
+            entityType: 'pole',
+            metadata: {
+              count: created.length,
+              firstCode: created[0]?.code,
+              lastCode: created.at(-1)?.code,
+            },
+            request,
+          },
+          tx,
+        );
+        return {
+          created: created.length,
+          poles: created.map(({ id, code }) => ({ id, code })),
+        };
+      },
+      { timeout: 30_000 },
+    );
   },
 };

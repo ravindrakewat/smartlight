@@ -237,6 +237,81 @@ describe('poles', () => {
     expect(bad.body.error.code).toBe('INVALID_POLE_CODE');
   });
 
+  it('bulk-imports poles with consecutive codes and zone codes', async () => {
+    const city = await setupCity();
+    const before = await createPole(city.auth);
+    const response = await request(app)
+      .post('/api/v1/poles/import')
+      .set(city.auth)
+      .send({
+        rows: [
+          { latitude: 22.7101, longitude: 75.8501, zoneCode: 'Z01', ward: 'Ward 12' },
+          { latitude: 22.7102, longitude: 75.8502, wattage: 90 },
+          { latitude: 22.7103, longitude: 75.8503, zoneCode: 'Z01' },
+        ],
+      });
+    expect(response.status).toBe(201);
+    expect(response.body.data.created).toBe(3);
+    const serials = response.body.data.poles.map(
+      (pole: { code: string }) => parsePoleCode(pole.code)?.serial,
+    );
+    const start = (parsePoleCode(before.code)?.serial ?? 0) + 1;
+    expect(serials).toEqual([start, start + 1, start + 2]);
+
+    const zoned = await prisma.pole.count({
+      where: { tenantId: city.tenant.id, zoneId: city.zone.id },
+    });
+    expect(zoned).toBe(2);
+    // The next single pole continues after the imported range.
+    const after = await createPole(city.auth, { latitude: 22.73, longitude: 75.87 });
+    expect(parsePoleCode(after.code)?.serial).toBe(start + 3);
+  });
+
+  it('saves nothing when any imported row is invalid, and blocks re-imports', async () => {
+    const city = await setupCity();
+    const rows = [
+      { latitude: 22.7201, longitude: 75.8601 },
+      { latitude: 22.7202, longitude: 75.8602, zoneCode: 'NOPE' },
+      { latitude: 22.7201, longitude: 75.8601 },
+    ];
+    const bad = await request(app).post('/api/v1/poles/import').set(city.auth).send({ rows });
+    expect(bad.status).toBe(400);
+    expect(bad.body.error.code).toBe('IMPORT_INVALID');
+    const fields = bad.body.error.details.map((detail: { field: string }) => detail.field);
+    expect(fields).toEqual(expect.arrayContaining(['rows.1.zoneCode', 'rows.2.latitude']));
+    expect(await prisma.pole.count({ where: { tenantId: city.tenant.id } })).toBe(0);
+
+    const good = [rows[0]];
+    expect(
+      (await request(app).post('/api/v1/poles/import').set(city.auth).send({ rows: good })).status,
+    ).toBe(201);
+    const again = await request(app)
+      .post('/api/v1/poles/import')
+      .set(city.auth)
+      .send({ rows: good });
+    expect(again.body.error.code).toBe('IMPORT_INVALID');
+
+    const outsideIndia = await request(app)
+      .post('/api/v1/poles/import')
+      .set(city.auth)
+      .send({ rows: [{ latitude: 75.86, longitude: 22.72 }] });
+    expect(outsideIndia.body.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('only lets asset editors import poles', async () => {
+    const city = await setupCity();
+    const technician = await createUser({
+      role: 'TECHNICIAN',
+      tenantId: city.tenant.id,
+      agencyId: city.municipal.id,
+    });
+    const response = await request(app)
+      .post('/api/v1/poles/import')
+      .set(await bearerFor(technician.email))
+      .send({ rows: [{ latitude: 22.74, longitude: 75.88 }] });
+    expect(response.status).toBe(403);
+  });
+
   it('serves map items inside a bounding box', async () => {
     const city = await setupCity();
     const inside = await createPole(city.auth, { latitude: 22.7, longitude: 75.85 });

@@ -25,6 +25,29 @@ export async function nextCounterValue(
   return value;
 }
 
+/**
+ * Atomically reserves `count` consecutive values of a per-tenant counter and
+ * returns the first one (bulk pole import). Same guarantees as nextCounterValue.
+ */
+export async function reserveCounterRange(
+  db: DbClient,
+  tenantId: string,
+  name: CounterName,
+  count: number,
+): Promise<number> {
+  const rows = await db.$queryRaw<{ value: number }[]>`
+    INSERT INTO "tenant_counters" ("tenantId", "name", "value")
+    VALUES (${tenantId}::uuid, ${name}, ${count})
+    ON CONFLICT ("tenantId", "name")
+    DO UPDATE SET "value" = "tenant_counters"."value" + ${count}
+    RETURNING "value"`;
+  const last = rows[0]?.value;
+  if (last === undefined) {
+    throw new Error(`Counter ${name} returned no value`);
+  }
+  return last - count + 1;
+}
+
 const REFERENCE_LETTERS = { complaint: 'C', work_order: 'W' } as const;
 
 /** Human reference number, e.g. `IND-C-000123` (complaint) or `IND-W-000045` (work order). */

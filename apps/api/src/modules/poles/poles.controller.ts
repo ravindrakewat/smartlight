@@ -1,5 +1,6 @@
 import {
   createPoleSchema,
+  importPolesSchema,
   listPolesQuerySchema,
   poleMapQuerySchema,
   updatePoleSchema,
@@ -43,6 +44,11 @@ export const polesController = {
   async create(req: Request, res: Response): Promise<void> {
     const input = createPoleSchema.parse(req.body);
     sendData(res, await polesService.create(tenantOf(req, res), input, getAuth(res), req), 201);
+  },
+
+  async import(req: Request, res: Response): Promise<void> {
+    const input = importPolesSchema.parse(req.body);
+    sendData(res, await polesService.import(tenantOf(req, res), input, getAuth(res), req), 201);
   },
 
   async update(req: Request, res: Response): Promise<void> {
