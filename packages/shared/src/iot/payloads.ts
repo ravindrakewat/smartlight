@@ -176,6 +176,20 @@ export type ScheduleStep = z.infer<typeof scheduleStepSchema>;
 
 export const SCHEDULE_MAX_STEPS = 12;
 
+/**
+ * Orders steps the way people read a lighting plan: from noon through the night
+ * to the next morning (sunset ≈ 18:00, sunrise ≈ 06:00 for ordering only). The
+ * controller does not depend on the order.
+ */
+export function compareScheduleSteps(a: ScheduleStep, b: ScheduleStep): number {
+  const approxMinute = (step: ScheduleStep) =>
+    step.anchor === 'clock'
+      ? step.atMinute
+      : (step.anchor === 'sunset' ? 18 * 60 : 6 * 60) + step.offsetMinutes;
+  const fromNoon = (step: ScheduleStep) => (((approxMinute(step) - 720) % 1440) + 1440) % 1440;
+  return fromNoon(a) - fromNoon(b);
+}
+
 /** Pole position for the astronomical clock (WGS 84). */
 export const deviceLocationSchema = z.object({
   latitude: z.number().min(-90).max(90),

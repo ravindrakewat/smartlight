@@ -12,6 +12,7 @@
 import type { Prisma } from '@smart-light/db';
 import {
   assignZoneScheduleSchema,
+  compareScheduleSteps,
   saveScheduleSchema,
   scheduleDtoSchema,
   successEnvelope,
@@ -35,11 +36,9 @@ const scheduleInclude = {
   zones: { select: { id: true, code: true, name: true }, orderBy: { code: 'asc' } },
 } as const;
 
-/** Steps in time order (clock steps by minute; solar steps keep their given order). */
+/** Steps from evening to morning, as people read a lighting plan. */
 function sortedSteps(steps: z.output<typeof saveScheduleSchema>['steps']) {
-  return [...steps].sort((a, b) =>
-    a.anchor === 'clock' && b.anchor === 'clock' ? a.atMinute - b.atMinute : 0,
-  );
+  return [...steps].sort(compareScheduleSteps);
 }
 
 async function clearOtherDefaults(db: DbClient, tenantId: string, keepId: string): Promise<void> {

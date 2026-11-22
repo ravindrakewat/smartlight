@@ -167,7 +167,9 @@ export default function PolesPage() {
                 {data.items.map((pole) => (
                   <tr key={pole.id} className="hover:bg-surface-subtle/50">
                     <th scope="row" className="px-5 py-3 font-mono font-medium">
-                      {pole.code}
+                      <Link href={`/poles/${pole.id}`} className="text-primary hover:underline">
+                        {pole.code}
+                      </Link>
                     </th>
                     <td className="px-3 py-3">{pole.zone?.name ?? '—'}</td>
                     <td className="px-3 py-3">
