@@ -3,7 +3,7 @@
  * Production has no seed data, so this is how the first person signs in.
  *
  *   npm run bootstrap:admin -w @smart-light/db             (uses DATABASE_URL)
- *   npm run bootstrap:admin -w @smart-light/db -- --render (uses RENDER_EXTERNAL_DATABASE_URL
+ *   npm run bootstrap:admin:render -w @smart-light/db       (uses RENDER_EXTERNAL_DATABASE_URL
  *                                                           from apps/api/.env)
  *
  * The password is typed in the terminal (hidden) and never passed as an argument,
@@ -74,7 +74,10 @@ rl.on('close', () => {
 });
 
 function ask(question: string, hidden = false): Promise<string> {
-  stdout.write(question);
+  // rl.prompt (not stdout.write) so a TTY redraw keeps showing the question.
+  muted = false;
+  rl.setPrompt(question);
+  rl.prompt();
   muted = hidden;
   return new Promise<string>((resolve) => {
     const queued = pendingLines.shift();

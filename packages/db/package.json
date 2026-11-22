@@ -21,6 +21,7 @@
     "migrate:deploy": "prisma migrate deploy",
     "seed": "prisma db seed",
     "bootstrap:admin": "tsx prisma/bootstrap-admin.ts",
+    "bootstrap:admin:render": "tsx prisma/bootstrap-admin.ts --render",
     "studio": "prisma studio"
   },
   "devDependencies": {

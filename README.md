@@ -81,7 +81,7 @@ The firmware is compiled with ESP-IDF in a separate CI job.
 
 - **API** → Render (`infra/deployment/render.yaml`; migrations run as the pre-deploy step).
   Production has no seed data: create the first platform administrator with
-  `npm run bootstrap:admin -w @smart-light/db -- --render` (reads `RENDER_EXTERNAL_DATABASE_URL`
+  `npm run bootstrap:admin:render -w @smart-light/db` (reads `RENDER_EXTERNAL_DATABASE_URL`
   from `apps/api/.env`; the password is typed hidden in the terminal).
 - **Web apps** → three Vercel projects (root directories `apps/citizen-web`, `apps/municipal-admin`,
   `apps/super-admin`).
