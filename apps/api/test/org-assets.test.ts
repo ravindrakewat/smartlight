@@ -1,7 +1,15 @@
 import { parsePoleCode } from '@smart-light/shared';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { app, bearerFor, createTenant, createUser, prisma, uniqueSuffix } from './helpers';
+import {
+  app,
+  bearerFor,
+  createTenant,
+  createUser,
+  TEST_PASSWORD,
+  prisma,
+  uniqueSuffix,
+} from './helpers';
 
 type Auth = { Authorization: string };
 
@@ -89,6 +97,60 @@ describe('users and agencies', () => {
       (agency: { id: string }) => agency.id === city.municipal.id,
     );
     expect(dept.technicianCount).toBe(1);
+  });
+
+  it('lets a manager reset a password: unlocks and signs the user out', async () => {
+    const city = await setupCity();
+    const technician = await createUser({
+      role: 'TECHNICIAN',
+      tenantId: city.tenant.id,
+      agencyId: city.municipal.id,
+    });
+    const oldAuth = await bearerFor(technician.email);
+    await prisma.user.update({
+      where: { id: technician.id },
+      data: { failedLoginCount: 5, lockedUntil: new Date(Date.now() + 60_000) },
+    });
+
+    const reset = await request(app)
+      .post(`/api/v1/users/${technician.id}/password-reset`)
+      .set(city.auth)
+      .send({ password: 'Fresh-Pass-2026' });
+    expect(reset.status).toBe(204);
+
+    expect((await request(app).get('/api/v1/auth/me').set(oldAuth)).status).toBe(401);
+    const login = (password: string) =>
+      request(app)
+        .post('/api/v1/auth/login')
+        .send({ email: technician.email, password, client: 'mobile' });
+    expect((await login('Fresh-Pass-2026')).status).toBe(200);
+    expect((await login(TEST_PASSWORD)).status).toBe(401);
+
+    const weak = await request(app)
+      .post(`/api/v1/users/${technician.id}/password-reset`)
+      .set(city.auth)
+      .send({ password: 'short' });
+    expect(weak.body.error.code).toBe('VALIDATION_ERROR');
+
+    // An agency manager cannot reset the municipal admin's password.
+    const manager = await createUser({
+      role: 'AGENCY_MANAGER',
+      tenantId: city.tenant.id,
+      agencyId: city.contractor.id,
+    });
+    const forbidden = await request(app)
+      .post(`/api/v1/users/${city.admin.id}/password-reset`)
+      .set(await bearerFor(manager.email))
+      .send({ password: 'Fresh-Pass-2026' });
+    expect(forbidden.status).toBe(403);
+
+    // Another city cannot even see the user.
+    const other = await setupCity();
+    const hidden = await request(app)
+      .post(`/api/v1/users/${technician.id}/password-reset`)
+      .set(other.auth)
+      .send({ password: 'Fresh-Pass-2026' });
+    expect(hidden.status).toBe(404);
   });
 
   it('enforces agency rules and password strength', async () => {

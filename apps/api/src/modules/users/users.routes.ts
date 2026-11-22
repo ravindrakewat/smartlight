@@ -2,6 +2,7 @@ import {
   createUserSchema,
   listUsersQuerySchema,
   paginatedEnvelope,
+  resetPasswordSchema,
   staffUserSchema,
   successEnvelope,
   updateUserSchema,
@@ -21,6 +22,7 @@ usersRouter.use(authenticate);
 usersRouter.get('/', requireRoles(...MANAGERS, 'SUPERVISOR'), usersController.list);
 usersRouter.post('/', requireRoles(...MANAGERS), usersController.create);
 usersRouter.patch('/:id', requireRoles(...MANAGERS), usersController.update);
+usersRouter.post('/:id/password-reset', requireRoles(...MANAGERS), usersController.resetPassword);
 
 const TAG = 'Users';
 
@@ -59,6 +61,22 @@ registry.registerPath({
   request: { params: z.object({ id: z.uuid() }), body: { content: jsonContent(updateUserSchema) } },
   responses: {
     200: { description: 'Updated', content: jsonContent(successEnvelope(staffUserSchema)) },
+    ...errorResponses(400, 401, 403, 404),
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/users/{id}/password-reset',
+  tags: [TAG],
+  summary: 'Set a new password for a staff member (unlocks the account, signs them out everywhere)',
+  security: AUTHENTICATED,
+  request: {
+    params: z.object({ id: z.uuid() }),
+    body: { content: jsonContent(resetPasswordSchema) },
+  },
+  responses: {
+    204: { description: 'Password changed' },
     ...errorResponses(400, 401, 403, 404),
   },
 });

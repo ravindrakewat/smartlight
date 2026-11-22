@@ -142,6 +142,11 @@ export const createUserSchema = z
   })
   .meta({ id: 'CreateUserRequest' });
 
+/** An administrator sets a new password for a staff member who forgot theirs. */
+export const resetPasswordSchema = z
+  .object({ password: newPasswordSchema })
+  .meta({ id: 'ResetPasswordRequest' });
+
 export const updateUserSchema = z
   .object({
     name: z.string().trim().min(2).max(120),

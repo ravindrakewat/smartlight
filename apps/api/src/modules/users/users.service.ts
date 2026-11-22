@@ -2,6 +2,7 @@ import { hashPassword, type Prisma } from '@smart-light/db';
 import type {
   createUserSchema,
   listUsersQuerySchema,
+  resetPasswordSchema,
   PaginationMeta,
   StaffUserDto,
   updateUserSchema,
@@ -203,6 +204,51 @@ export const usersService = {
         tx,
       );
       return toDto(user);
+    });
+  },
+
+  /**
+   * Sets a new password chosen by a manager, unlocks the account and signs the
+   * user out everywhere. People change their own password themselves instead.
+   */
+  async resetPassword(
+    id: string,
+    input: z.output<typeof resetPasswordSchema>,
+    auth: AuthContext,
+    request: Request,
+  ): Promise<void> {
+    if (id === auth.userId) {
+      throw errors.forbidden('Use "change password" for your own account');
+    }
+    const passwordHash = await hashPassword(input.password);
+    await prisma.$transaction(async (tx) => {
+      const existing = await usersRepository.findById(id, tx);
+      if (
+        !existing ||
+        existing.role === 'SUPER_ADMIN' ||
+        (auth.role !== 'SUPER_ADMIN' && existing.tenantId !== auth.tenantId)
+      ) {
+        throw errors.notFound('User');
+      }
+      assertCanManage(auth, existing.role, existing.agencyId);
+      await usersRepository.update(
+        id,
+        { passwordHash, failedLoginCount: 0, lockedUntil: null },
+        tx,
+      );
+      await usersRepository.revokeAllSessions(id, tx);
+      await recordAudit(
+        {
+          tenantId: existing.tenantId,
+          actorType: 'USER',
+          actorId: auth.userId,
+          action: 'user.password_reset',
+          entityType: 'user',
+          entityId: id,
+          request,
+        },
+        tx,
+      );
     });
   },
 };

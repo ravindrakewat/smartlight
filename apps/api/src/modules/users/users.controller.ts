@@ -1,4 +1,9 @@
-import { createUserSchema, listUsersQuerySchema, updateUserSchema } from '@smart-light/shared';
+import {
+  createUserSchema,
+  listUsersQuerySchema,
+  resetPasswordSchema,
+  updateUserSchema,
+} from '@smart-light/shared';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { sendData, sendPage } from '../../lib/http';
@@ -23,5 +28,12 @@ export const usersController = {
     const { id } = idParams.parse(req.params);
     const input = updateUserSchema.parse(req.body);
     sendData(res, await usersService.update(id, input, getAuth(res), req));
+  },
+
+  async resetPassword(req: Request, res: Response): Promise<void> {
+    const { id } = idParams.parse(req.params);
+    const input = resetPasswordSchema.parse(req.body);
+    await usersService.resetPassword(id, input, getAuth(res), req);
+    res.status(204).end();
   },
 };
