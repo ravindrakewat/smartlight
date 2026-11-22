@@ -21,18 +21,31 @@ export function uniqueSuffix(): string {
   return randomUUID().slice(0, 8);
 }
 
+/**
+ * Creates a municipality with a random 3-letter code. Only 17,576 codes exist and
+ * test files run in parallel, so a clash is retried with a new code.
+ */
 export async function createTenant(overrides: { status?: 'ACTIVE' | 'SUSPENDED' } = {}) {
-  const suffix = uniqueSuffix();
   const randomLetter = () => String.fromCharCode(65 + Math.floor(Math.random() * 26));
-  return prisma.tenant.create({
-    data: {
-      slug: `t-${suffix}`,
-      code: `${randomLetter()}${randomLetter()}${randomLetter()}`,
-      name: `Test City ${suffix}`,
-      nameHi: `परीक्षण नगर ${suffix}`,
-      status: overrides.status ?? 'ACTIVE',
-    },
-  });
+  for (let attempt = 1; ; attempt++) {
+    const suffix = uniqueSuffix();
+    try {
+      return await prisma.tenant.create({
+        data: {
+          slug: `t-${suffix}`,
+          code: `${randomLetter()}${randomLetter()}${randomLetter()}`,
+          name: `Test City ${suffix}`,
+          nameHi: `परीक्षण नगर ${suffix}`,
+          status: overrides.status ?? 'ACTIVE',
+        },
+      });
+    } catch (error) {
+      const clash = (error as { code?: string }).code === 'P2002';
+      if (!clash || attempt >= 20) {
+        throw error;
+      }
+    }
+  }
 }
 
 export async function createUser(options: {
