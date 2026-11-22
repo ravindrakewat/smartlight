@@ -1,6 +1,6 @@
 'use client';
 
-import type { DashboardSummaryDto, WorkOrderSummaryDto } from '@smart-light/shared';
+import type { DashboardSummaryDto, PoleMapItemDto, WorkOrderSummaryDto } from '@smart-light/shared';
 import {
   Alert,
   Button,
@@ -16,7 +16,9 @@ import {
 } from '@smart-light/ui';
 import { useQuery } from '@tanstack/react-query';
 import { CircleAlert, Cpu, Lightbulb, MapPinned, WifiOff, Zap } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
 import {
   DeadlineLabel,
@@ -28,15 +30,29 @@ import { api } from '@/lib/api';
 
 const REFRESH_MS = 60_000;
 
+/** MapLibre needs the browser (WebGL); load it only when the dashboard renders. */
+const PoleMap = dynamic(
+  () => import('@/components/lighting/PoleMap').then((module) => module.PoleMap),
+  { ssr: false, loading: () => <Skeleton className="h-72" /> },
+);
+
 export default function DashboardPage() {
   const t = useTranslations('Dashboard');
   const tCommon = useTranslations('Common');
+  const tMap = useTranslations('Lighting.map');
+  const tLight = useTranslations('LightStatus');
+  const router = useRouter();
   const format = useFormatter();
   const faultLabel = useFaultLabel();
 
   const summary = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: () => api.request<DashboardSummaryDto>('/v1/dashboard/summary'),
+    refetchInterval: REFRESH_MS,
+  });
+  const mapPoles = useQuery({
+    queryKey: ['pole-map'],
+    queryFn: () => api.request<PoleMapItemDto[]>('/v1/poles/map'),
     refetchInterval: REFRESH_MS,
   });
   const urgent = useQuery({
@@ -173,13 +189,31 @@ export default function DashboardPage() {
               <CardDescription>{t('map.description')}</CardDescription>
             </div>
           </CardHeader>
-          <CardContent>
-            <EmptyState
-              className="min-h-72"
-              icon={<MapPinned />}
-              title={t('map.emptyTitle')}
-              description={t('map.emptyDescription')}
-            />
+          <CardContent className="grid gap-3">
+            {mapPoles.data && mapPoles.data.length > 0 ? (
+              <>
+                <PoleMap
+                  poles={mapPoles.data}
+                  className="h-72 min-h-0"
+                  label={tMap('label', { count: mapPoles.data.length })}
+                  statusLabel={(status) => tLight(status)}
+                  openLabel={tMap('open')}
+                  onOpen={(poleId) => router.push(`/poles/${poleId}`)}
+                />
+                <Link href="/map" className="text-sm font-semibold text-primary hover:underline">
+                  {t('map.openFull')}
+                </Link>
+              </>
+            ) : mapPoles.isPending ? (
+              <Skeleton className="h-72" />
+            ) : (
+              <EmptyState
+                className="min-h-72"
+                icon={<MapPinned />}
+                title={t('map.emptyTitle')}
+                description={t('map.emptyDescription')}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

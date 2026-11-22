@@ -146,8 +146,9 @@
     "map": {
       "title": "Live map",
       "description": "Every pole, coloured by its current status.",
-      "emptyTitle": "Map view is coming next",
-      "emptyDescription": "Poles will be shown on an interactive map in the next release."
+      "emptyTitle": "No poles on the map yet",
+      "emptyDescription": "Import poles to see them here with their live status.",
+      "openFull": "Open the full map"
     },
     "openWork": {
       "title": "Most urgent repairs",
@@ -618,6 +619,16 @@
           "sunrise": "{minutes} min before sunrise"
         }
       }
+    },
+    "map": {
+      "title": "Live map",
+      "description": "Every pole, coloured by its current light status. Updates every minute.",
+      "asList": "View as list",
+      "legend": "Legend",
+      "empty": "No poles yet. Import poles to see them on the map.",
+      "label": "Map of {count, plural, one {# pole} other {# poles}}",
+      "open": "Open pole",
+      "attribution": "Map data © OpenStreetMap contributors, tiles by OpenFreeMap."
     }
   },
   "Settings": {

@@ -140,6 +140,8 @@ export const poleMapItemSchema = z
   })
   .meta({ id: 'PoleMapItem' });
 
+export type PoleMapItemDto = z.infer<typeof poleMapItemSchema>;
+
 /** Optional bounding box: only poles inside the visible map area are returned. */
 export const poleMapQuerySchema = z.object({
   zoneId: z.uuid().optional(),
