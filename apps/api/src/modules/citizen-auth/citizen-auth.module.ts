@@ -66,10 +66,7 @@ export const citizenAuthService = {
         expiresAt: new Date(Date.now() + OTP_TTL_MS),
       },
     });
-    await sms.send(
-      phone,
-      `${code} is your Smart Street Light verification code. Valid for 5 minutes. Do not share it.`,
-    );
+    await sms.send(phone, { template: 'otp', code });
     await recordAuditSafely({
       actorType: 'CITIZEN',
       action: 'citizen.otp_requested',

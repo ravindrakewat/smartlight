@@ -34,6 +34,21 @@ services:
       # Use the INTERNAL database URL from the Render dashboard.
       - key: DATABASE_URL
         sync: false
+      # Random 32+ character signing key, generated once by Render.
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      # Parent domain shared with the web consoles, e.g. .smartlight.example.in
+      - key: COOKIE_DOMAIN
+        sync: false
+      # Set to msg91 once DLT templates are approved (see apps/api/.env.example).
+      - key: SMS_PROVIDER
+        value: console
+      - key: MSG91_AUTH_KEY
+        sync: false
+      - key: MSG91_TEMPLATE_OTP
+        sync: false
+      - key: MSG91_TEMPLATE_COMPLAINT_RESOLVED
+        sync: false
 
   # Future phases:
   # - type: worker

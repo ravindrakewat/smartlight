@@ -222,10 +222,10 @@ async function resolveTx(
 
 function notifyCitizens(recipients: { phone: string; number: string }[]): void {
   for (const recipient of recipients) {
-    sendSmsInBackground(
-      recipient.phone,
-      `आपकी शिकायत ${recipient.number} का समाधान हो गया है। Your street light complaint ${recipient.number} has been resolved. - Smart Street Light`,
-    );
+    sendSmsInBackground(recipient.phone, {
+      template: 'complaint_resolved',
+      complaintNumber: recipient.number,
+    });
   }
 }
 
