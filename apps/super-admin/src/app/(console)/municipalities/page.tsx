@@ -16,6 +16,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
+import { AddAdminForm } from '@/components/AddAdminForm';
 import { TenantsTable } from '@/components/TenantsTable';
 import { api } from '@/lib/api';
 
@@ -125,87 +126,90 @@ export default function MunicipalitiesPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('form.title')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form className="grid gap-4" onSubmit={onSubmit}>
-              {create.error ? <Alert tone="danger">{errorText(create.error)}</Alert> : null}
-              {created ? (
-                <Alert tone="success">{t('form.created', { name: created })}</Alert>
-              ) : null}
-              <Field label={t('form.name')} required>
-                {({ id }) => (
-                  <Input
-                    id={id}
-                    required
-                    minLength={3}
-                    value={form.name}
-                    onChange={update('name')}
-                  />
-                )}
-              </Field>
-              <Field label={t('form.nameHi')} required>
-                {({ id }) => (
-                  <Input
-                    id={id}
-                    lang="hi"
-                    required
-                    minLength={2}
-                    value={form.nameHi}
-                    onChange={update('nameHi')}
-                  />
-                )}
-              </Field>
-              <Field label={t('form.slug')} hint={t('form.slugHint')} required>
-                {({ id, describedBy }) => (
-                  <Input
-                    id={id}
-                    aria-describedby={describedBy}
-                    required
-                    pattern="[a-z0-9][a-z0-9-]{1,62}"
-                    className="font-mono"
-                    value={form.slug}
-                    onChange={update('slug')}
-                  />
-                )}
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label={t('form.code')} hint={t('form.codeHint')} required>
+        <div className="grid content-start gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('form.title')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="grid gap-4" onSubmit={onSubmit}>
+                {create.error ? <Alert tone="danger">{errorText(create.error)}</Alert> : null}
+                {created ? (
+                  <Alert tone="success">{t('form.created', { name: created })}</Alert>
+                ) : null}
+                <Field label={t('form.name')} required>
+                  {({ id }) => (
+                    <Input
+                      id={id}
+                      required
+                      minLength={3}
+                      value={form.name}
+                      onChange={update('name')}
+                    />
+                  )}
+                </Field>
+                <Field label={t('form.nameHi')} required>
+                  {({ id }) => (
+                    <Input
+                      id={id}
+                      lang="hi"
+                      required
+                      minLength={2}
+                      value={form.nameHi}
+                      onChange={update('nameHi')}
+                    />
+                  )}
+                </Field>
+                <Field label={t('form.slug')} hint={t('form.slugHint')} required>
                   {({ id, describedBy }) => (
                     <Input
                       id={id}
                       aria-describedby={describedBy}
                       required
-                      maxLength={3}
-                      pattern="[A-Za-z]{3}"
-                      className="font-mono uppercase"
-                      value={form.code}
-                      onChange={update('code')}
+                      pattern="[a-z0-9][a-z0-9-]{1,62}"
+                      className="font-mono"
+                      value={form.slug}
+                      onChange={update('slug')}
                     />
                   )}
                 </Field>
-                <Field label={t('form.slaHours')} required>
-                  {({ id }) => (
-                    <Input
-                      id={id}
-                      type="number"
-                      min={1}
-                      max={168}
-                      required
-                      value={form.slaHours}
-                      onChange={update('slaHours')}
-                    />
-                  )}
-                </Field>
-              </div>
-              <Button type="submit" disabled={create.isPending}>
-                {t('form.submit')}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label={t('form.code')} hint={t('form.codeHint')} required>
+                    {({ id, describedBy }) => (
+                      <Input
+                        id={id}
+                        aria-describedby={describedBy}
+                        required
+                        maxLength={3}
+                        pattern="[A-Za-z]{3}"
+                        className="font-mono uppercase"
+                        value={form.code}
+                        onChange={update('code')}
+                      />
+                    )}
+                  </Field>
+                  <Field label={t('form.slaHours')} required>
+                    {({ id }) => (
+                      <Input
+                        id={id}
+                        type="number"
+                        min={1}
+                        max={168}
+                        required
+                        value={form.slaHours}
+                        onChange={update('slaHours')}
+                      />
+                    )}
+                  </Field>
+                </div>
+                <Button type="submit" disabled={create.isPending}>
+                  {t('form.submit')}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+          <AddAdminForm tenants={tenants.data ?? []} />
+        </div>
       </div>
     </>
   );

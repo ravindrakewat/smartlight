@@ -123,6 +123,26 @@
       "CONFLICT": "A municipality with this web address name or code already exists.",
       "VALIDATION_ERROR": "Please check the highlighted fields.",
       "generic": "The change could not be saved. Please try again."
+    },
+    "admin": {
+      "title": "Add municipal administrator",
+      "noTenants": "Onboard a municipality first.",
+      "tenant": "Municipality",
+      "chooseTenant": "Choose a municipality",
+      "name": "Full name",
+      "email": "E-mail",
+      "emailHint": "Used to sign in to the municipal console.",
+      "phone": "Mobile number",
+      "phoneHint": "Optional. 10 digits.",
+      "password": "Initial password",
+      "passwordHint": "At least 10 characters with upper case, lower case and a digit. Share it privately; the administrator should change it after the first sign-in.",
+      "submit": "Create administrator",
+      "created": "Administrator {email} created. They can now sign in to the municipal console.",
+      "errors": {
+        "CONFLICT": "A user with this e-mail already exists.",
+        "VALIDATION_ERROR": "Please check the details and the password rules.",
+        "generic": "The administrator could not be created. Please try again."
+      }
     }
   }
 }
