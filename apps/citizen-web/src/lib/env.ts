@@ -4,6 +4,11 @@ import { httpUrlSchema } from '@smart-light/shared';
 const citizenEnvSchema = z.object({
   NEXT_PUBLIC_API_BASE_URL: httpUrlSchema.default('http://localhost:4000/api'),
   NEXT_PUBLIC_APP_NAME: z.string().min(1).default('Citizen Street Light Portal'),
+  /**
+   * Municipality served by this deployment (one citizen portal per city,
+   * e.g. indore.<domain>). Used when a citizen reports by location.
+   */
+  NEXT_PUBLIC_TENANT_SLUG: z.string().min(2).default('indore-mc'),
 });
 
 export type CitizenEnv = z.infer<typeof citizenEnvSchema>;
@@ -12,6 +17,7 @@ function parseCitizenEnv(): CitizenEnv {
   const result = citizenEnvSchema.safeParse({
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
+    NEXT_PUBLIC_TENANT_SLUG: process.env.NEXT_PUBLIC_TENANT_SLUG,
   });
 
   if (!result.success) {

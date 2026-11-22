@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
+import { Providers } from '@/components/Providers';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { routing } from '@/i18n/routing';
@@ -46,12 +47,14 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     <html lang={locale} className={`${inter.variable} ${notoDevanagari.variable}`}>
       <body className="flex min-h-dvh flex-col">
         <NextIntlClientProvider>
-          <SkipLink label={t('skipToContent')} />
-          <SiteHeader />
-          <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
-            {children}
-          </main>
-          <SiteFooter />
+          <Providers>
+            <SkipLink label={t('skipToContent')} />
+            <SiteHeader />
+            <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
+              {children}
+            </main>
+            <SiteFooter />
+          </Providers>
         </NextIntlClientProvider>
       </body>
     </html>

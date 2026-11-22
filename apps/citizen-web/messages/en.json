@@ -16,9 +16,11 @@
     },
     "reportCta": "Report a problem",
     "trackCta": "Track complaint",
-    "comingSoonTitle": "Coming soon",
-    "comingSoonDescription": "This service will be available in the next release.",
-    "backHome": "Back to home"
+    "loading": "Loading…",
+    "errorTitle": "Something went wrong",
+    "errorBody": "Please check your connection and try again.",
+    "back": "Back",
+    "continue": "Continue"
   },
   "Home": {
     "eyebrow": "Citizen services",
@@ -53,14 +55,102 @@
   },
   "Report": {
     "title": "Report a problem",
-    "description": "Report a faulty street light online."
+    "description": "Report a faulty street light online.",
+    "steps": {
+      "pole": "Pole",
+      "problem": "Problem",
+      "verify": "Mobile number"
+    },
+    "stepStatus": "Step {current} of {total}",
+    "poleLabel": "Pole number",
+    "poleHint": "Printed on the plate on the pole, e.g. IND-004182-7",
+    "poleInvalid": "This number is not valid. Please check it on the plate.",
+    "useLocation": "I cannot find the number — use my location",
+    "locating": "Finding your location…",
+    "locationReady": "Your location will be used to find the nearest pole.",
+    "locationDenied": "Location permission was denied. Please enter the pole number instead.",
+    "problemLabel": "What is the problem?",
+    "descriptionLabel": "More details (optional)",
+    "descriptionHint": "For example: which side of the road, a nearby landmark.",
+    "nameLabel": "Your name (optional)",
+    "phoneLabel": "Mobile number",
+    "phoneHint": "We will send a 6-digit code by SMS. Your number is never shown publicly.",
+    "sendCode": "Send code",
+    "sending": "Sending…",
+    "codeLabel": "6-digit code",
+    "codeHint": "Sent to {phone}",
+    "changeNumber": "Change number",
+    "verifyAndSubmit": "Verify and submit",
+    "submit": "Submit complaint",
+    "submitting": "Submitting…",
+    "verifiedAs": "Verified as {phone}",
+    "successTitle": "Complaint registered",
+    "successJoined": "This problem was already reported. Your complaint has been added and you will get updates.",
+    "successBody": "Keep this number to track the repair. You will also get an SMS when it is fixed.",
+    "numberLabel": "Complaint number",
+    "trackIt": "Track this complaint",
+    "another": "Report another problem",
+    "copy": "Copy",
+    "copied": "Copied",
+    "errors": {
+      "INVALID_OTP": "The code is incorrect.",
+      "OTP_EXPIRED": "The code has expired. Please request a new one.",
+      "TOO_MANY_REQUESTS": "Too many attempts. Please wait and try again.",
+      "NOT_FOUND": "We could not find this pole. Please check the number.",
+      "INVALID_POLE_CODE": "This pole number is not valid.",
+      "NETWORK_ERROR": "Cannot reach the server. Check your connection.",
+      "generic": "Something went wrong. Please try again."
+    }
   },
   "Track": {
     "title": "Track your complaint",
-    "description": "Check the status of your complaint with its number."
+    "description": "Check the status of your complaint with its number.",
+    "numberLabel": "Complaint number",
+    "numberHint": "For example: IND-C-000123",
+    "search": "Check status",
+    "notFound": "No complaint found with this number.",
+    "filed": "Filed on {date}",
+    "pole": "Pole {code}",
+    "deadline": "Expected by {date}",
+    "resolvedOn": "Resolved on {date}"
   },
   "Footer": {
     "rights": "© {year} Smart Street Light Management System",
     "note": "Street lighting services for the citizens of your city."
+  },
+  "LightStatus": {
+    "UNKNOWN": "Status not available",
+    "ON": "Working",
+    "DIMMED": "Working (dimmed)",
+    "OFF": "Off (normal in daytime)",
+    "FAULT": "Not working",
+    "OFFLINE": "Status not available"
+  },
+  "Categories": {
+    "LIGHT_OFF": "Light is off",
+    "FLICKERING": "Light is flickering",
+    "DAY_BURNING": "Light is on during the day",
+    "DAMAGED_POLE": "Pole is damaged",
+    "EXPOSED_WIRING": "Wires are exposed",
+    "OTHER": "Something else"
+  },
+  "ComplaintStatus": {
+    "SUBMITTED": "Received",
+    "ASSIGNED": "Technician assigned",
+    "IN_PROGRESS": "Repair in progress",
+    "RESOLVED": "Resolved",
+    "REJECTED": "Closed"
+  },
+  "Pole": {
+    "title": "Pole {code}",
+    "liveStatus": "Current status",
+    "zone": "Area",
+    "updated": "Updated {time}",
+    "openRepair": "This problem has already been reported",
+    "openRepairBody": "Our team is working on it. Expected to be fixed by {date}.",
+    "report": "Report a problem with this pole",
+    "notFound": "We could not find this pole",
+    "notFoundBody": "Check the number on the plate and try again.",
+    "directions": "Directions"
   }
 }
