@@ -15,3 +15,5 @@ export * from './api/complaints';
 export * from './api/work-orders';
 export * from './client/api-client';
 export * from './api/iot-control';
+export * from './api/reports';
+export * from './api/platform';
