@@ -25,7 +25,7 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { config as loadEnv } from 'dotenv';
 import { formatPoleCode } from '@smart-light/shared';
-import { createPrismaClient, type LightStatus, type Prisma } from '../src';
+import { createPrismaClient, Prisma, type LightStatus } from '../src';
 import { hashPassword } from '../src/security/password';
 
 const useRender = process.argv.includes('--render');
@@ -342,6 +342,11 @@ async function setDemoLights(tenantId: string, mode: 'on' | 'auto'): Promise<voi
   });
   const now = new Date();
   const readings: Prisma.DeviceReadingCreateManyInput[] = [];
+  const poleIdsByStatus: Record<'ON' | 'DIMMED' | 'OFF', string[]> = {
+    ON: [],
+    DIMMED: [],
+    OFF: [],
+  };
   const updates = poles.map((pole) => {
     const device = pole.device as NonNullable<typeof pole.device>;
     const plan: Plan = pole.zone?.code === 'DEMO-RJW' ? 'market' : 'standard';
@@ -349,7 +354,7 @@ async function setDemoLights(tenantId: string, mode: 'on' | 'auto'): Promise<voi
       mode === 'on'
         ? { on: true, dim: pole.zone?.code === 'DEMO-PLS' ? 60 : 100 }
         : planAt(plan, now.getTime());
-    const status: LightStatus = !output.on ? 'OFF' : output.dim < 100 ? 'DIMMED' : 'ON';
+    const status = !output.on ? 'OFF' : output.dim < 100 ? 'DIMMED' : 'ON';
     const wattage = pole.wattage ?? 90;
     const power = output.on ? round(((wattage * output.dim) / 100) * between(0.93, 1.01)) : 0;
     const voltage = round(between(228, 240));
@@ -382,33 +387,34 @@ async function setDemoLights(tenantId: string, mode: 'on' | 'auto'): Promise<voi
       rssiDbm: Math.round(between(-90, -62)),
       boardTempC: round(between(30, 42)),
     });
-    return prisma.$transaction([
-      prisma.pole.update({
-        where: { id: pole.id },
-        data: { lightStatus: status, lightStatusAt: now },
-      }),
-      prisma.device.update({
-        where: { id: device.id },
-        data: {
-          online: true,
-          lampOn: output.on,
-          dimPercent: output.dim,
-          mode: operatingMode,
-          lastSeenAt: now,
-          lastTelemetryAt: now,
-          lastTelemetry: {
-            ...telemetry,
-            ts: Math.floor(now.getTime() / 1000),
-            lamp: { on: output.on, dimPercent: output.dim, mode: operatingMode },
-            electrical,
-          } as Prisma.InputJsonValue,
-        },
-      }),
-    ]);
+    poleIdsByStatus[status].push(pole.id);
+    return Prisma.sql`(${device.id}::uuid, ${output.on}::boolean, ${output.dim}::int, ${operatingMode}::text, ${JSON.stringify(
+      {
+        ...telemetry,
+        ts: Math.floor(now.getTime() / 1000),
+        lamp: { on: output.on, dimPercent: output.dim, mode: operatingMode },
+        electrical,
+      },
+    )}::jsonb)`;
   });
-  // A few at a time: the Render database is far away and has few connections.
-  for (let start = 0; start < updates.length; start += 10) {
-    await Promise.all(updates.slice(start, start + 10));
+  // Bulk statements, no per-pole transactions: the Render database is far away
+  // and allows few connections.
+  for (const [status, ids] of Object.entries(poleIdsByStatus)) {
+    if (ids.length > 0) {
+      await prisma.pole.updateMany({
+        where: { id: { in: ids } },
+        data: { lightStatus: status as LightStatus, lightStatusAt: now },
+      });
+    }
+  }
+  if (updates.length > 0) {
+    await prisma.$executeRaw`
+      UPDATE "devices" AS d
+      SET "online" = true, "lampOn" = v.lamp_on, "dimPercent" = v.dim, "mode" = v.mode,
+          "lastSeenAt" = ${now}, "lastTelemetryAt" = ${now}, "lastTelemetry" = v.telemetry,
+          "updatedAt" = ${now}
+      FROM (VALUES ${Prisma.join(updates)}) AS v(id, lamp_on, dim, mode, telemetry)
+      WHERE d."id" = v.id`;
   }
   await prisma.deviceReading.createMany({ data: readings });
   const lit = readings.filter((reading) => reading.lampOn).length;
