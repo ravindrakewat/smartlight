@@ -1,19 +1,19 @@
 import { createApiClient, type LoginResponse, type TokenPair } from '@smart-light/shared';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from './storage';
 import { mobileEnv } from '../config/env';
 
 const TOKENS_KEY = 'sl.tokens';
 const baseUrl = mobileEnv.EXPO_PUBLIC_API_BASE_URL;
 
 /**
- * Tokens live in the OS keychain/keystore (expo-secure-store), never in plain
+ * Tokens live in the OS keychain/keystore (see storage.ts), never in plain
  * storage. A copy is kept in memory for request headers.
  */
 let tokens: TokenPair | null = null;
 let onSessionExpired: (() => void) | null = null;
 
 export async function loadStoredTokens(): Promise<boolean> {
-  const raw = await SecureStore.getItemAsync(TOKENS_KEY);
+  const raw = await storage.get(TOKENS_KEY);
   tokens = raw ? (JSON.parse(raw) as TokenPair) : null;
   return tokens !== null;
 }
@@ -21,9 +21,9 @@ export async function loadStoredTokens(): Promise<boolean> {
 export async function saveTokens(next: TokenPair | null): Promise<void> {
   tokens = next;
   if (next) {
-    await SecureStore.setItemAsync(TOKENS_KEY, JSON.stringify(next));
+    await storage.set(TOKENS_KEY, JSON.stringify(next));
   } else {
-    await SecureStore.deleteItemAsync(TOKENS_KEY);
+    await storage.remove(TOKENS_KEY);
   }
 }
 

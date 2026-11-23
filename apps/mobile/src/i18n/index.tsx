@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../lib/storage';
 import {
   createContext,
   useCallback,
@@ -29,7 +29,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocale] = useState<Locale>('hi');
 
   useEffect(() => {
-    void SecureStore.getItemAsync(STORAGE_KEY).then((stored) => {
+    void storage.get(STORAGE_KEY).then((stored) => {
       if (stored === 'en' || stored === 'hi') {
         setLocale(stored);
       }
@@ -39,7 +39,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const toggleLocale = useCallback(() => {
     setLocale((current) => {
       const next: Locale = current === 'hi' ? 'en' : 'hi';
-      void SecureStore.setItemAsync(STORAGE_KEY, next);
+      void storage.set(STORAGE_KEY, next);
       return next;
     });
   }, []);
