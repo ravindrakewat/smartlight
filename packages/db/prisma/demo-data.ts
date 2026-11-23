@@ -7,6 +7,9 @@
  *   npm run demo:data:render -w @smart-light/db     Render (RENDER_EXTERNAL_DATABASE_URL
  *                                                   from apps/api/.env)
  *   npm run demo:clear -w @smart-light/db           remove it again (also :render)
+ *   npm run demo:lights-on -w @smart-light/db       show the demo lights switched ON by an
+ *                                                   operator (daytime demos; also :render)
+ *   npm run demo:lights-auto -w @smart-light/db     back to their schedule (also :render)
  *
  * The city is chosen with DEMO_TENANT (default `indore-mc`); it must already exist.
  * Everything is added beside real data and is recognisable, so `demo:clear` can take
@@ -27,6 +30,11 @@ import { hashPassword } from '../src/security/password';
 
 const useRender = process.argv.includes('--render');
 const clearOnly = process.argv.includes('--clear');
+const lightsMode = process.argv.includes('--lights-on')
+  ? 'on'
+  : process.argv.includes('--lights-auto')
+    ? 'auto'
+    : null;
 loadEnv({ path: useRender ? '../../apps/api/.env' : '.env', quiet: true });
 
 const rawUrl = useRender
@@ -315,6 +323,102 @@ async function clearDemo(tenantId: string): Promise<void> {
   console.log(`Removed ${poleIds.length} demo poles, ${zoneIds.length} zones and their history.`);
 }
 
+// ─── Lights on / back to schedule ────────────────────────────────────────────
+
+/**
+ * Shows the demo poles as an operator override ("festival lighting") or back on
+ * their schedule, as if the controllers had confirmed it. Faulty, offline and
+ * controller-less poles keep their state. Palasia is dimmed so the map shows both.
+ */
+async function setDemoLights(tenantId: string, mode: 'on' | 'auto'): Promise<void> {
+  const poles = await prisma.pole.findMany({
+    where: {
+      tenantId,
+      zone: { code: { startsWith: ZONE_PREFIX } },
+      lightStatus: { notIn: ['FAULT', 'OFFLINE', 'UNKNOWN'] },
+      device: { isNot: null },
+    },
+    include: { zone: { select: { code: true } }, device: true },
+  });
+  const now = new Date();
+  const readings: Prisma.DeviceReadingCreateManyInput[] = [];
+  const updates = poles.map((pole) => {
+    const device = pole.device as NonNullable<typeof pole.device>;
+    const plan: Plan = pole.zone?.code === 'DEMO-RJW' ? 'market' : 'standard';
+    const output =
+      mode === 'on'
+        ? { on: true, dim: pole.zone?.code === 'DEMO-PLS' ? 60 : 100 }
+        : planAt(plan, now.getTime());
+    const status: LightStatus = !output.on ? 'OFF' : output.dim < 100 ? 'DIMMED' : 'ON';
+    const wattage = pole.wattage ?? 90;
+    const power = output.on ? round(((wattage * output.dim) / 100) * between(0.93, 1.01)) : 0;
+    const voltage = round(between(228, 240));
+    const telemetry = (device.lastTelemetry ?? {}) as {
+      lamp?: object;
+      electrical?: { energyWh?: number };
+      environment?: object;
+    };
+    const energyWh = telemetry.electrical?.energyWh ?? 0;
+    const operatingMode = mode === 'on' ? 'manual' : 'auto';
+    const electrical = {
+      voltageV: voltage,
+      currentA: round(power / voltage / 0.96, 3),
+      powerW: power,
+      energyWh,
+      powerFactor: 0.96,
+    };
+    readings.push({
+      deviceId: device.id,
+      tenantId,
+      receivedAt: now,
+      deviceTs: Math.floor(now.getTime() / 1000),
+      lampOn: output.on,
+      dimPercent: output.dim,
+      mode: operatingMode,
+      voltageV: voltage,
+      currentA: electrical.currentA,
+      powerW: power,
+      energyWh,
+      rssiDbm: Math.round(between(-90, -62)),
+      boardTempC: round(between(30, 42)),
+    });
+    return prisma.$transaction([
+      prisma.pole.update({
+        where: { id: pole.id },
+        data: { lightStatus: status, lightStatusAt: now },
+      }),
+      prisma.device.update({
+        where: { id: device.id },
+        data: {
+          online: true,
+          lampOn: output.on,
+          dimPercent: output.dim,
+          mode: operatingMode,
+          lastSeenAt: now,
+          lastTelemetryAt: now,
+          lastTelemetry: {
+            ...telemetry,
+            ts: Math.floor(now.getTime() / 1000),
+            lamp: { on: output.on, dimPercent: output.dim, mode: operatingMode },
+            electrical,
+          } as Prisma.InputJsonValue,
+        },
+      }),
+    ]);
+  });
+  // A few at a time: the Render database is far away and has few connections.
+  for (let start = 0; start < updates.length; start += 10) {
+    await Promise.all(updates.slice(start, start + 10));
+  }
+  await prisma.deviceReading.createMany({ data: readings });
+  const lit = readings.filter((reading) => reading.lampOn).length;
+  console.log(
+    mode === 'on'
+      ? `${lit} demo lights shown ON (Palasia dimmed to 60 %). Faulty/offline poles unchanged.`
+      : `${poles.length} demo lights back on their schedule (${lit} lit right now).`,
+  );
+}
+
 // ─── Build ───────────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -328,6 +432,10 @@ async function main(): Promise<void> {
 
   if (clearOnly) {
     await clearDemo(tenant.id);
+    return;
+  }
+  if (lightsMode) {
+    await setDemoLights(tenant.id, lightsMode);
     return;
   }
   if (
