@@ -10,9 +10,9 @@ import { useSession } from '../../src/lib/session';
 import { colors, spacing } from '../../src/theme';
 
 export default function JobsScreen() {
-  const { messages: m, toggleLocale, format } = useI18n();
+  const { messages: m, format } = useI18n();
   const relative = useRelativeTime();
-  const { user, signOut } = useSession();
+  const { user } = useSession();
   const router = useRouter();
 
   const jobs = useQuery({
@@ -27,10 +27,11 @@ export default function JobsScreen() {
       <Stack.Screen
         options={{
           headerRight: () => (
-            <View style={{ flexDirection: 'row' }}>
-              <AppButton label={m.common.language} variant="ghost" onPress={toggleLocale} />
-              <AppButton label={m.common.signOut} variant="ghost" onPress={() => void signOut()} />
-            </View>
+            <AppButton
+              label={m.profile.title}
+              variant="ghost"
+              onPress={() => router.push('/profile')}
+            />
           ),
         }}
       />

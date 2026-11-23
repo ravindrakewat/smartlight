@@ -34,6 +34,7 @@ export default function AppLayout() {
       <Stack.Screen name="index" options={{ title: m.jobs.title }} />
       <Stack.Screen name="job/[id]" options={{ title: '' }} />
       <Stack.Screen name="scan" options={{ title: m.scan.title }} />
+      <Stack.Screen name="profile" options={{ title: m.profile.title }} />
     </Stack>
   );
 }

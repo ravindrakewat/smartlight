@@ -12,6 +12,7 @@ import {
   Message,
   styles as ui,
 } from '../../../src/components/ui';
+import { LightTest } from '../../../src/components/LightTest';
 import { useI18n, useRelativeTime } from '../../../src/i18n';
 import { api } from '../../../src/lib/api';
 import { faultLabel, PRIORITY_TONES, STATUS_TONES } from '../../../src/lib/labels';
@@ -157,6 +158,12 @@ export default function JobScreen() {
             tone="info"
             text={`${m.job.waiting} ${wo.pole.hasController ? m.job.controllerNote : m.job.supervisorNote}`}
           />
+        ) : null}
+
+        {mine &&
+        wo.pole.hasController &&
+        ['ASSIGNED', 'IN_PROGRESS', 'PENDING_VERIFICATION'].includes(wo.status) ? (
+          <LightTest poleId={wo.pole.id} />
         ) : null}
 
         {mine && wo.status === 'ASSIGNED' ? (
