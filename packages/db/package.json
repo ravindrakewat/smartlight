@@ -28,6 +28,8 @@
     "demo:clear:render": "tsx prisma/demo-data.ts --render --clear",
     "demo:lights-on": "tsx prisma/demo-data.ts --lights-on",
     "demo:lights-on:render": "tsx prisma/demo-data.ts --render --lights-on",
+    "demo:lights-mix": "tsx prisma/demo-data.ts --lights-mix",
+    "demo:lights-mix:render": "tsx prisma/demo-data.ts --render --lights-mix",
     "demo:lights-auto": "tsx prisma/demo-data.ts --lights-auto",
     "demo:lights-auto:render": "tsx prisma/demo-data.ts --render --lights-auto",
     "studio": "prisma studio"

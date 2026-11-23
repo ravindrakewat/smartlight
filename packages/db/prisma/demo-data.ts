@@ -9,6 +9,8 @@
  *   npm run demo:clear -w @smart-light/db           remove it again (also :render)
  *   npm run demo:lights-on -w @smart-light/db       show the demo lights switched ON by an
  *                                                   operator (daytime demos; also :render)
+ *   npm run demo:lights-mix -w @smart-light/db      some on, some dimmed, some off, a few
+ *                                                   new faults with alerts (also :render)
  *   npm run demo:lights-auto -w @smart-light/db     back to their schedule (also :render)
  *
  * The city is chosen with DEMO_TENANT (default `indore-mc`); it must already exist.
@@ -32,9 +34,11 @@ const useRender = process.argv.includes('--render');
 const clearOnly = process.argv.includes('--clear');
 const lightsMode = process.argv.includes('--lights-on')
   ? 'on'
-  : process.argv.includes('--lights-auto')
-    ? 'auto'
-    : null;
+  : process.argv.includes('--lights-mix')
+    ? 'mix'
+    : process.argv.includes('--lights-auto')
+      ? 'auto'
+      : null;
 loadEnv({ path: useRender ? '../../apps/api/.env' : '.env', quiet: true });
 
 const rawUrl = useRender
@@ -329,8 +333,14 @@ async function clearDemo(tenantId: string): Promise<void> {
  * Shows the demo poles as an operator override ("festival lighting") or back on
  * their schedule, as if the controllers had confirmed it. Faulty, offline and
  * controller-less poles keep their state. Palasia is dimmed so the map shows both.
+ * `mix` gives a lively map: some lights on, some dimmed, some off, and a few new
+ * lamp failures with their alert and work order, as the controllers would raise them.
  */
-async function setDemoLights(tenantId: string, mode: 'on' | 'auto'): Promise<void> {
+async function setDemoLights(
+  tenant: { id: string; code: string; slaHours: number },
+  mode: 'on' | 'auto' | 'mix',
+): Promise<void> {
+  const tenantId = tenant.id;
   const poles = await prisma.pole.findMany({
     where: {
       tenantId,
@@ -342,29 +352,49 @@ async function setDemoLights(tenantId: string, mode: 'on' | 'auto'): Promise<voi
   });
   const now = new Date();
   const readings: Prisma.DeviceReadingCreateManyInput[] = [];
-  const poleIdsByStatus: Record<'ON' | 'DIMMED' | 'OFF', string[]> = {
+  const poleIdsByStatus: Record<'ON' | 'DIMMED' | 'OFF' | 'FAULT', string[]> = {
     ON: [],
     DIMMED: [],
     OFF: [],
+    FAULT: [],
   };
+  const newFaults: { poleId: string; deviceId: string; voltageV: number }[] = [];
+  // Different picks on every run (the module random is seeded for the city layout).
+  const roll = () => Math.random();
   const updates = poles.map((pole) => {
     const device = pole.device as NonNullable<typeof pole.device>;
     const plan: Plan = pole.zone?.code === 'DEMO-RJW' ? 'market' : 'standard';
+    const chance = roll();
+    const failed = mode === 'mix' && chance < 0.07;
     const output =
       mode === 'on'
         ? { on: true, dim: pole.zone?.code === 'DEMO-PLS' ? 60 : 100 }
-        : planAt(plan, now.getTime());
-    const status = !output.on ? 'OFF' : output.dim < 100 ? 'DIMMED' : 'ON';
+        : mode === 'mix'
+          ? chance < 0.55
+            ? { on: true, dim: 100 }
+            : chance < 0.75
+              ? { on: true, dim: pick([50, 60, 70]) }
+              : { on: false, dim: 0 }
+          : planAt(plan, now.getTime());
+    if (failed) {
+      output.on = true;
+      output.dim = 100;
+    }
+    const status = failed ? 'FAULT' : !output.on ? 'OFF' : output.dim < 100 ? 'DIMMED' : 'ON';
     const wattage = pole.wattage ?? 90;
-    const power = output.on ? round(((wattage * output.dim) / 100) * between(0.93, 1.01)) : 0;
+    const power =
+      output.on && !failed ? round(((wattage * output.dim) / 100) * between(0.93, 1.01)) : 0;
     const voltage = round(between(228, 240));
+    if (failed) {
+      newFaults.push({ poleId: pole.id, deviceId: device.id, voltageV: voltage });
+    }
     const telemetry = (device.lastTelemetry ?? {}) as {
       lamp?: object;
       electrical?: { energyWh?: number };
       environment?: object;
     };
     const energyWh = telemetry.electrical?.energyWh ?? 0;
-    const operatingMode = mode === 'on' ? 'manual' : 'auto';
+    const operatingMode = mode === 'auto' ? 'auto' : 'manual';
     const electrical = {
       voltageV: voltage,
       currentA: round(power / voltage / 0.96, 3),
@@ -417,11 +447,59 @@ async function setDemoLights(tenantId: string, mode: 'on' | 'auto'): Promise<voi
       WHERE d."id" = v.id`;
   }
   await prisma.deviceReading.createMany({ data: readings });
-  const lit = readings.filter((reading) => reading.lampOn).length;
+
+  // New failures raise an alert and an IoT work order, like the ingest pipeline does.
+  if (newFaults.length > 0) {
+    let number = await reserve(tenantId, 'work_order', newFaults.length);
+    const jobs = await prisma.workOrder.createManyAndReturn({
+      data: newFaults.map((fault) => ({
+        tenantId,
+        number: `${tenant.code}-W-${String(number++).padStart(6, '0')}`,
+        poleId: fault.poleId,
+        source: 'IOT_ALERT' as const,
+        priority: 'HIGH' as const,
+        faultType: 'lamp_failure',
+        description: 'Relay ON but no lamp current',
+        slaDueAt: new Date(now.getTime() + tenant.slaHours * HOUR),
+        createdAt: now,
+      })),
+      select: { id: true, poleId: true },
+    });
+    const jobByPole = new Map(jobs.map((job) => [job.poleId, job.id]));
+    await prisma.workOrderEvent.createMany({
+      data: jobs.map((job) => ({
+        workOrderId: job.id,
+        type: 'CREATED' as const,
+        note: 'Controller reported lamp failure',
+        createdAt: now,
+      })),
+    });
+    await prisma.deviceEvent.createMany({
+      data: newFaults.map((fault) => ({
+        tenantId,
+        deviceId: fault.deviceId,
+        poleId: fault.poleId,
+        type: 'lamp_failure',
+        severity: 'critical',
+        message: 'Relay ON but lamp current below 0.05 A',
+        snapshot: { voltageV: fault.voltageV, currentA: 0.01, lampOn: true },
+        deviceTs: Math.floor(now.getTime() / 1000),
+        seq: Math.floor(between(10, 900)),
+        receivedAt: now,
+        workOrderId: jobByPole.get(fault.poleId) ?? null,
+      })),
+    });
+  }
+
+  const lit = readings.filter((reading) => reading.lampOn && reading.powerW > 0).length;
+  const count = (status: keyof typeof poleIdsByStatus) => poleIdsByStatus[status].length;
   console.log(
-    mode === 'on'
-      ? `${lit} demo lights shown ON (Palasia dimmed to 60 %). Faulty/offline poles unchanged.`
-      : `${poles.length} demo lights back on their schedule (${lit} lit right now).`,
+    mode === 'mix'
+      ? `Mixed: ${count('ON')} on, ${count('DIMMED')} dimmed, ${count('OFF')} off, ` +
+          `${count('FAULT')} new faults (alerts + work orders raised). Older faults/offline unchanged.`
+      : mode === 'on'
+        ? `${lit} demo lights shown ON (Palasia dimmed to 60 %). Faulty/offline poles unchanged.`
+        : `${poles.length} demo lights back on their schedule (${lit} lit right now).`,
   );
 }
 
@@ -441,7 +519,7 @@ async function main(): Promise<void> {
     return;
   }
   if (lightsMode) {
-    await setDemoLights(tenant.id, lightsMode);
+    await setDemoLights(tenant, lightsMode);
     return;
   }
   if (
