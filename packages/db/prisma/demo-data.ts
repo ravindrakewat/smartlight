@@ -756,6 +756,7 @@ async function main(): Promise<void> {
         poleId: pole.id,
         deviceId: pole.deviceId as string,
         serialNumber: `SL1-${pole.code.split('-')[1]}`,
+        isSimulated: true,
         firmwareVersion: pick(['1.0.3', '1.0.3', '1.0.3', '1.0.2']),
         online: !offline,
         lastSeenAt: new Date(lastAt),

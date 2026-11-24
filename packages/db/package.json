@@ -34,7 +34,8 @@
     "demo:lights-mix:render": "tsx prisma/demo-data.ts --render --lights-mix",
     "demo:lights-auto": "tsx prisma/demo-data.ts --lights-auto",
     "demo:lights-auto:render": "tsx prisma/demo-data.ts --render --lights-auto",
-    "studio": "prisma studio"
+    "studio": "prisma studio",
+    "map:wards": "tsx prisma/map-wards.ts"
   },
   "devDependencies": {
     "@smart-light/config": "^0.1.0",

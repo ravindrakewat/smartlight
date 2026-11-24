@@ -53,6 +53,9 @@ model Tenant {
   schedules      Schedule[]
   deviceEvents   DeviceEvent[]
   deviceCommands DeviceCommand[]
+  wards          Ward[]
+  streets        Street[]
+  gateways       Gateway[]
 
   @@map("tenants")
 }
@@ -268,6 +271,8 @@ model Zone {
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   schedule Schedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
   poles    Pole[]
+  wards    Ward[]
+  streets  Street[]
 
   @@unique([tenantId, code])
   @@map("zones")
@@ -298,7 +303,10 @@ model Pole {
   latitude      Float
   longitude     Float
   address       String?
+  /// Legacy free text (e.g. "Ward 36"). Kept as entered; `wardId` is the normalised link.
   ward          String?
+  wardId        String?     @db.Uuid
+  streetId      String?     @db.Uuid
   /// e.g. `LED`
   lampType      String?
   wattage       Int?
@@ -311,12 +319,16 @@ model Pole {
 
   tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   zone       Zone?       @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  wardRef    Ward?       @relation(fields: [wardId], references: [id], onDelete: SetNull)
+  street     Street?     @relation(fields: [streetId], references: [id], onDelete: SetNull)
   device     Device?
   complaints Complaint[]
   workOrders WorkOrder[]
 
   @@unique([tenantId, serial])
   @@index([tenantId, zoneId])
+  @@index([wardId])
+  @@index([streetId])
   @@index([tenantId, lightStatus])
   @@index([tenantId, latitude, longitude])
   @@map("poles")
@@ -324,15 +336,19 @@ model Pole {
 
 /// Street light controller (ESP32-S3) installed on a pole.
 model Device {
-  id                String    @id @default(uuid(7)) @db.Uuid
-  tenantId          String    @db.Uuid
-  poleId            String?   @unique @db.Uuid
+  id                String              @id @default(uuid(7)) @db.Uuid
+  tenantId          String              @db.Uuid
+  poleId            String?             @unique @db.Uuid
   /// MQTT client id / topic segment, e.g. `sl-000123`
-  deviceId          String    @unique
+  deviceId          String              @unique
   serialNumber      String?
+  hardwareVersion   String?
   firmwareVersion   String?
-  online            Boolean   @default(false)
-  lastSeenAt        DateTime? @db.Timestamptz(3)
+  installStatus     DeviceInstallStatus @default(INSTALLED)
+  /// True for simulator / demo controllers; never shown as physically installed hardware.
+  isSimulated       Boolean             @default(false)
+  online            Boolean             @default(false)
+  lastSeenAt        DateTime?           @db.Timestamptz(3)
   /// Latest reported operating state (from telemetry).
   lampOn            Boolean?
   dimPercent        Int?
@@ -340,18 +356,20 @@ model Device {
   mode              String?
   /// Most recent telemetry payload as received (validated), for the console.
   lastTelemetry     Json?
-  lastTelemetryAt   DateTime? @db.Timestamptz(3)
+  lastTelemetryAt   DateTime?           @db.Timestamptz(3)
   resetReason       String?
   /// Schedule id the controller last acknowledged.
   appliedScheduleId String?
-  createdAt         DateTime  @default(now()) @db.Timestamptz(3)
-  updatedAt         DateTime  @updatedAt @db.Timestamptz(3)
+  createdAt         DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime            @updatedAt @db.Timestamptz(3)
 
-  tenant   Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  pole     Pole?           @relation(fields: [poleId], references: [id], onDelete: SetNull)
-  readings DeviceReading[]
-  events   DeviceEvent[]
-  commands DeviceCommand[]
+  tenant     Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  pole       Pole?             @relation(fields: [poleId], references: [id], onDelete: SetNull)
+  readings   DeviceReading[]
+  events     DeviceEvent[]
+  commands   DeviceCommand[]
+  interfaces DeviceInterface[]
+  uplinks    LorawanUplink[]
 
   @@index([tenantId])
   @@map("devices")
@@ -593,6 +611,10 @@ model DeviceReading {
   powerW     Float
   energyWh   Float
   rssiDbm    Int
+  /// LoRaWAN only.
+  snrDb      Float?
+  /// `wifi` | `cellular` | `lorawan`; null for readings before this was recorded.
+  via        String?
   boardTempC Float?
   motion     Boolean  @default(false)
 
@@ -662,6 +684,12 @@ model DeviceCommand {
   createdAt   DateTime            @default(now()) @db.Timestamptz(3)
   sentAt      DateTime?           @db.Timestamptz(3)
   ackAt       DateTime?           @db.Timestamptz(3)
+  /// The device reported the change as applied (COMPLETED); separate from acknowledgement.
+  appliedAt   DateTime?           @db.Timestamptz(3)
+  /// `mqtt` (Wi-Fi / 4G) or `lorawan`
+  channel     String              @default("mqtt")
+  /// Network server reference for a LoRaWAN downlink (ChirpStack queue item id).
+  downlinkId  String?
   expiresAt   DateTime            @db.Timestamptz(3)
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
@@ -690,4 +718,180 @@ model Schedule {
 
   @@unique([tenantId, name])
   @@map("schedules")
+}
+
+// ─── Geography (normalised) ──────────────────────────────────────────────────
+
+/// Municipal ward. Poles keep their legacy `ward` text; `Pole.wardId` links here.
+model Ward {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  tenantId  String   @db.Uuid
+  zoneId    String?  @db.Uuid
+  /// e.g. `36` (the municipality's own ward number)
+  code      String
+  name      String
+  nameHi    String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  zone    Zone?    @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  poles   Pole[]
+  streets Street[]
+
+  @@unique([tenantId, code])
+  @@index([zoneId])
+  @@map("wards")
+}
+
+model Street {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  tenantId  String   @db.Uuid
+  wardId    String?  @db.Uuid
+  zoneId    String?  @db.Uuid
+  name      String
+  nameHi    String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  ward   Ward?  @relation(fields: [wardId], references: [id], onDelete: SetNull)
+  zone   Zone?  @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  poles  Pole[]
+
+  @@index([tenantId, name])
+  @@index([wardId])
+  @@map("streets")
+}
+
+// ─── Devices: communication links (Wi-Fi, 4G, LoRaWAN) ───────────────────────
+
+enum DeviceInstallStatus {
+  IN_STOCK
+  INSTALLED
+  REMOVED
+  FAULTY
+}
+
+enum CommInterfaceKind {
+  WIFI
+  CELLULAR
+  LORAWAN
+}
+
+/// One communication link of a controller. A controller may have several
+/// (e.g. 4G + LoRaWAN); none of them replaces the others.
+model DeviceInterface {
+  id          String            @id @default(uuid(7)) @db.Uuid
+  deviceId    String            @db.Uuid
+  kind        CommInterfaceKind
+  /// MAC (Wi-Fi), IMEI (4G) or DevEUI (LoRaWAN), lower-case.
+  identifier  String
+  enabled     Boolean           @default(true)
+  /// Lower = preferred for commands when several links are up.
+  priority    Int               @default(100)
+  lastSeenAt  DateTime?         @db.Timestamptz(3)
+  lastRssiDbm Int?
+  lastSnrDb   Float?
+  createdAt   DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime          @updatedAt @db.Timestamptz(3)
+
+  device  Device         @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  lorawan LorawanDevice?
+
+  @@unique([kind, identifier])
+  @@unique([deviceId, kind])
+  @@map("device_interfaces")
+}
+
+/// LoRaWAN registration of a controller's radio (OTAA). The AppKey is stored
+/// encrypted and is never returned by the API.
+model LorawanDevice {
+  id              String    @id @default(uuid(7)) @db.Uuid
+  interfaceId     String    @unique @db.Uuid
+  /// 16 hex characters, lower-case.
+  devEui          String    @unique
+  /// JoinEUI (LoRaWAN 1.0.4+ name for AppEUI), 16 hex characters.
+  joinEui         String
+  /// AES-GCM envelope (`v1:`); null until provisioned.
+  appKeyEncrypted String?
+  /// ChirpStack device-profile id or name.
+  deviceProfile   String
+  /// e.g. `1.0.3` (what the module firmware supports)
+  macVersion      String    @default("1.0.3")
+  region          String    @default("IN865")
+  /// Only OTAA is used.
+  activation      String    @default("OTAA")
+  /// `A` or `C`
+  deviceClass     String    @default("A")
+  /// `NOT_JOINED` | `JOINED` (as reported by the network server, or by the simulator)
+  joinStatus      String    @default("NOT_JOINED")
+  joinedAt        DateTime? @db.Timestamptz(3)
+  lastFCntUp      Int?
+  lastUplinkAt    DateTime? @db.Timestamptz(3)
+  /// Simulator device: no radio involved. Joins and uplinks are not real radio events.
+  isSimulated     Boolean   @default(false)
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @db.Timestamptz(3)
+
+  interface DeviceInterface @relation(fields: [interfaceId], references: [id], onDelete: Cascade)
+
+  @@map("lorawan_devices")
+}
+
+/// A network gateway (LoRaWAN today; the record does not assume one radio or model).
+model Gateway {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  tenantId     String?   @db.Uuid
+  /// `LORAWAN`
+  network      String    @default("LORAWAN")
+  /// Gateway EUI / id as the network server knows it, lower-case.
+  gatewayEui   String    @unique
+  name         String
+  manufacturer String?
+  model        String?
+  /// `ethernet` | `wifi` | `cellular`
+  backhaul     String?
+  latitude     Float?
+  longitude    Float?
+  altitudeM    Float?
+  online       Boolean   @default(false)
+  lastSeenAt   DateTime? @db.Timestamptz(3)
+  isSimulated  Boolean   @default(false)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(3)
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@map("gateways")
+}
+
+/// Every processed LoRaWAN uplink, once (idempotency by the network server's
+/// deduplication id), with its radio metadata.
+model LorawanUplink {
+  id              String   @id @default(uuid(7)) @db.Uuid
+  deduplicationId String   @unique
+  devEui          String
+  deviceId        String?  @db.Uuid
+  fCnt            Int
+  fPort           Int?
+  receivedAt      DateTime @db.Timestamptz(3)
+  /// Best gateway reception.
+  rssiDbm         Int?
+  snrDb           Float?
+  gatewayEui      String?
+  gatewayCount    Int      @default(0)
+  dataRate        Int?
+  frequencyHz     Int?
+  payloadHex      String?
+  /// `ok` | `decode_error` | `unknown_device`
+  result          String
+  isSimulated     Boolean  @default(false)
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+
+  device Device? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+
+  @@index([devEui, receivedAt])
+  @@map("lorawan_uplinks")
 }

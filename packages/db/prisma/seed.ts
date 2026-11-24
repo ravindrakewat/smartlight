@@ -169,6 +169,8 @@ async function seedBase(): Promise<void> {
                     tenantId: indore.id,
                     deviceId: `sl-${String(serial).padStart(6, '0')}`,
                     firmwareVersion: '0.1.0',
+                    // Seed data is not hardware: never shown as an installed controller.
+                    isSimulated: true,
                     online: lightStatus !== 'OFFLINE',
                     lastSeenAt: new Date(),
                   },
