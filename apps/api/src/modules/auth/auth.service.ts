@@ -1,6 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { hashPassword, verifyPassword } from '@smart-light/db';
-import type { AuthClient, AuthUser, changePasswordSchema, TokenPair } from '@smart-light/shared';
+import type {
+  AuthClient,
+  AuthUser,
+  changePasswordSchema,
+  MfaChallengeResponse,
+  TokenPair,
+} from '@smart-light/shared';
 import type { Request } from 'express';
 import type { z } from 'zod';
 import { env } from '../../config/env';
@@ -11,11 +17,12 @@ import { errors } from '../../utils/errors';
 import { recordAudit, recordAuditSafely } from '../audit/audit.service';
 import type { AuthContext } from './auth.context';
 import { authRepository, type UserWithOrg } from './auth.repository';
+import { mfaService } from './mfa.service';
 import { generateRefreshToken, hashToken, signAccessToken } from './tokens';
 
 /** After this many consecutive failures the account is locked for LOCK_MINUTES. */
-const MAX_FAILED_LOGINS = 5;
-const LOCK_MINUTES = 15;
+export const MAX_FAILED_LOGINS = 5;
+export const LOCK_MINUTES = 15;
 
 /** Hash used to spend the same time when the e-mail does not exist (no user enumeration). */
 let dummyHashPromise: Promise<string> | null = null;
@@ -45,12 +52,45 @@ export function toAuthUser(user: UserWithOrg): AuthUser {
   };
 }
 
+export function assertNotLocked(user: UserWithOrg): void {
+  if (user.lockedUntil && user.lockedUntil > new Date()) {
+    throw new AppError({
+      statusCode: 429,
+      code: 'ACCOUNT_LOCKED',
+      message: `Too many failed attempts. Try again after ${LOCK_MINUTES} minutes.`,
+    });
+  }
+}
+
+/**
+ * Counts a failed password or code; the fifth in a row locks the account for
+ * LOCK_MINUTES. Password and two-factor failures share one counter.
+ */
+export async function recordFailure(
+  user: UserWithOrg,
+  action: 'auth.login_failed' | 'auth.mfa_failed',
+  request: Request,
+): Promise<void> {
+  const failures = user.failedLoginCount + 1;
+  const lockUntil =
+    failures >= MAX_FAILED_LOGINS ? new Date(Date.now() + LOCK_MINUTES * 60 * 1000) : null;
+  await authRepository.recordFailedLogin(user.id, lockUntil);
+  await recordAuditSafely({
+    tenantId: user.tenantId,
+    actorType: 'USER',
+    actorId: user.id,
+    action: lockUntil ? 'auth.account_locked' : action,
+    metadata: { failures },
+    request,
+  });
+}
+
 export interface IssuedSession {
   user: AuthUser;
   tokens: TokenPair;
 }
 
-function assertCanSignIn(user: UserWithOrg): void {
+export function assertCanSignIn(user: UserWithOrg): void {
   if (user.status !== 'ACTIVE') {
     throw new AppError({
       statusCode: 403,
@@ -67,7 +107,7 @@ function assertCanSignIn(user: UserWithOrg): void {
   }
 }
 
-async function issueSession(
+export async function issueSession(
   user: UserWithOrg,
   client: AuthClient,
   request: Request,
@@ -106,7 +146,7 @@ export const authService = {
   async login(
     input: { email: string; password: string; client: AuthClient },
     request: Request,
-  ): Promise<IssuedSession> {
+  ): Promise<IssuedSession | MfaChallengeResponse> {
     const user = await authRepository.findUserByEmail(input.email);
     if (!user) {
       await verifyPassword(await dummyHash(), input.password);
@@ -119,31 +159,25 @@ export const authService = {
       throw errors.invalidCredentials();
     }
 
-    if (user.lockedUntil && user.lockedUntil > new Date()) {
-      throw new AppError({
-        statusCode: 429,
-        code: 'ACCOUNT_LOCKED',
-        message: `Too many failed attempts. Try again after ${LOCK_MINUTES} minutes.`,
-      });
-    }
+    assertNotLocked(user);
 
     if (!(await verifyPassword(user.passwordHash, input.password))) {
-      const failures = user.failedLoginCount + 1;
-      const lockUntil =
-        failures >= MAX_FAILED_LOGINS ? new Date(Date.now() + LOCK_MINUTES * 60 * 1000) : null;
-      await authRepository.recordFailedLogin(user.id, lockUntil);
-      await recordAuditSafely({
-        tenantId: user.tenantId,
-        actorType: 'USER',
-        actorId: user.id,
-        action: lockUntil ? 'auth.account_locked' : 'auth.login_failed',
-        metadata: { failures },
-        request,
-      });
+      await recordFailure(user, 'auth.login_failed', request);
       throw errors.invalidCredentials();
     }
 
     assertCanSignIn(user);
+
+    // Second step: a code from the authenticator app (or enrolment if the role requires it).
+    if (user.totpEnabled || mfaService.isRequired(user.role)) {
+      return mfaService.createChallenge(
+        user,
+        user.totpEnabled ? 'verify' : 'setup',
+        input.client,
+        request,
+      );
+    }
+
     await authRepository.recordSuccessfulLogin(user.id);
     const issued = await issueSession(user, input.client, request);
     await recordAudit({

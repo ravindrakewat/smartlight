@@ -3,6 +3,7 @@ import { hashPassword, type UserRole } from '@smart-light/db';
 import request from 'supertest';
 import { createApp } from '../src/app';
 import { prisma } from '../src/lib/prisma';
+import { currentStep, decryptSecret, totpAt } from '../src/modules/auth/totp';
 
 export const app = createApp();
 export { prisma };
@@ -67,11 +68,58 @@ export async function createUser(options: {
   });
 }
 
-/** Signs in as a mobile client and returns the token pair. */
+/**
+ * A valid authenticator code for a user: the earliest step in the accepted
+ * window that was not used yet (codes are never accepted twice). If the whole
+ * window is used up, waits for the next 30-second step.
+ */
+export async function totpCodeFor(userId: string): Promise<string> {
+  for (;;) {
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    if (!user.totpSecret) {
+      throw new Error('User has no two-factor secret');
+    }
+    const secret = decryptSecret(user.totpSecret);
+    const now = currentStep();
+    for (const step of [now - 1, now, now + 1]) {
+      if (user.totpLastStep === null || step > user.totpLastStep) {
+        return totpAt(secret, step);
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
+  }
+}
+
+/**
+ * Completes a two-factor challenge the way an admin would: enrols the
+ * authenticator first for a `setup` challenge, then sends a current code.
+ */
+export async function completeMfa(
+  email: string,
+  mfa: { status: 'verify' | 'setup'; challengeToken: string },
+) {
+  if (mfa.status === 'setup') {
+    const setup = await request(app)
+      .post('/api/v1/auth/login/mfa/setup')
+      .send({ challengeToken: mfa.challengeToken });
+    if (setup.status !== 200) {
+      throw new Error(`MFA setup failed: ${setup.status} ${JSON.stringify(setup.body)}`);
+    }
+  }
+  const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+  return request(app)
+    .post('/api/v1/auth/login/mfa')
+    .send({ challengeToken: mfa.challengeToken, code: await totpCodeFor(user.id) });
+}
+
+/** Signs in as a mobile client (completing two-factor if needed) and returns the token pair. */
 export async function loginMobile(email: string, password = TEST_PASSWORD) {
-  const response = await request(app)
+  let response = await request(app)
     .post('/api/v1/auth/login')
     .send({ email, password, client: 'mobile' });
+  if (response.status === 200 && response.body.data.mfa) {
+    response = await completeMfa(email, response.body.data.mfa);
+  }
   if (response.status !== 200) {
     throw new Error(`Login failed: ${response.status} ${JSON.stringify(response.body)}`);
   }

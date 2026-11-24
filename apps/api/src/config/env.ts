@@ -1,6 +1,12 @@
 import dotenv from 'dotenv';
 import { z } from 'zod';
-import { NodeEnvironment, nodeEnvSchema, portSchema } from '@smart-light/shared';
+import {
+  MFA_ROLES,
+  NodeEnvironment,
+  nodeEnvSchema,
+  portSchema,
+  userRoleSchema,
+} from '@smart-light/shared';
 
 dotenv.config({ quiet: true });
 
@@ -38,6 +44,35 @@ const apiEnvSchema = z
      * (e.g. `.smartlight.example.in`) so auth cookies are first-party. Empty locally.
      */
     COOKIE_DOMAIN: z.string().optional(),
+
+    /**
+     * 32-byte key (base64) that encrypts two-factor secrets at rest. Generate with:
+     * openssl rand -base64 32. Required in production; locally a key derived from
+     * JWT_ACCESS_SECRET is used when empty. Changing it invalidates every enrolment.
+     */
+    MFA_ENCRYPTION_KEY: z
+      .string()
+      .optional()
+      .refine((value) => !value || Buffer.from(value, 'base64').length === 32, {
+        error: 'MFA_ENCRYPTION_KEY must be 32 bytes, base64 (openssl rand -base64 32)',
+      }),
+    /** Roles that must use two-factor sign-in (comma-separated, from SUPER_ADMIN, MUNICIPAL_ADMIN). */
+    MFA_REQUIRED_ROLES: z
+      .string()
+      .default('SUPER_ADMIN')
+      .transform((raw) =>
+        raw
+          .split(',')
+          .map((role) => role.trim())
+          .filter(Boolean),
+      )
+      .pipe(
+        z.array(
+          userRoleSchema.refine((role) => (MFA_ROLES as readonly string[]).includes(role), {
+            error: 'Only SUPER_ADMIN and MUNICIPAL_ADMIN can be required to use two-factor sign-in',
+          }),
+        ),
+      ),
     COOKIE_SECURE: z.stringbool().optional(),
 
     API_DOCS_ENABLED: z.stringbool().optional(),
@@ -90,6 +125,13 @@ const apiEnvSchema = z
     MQTT_CLIENT_ID: z.string().min(1).default('sl-backend-worker'),
   })
   .superRefine((value, context) => {
+    if (value.NODE_ENV === NodeEnvironment.Production && !value.MFA_ENCRYPTION_KEY) {
+      context.addIssue({
+        code: 'custom',
+        path: ['MFA_ENCRYPTION_KEY'],
+        message: 'Required in production (openssl rand -base64 32)',
+      });
+    }
     if (value.NODE_ENV === NodeEnvironment.Production && value.MQTT_URL?.startsWith('mqtt://')) {
       context.addIssue({
         code: 'custom',

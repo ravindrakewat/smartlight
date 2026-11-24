@@ -23,6 +23,7 @@ usersRouter.get('/', requireRoles(...MANAGERS, 'SUPERVISOR'), usersController.li
 usersRouter.post('/', requireRoles(...MANAGERS), usersController.create);
 usersRouter.patch('/:id', requireRoles(...MANAGERS), usersController.update);
 usersRouter.post('/:id/password-reset', requireRoles(...MANAGERS), usersController.resetPassword);
+usersRouter.post('/:id/mfa-reset', requireRoles('SUPER_ADMIN'), usersController.resetMfa);
 
 const TAG = 'Users';
 
@@ -79,4 +80,15 @@ registry.registerPath({
     204: { description: 'Password changed' },
     ...errorResponses(400, 401, 403, 404),
   },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/users/{id}/mfa-reset',
+  tags: [TAG],
+  summary:
+    "Platform administrators only: clear a person's two-factor sign-in (lost phone and codes); signs them out everywhere",
+  security: AUTHENTICATED,
+  request: { params: z.object({ id: z.uuid() }) },
+  responses: { 204: { description: 'Cleared' }, ...errorResponses(401, 403, 404) },
 });

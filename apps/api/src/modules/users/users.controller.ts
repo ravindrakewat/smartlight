@@ -8,6 +8,7 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { sendData, sendPage } from '../../lib/http';
 import { getAuth } from '../auth/auth.context';
+import { mfaService } from '../auth/mfa.service';
 import { usersService } from './users.service';
 
 const idParams = z.object({ id: z.uuid() });
@@ -34,6 +35,12 @@ export const usersController = {
     const { id } = idParams.parse(req.params);
     const input = resetPasswordSchema.parse(req.body);
     await usersService.resetPassword(id, input, getAuth(res), req);
+    res.status(204).end();
+  },
+
+  async resetMfa(req: Request, res: Response): Promise<void> {
+    const { id } = idParams.parse(req.params);
+    await mfaService.adminReset(id, getAuth(res), req);
     res.status(204).end();
   },
 };
