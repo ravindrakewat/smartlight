@@ -338,5 +338,12 @@
       "noDevices": "No controllers yet",
       "online": "{online} of {total} online ({percent})"
     }
+  },
+  "Shell": {
+    "live": "Live",
+    "checking": "Checking…",
+    "systemOnline": "System online",
+    "systemDown": "Server not reachable",
+    "lastUpdate": "Last update {time}"
   }
 }

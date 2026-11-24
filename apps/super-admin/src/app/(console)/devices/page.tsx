@@ -6,13 +6,12 @@ import {
   Card,
   cn,
   EmptyState,
+  KpiCard,
   Field,
   Input,
-  PageHeader,
   Pagination,
   Select,
   Skeleton,
-  StatCard,
 } from '@smart-light/ui';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Cpu, Lightbulb, LightbulbOff, Search, Wifi, WifiOff } from 'lucide-react';
@@ -20,6 +19,7 @@ import { useSearchParams } from 'next/navigation';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { Suspense, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { ConsoleHero } from '@/components/shell/ConsoleHero';
 
 const PAGE_SIZE = 25;
 const MODES = ['auto', 'manual', 'failsafe'] as const;
@@ -79,13 +79,18 @@ function Devices() {
 
   return (
     <>
-      <PageHeader title={t('title')} description={t('description')} />
+      <ConsoleHero icon={<Cpu />} title={t('title')} description={t('description')} />
 
       <section aria-label={t('summary')} className="mb-6 grid gap-4 sm:grid-cols-3">
         {tenants.data ? (
           <>
-            <StatCard label={t('stats.total')} value={format.number(total)} icon={<Cpu />} />
-            <StatCard
+            <KpiCard
+              label={t('stats.total')}
+              value={format.number(total)}
+              icon={<Cpu />}
+              tone="info"
+            />
+            <KpiCard
               label={t('stats.online')}
               value={format.number(onlineCount)}
               hint={
@@ -98,19 +103,21 @@ function Devices() {
                     })
                   : undefined
               }
+              share={total ? onlineCount / total : null}
               icon={<Wifi />}
               tone="success"
             />
-            <StatCard
+            <KpiCard
               label={t('stats.offline')}
               value={format.number(total - onlineCount)}
               hint={t('stats.offlineHint')}
+              share={total ? (total - onlineCount) / total : null}
               icon={<WifiOff />}
               tone={total - onlineCount > 0 ? 'warning' : 'success'}
             />
           </>
         ) : (
-          Array.from({ length: 3 }, (_, index) => <Skeleton key={index} className="h-[7.5rem]" />)
+          Array.from({ length: 3 }, (_, index) => <Skeleton key={index} className="h-28" />)
         )}
       </section>
 

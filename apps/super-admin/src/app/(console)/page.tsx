@@ -10,18 +10,18 @@ import {
   CardHeader,
   CardTitle,
   EmptyState,
-  PageHeader,
   Skeleton,
-  StatCard,
+  KpiCard,
   StatusIndicator,
 } from '@smart-light/ui';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, Lightbulb, Plus, TriangleAlert, Wifi } from 'lucide-react';
+import { Building2, Lightbulb, Plus, TriangleAlert, Wifi, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { useFormatter, useTranslations } from 'next-intl';
 import { CityCard } from '@/components/CityCard';
 import { RecentActivity } from '@/components/RecentActivity';
 import { api } from '@/lib/api';
+import { ConsoleHero } from '@/components/shell/ConsoleHero';
 
 export default function OverviewPage() {
   const t = useTranslations('Overview');
@@ -84,7 +84,8 @@ export default function OverviewPage() {
 
   return (
     <>
-      <PageHeader
+      <ConsoleHero
+        icon={<LayoutDashboard />}
         title={t('title')}
         description={t('description')}
         actions={
@@ -106,18 +107,19 @@ export default function OverviewPage() {
       <section aria-label={t('title')} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {tenants.data ? (
           <>
-            <StatCard
+            <KpiCard
               label={t('stats.municipalities')}
               value={format.number(tenants.data.length)}
               icon={<Building2 />}
               tone="info"
             />
-            <StatCard
+            <KpiCard
               label={t('stats.poles')}
               value={format.number(totals.poles)}
               icon={<Lightbulb />}
+              tone="info"
             />
-            <StatCard
+            <KpiCard
               label={t('stats.online')}
               value={format.number(totals.online)}
               hint={t('stats.onlineHint', {
@@ -127,19 +129,21 @@ export default function OverviewPage() {
                   maximumFractionDigits: 1,
                 }),
               })}
+              share={totals.devices ? totals.online / totals.devices : null}
               icon={<Wifi />}
               tone="success"
             />
-            <StatCard
+            <KpiCard
               label={t('stats.problems')}
               value={format.number(totals.problems)}
               hint={t('stats.problemsHint')}
+              share={totals.poles ? totals.problems / totals.poles : null}
               icon={<TriangleAlert />}
               tone={totals.problems > 0 ? 'danger' : 'success'}
             />
           </>
         ) : (
-          Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-[7.5rem]" />)
+          Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-28" />)
         )}
       </section>
 

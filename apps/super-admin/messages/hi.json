@@ -338,5 +338,12 @@
       "noDevices": "अभी कोई कंट्रोलर नहीं",
       "online": "{total} में से {online} ऑनलाइन ({percent})"
     }
+  },
+  "Shell": {
+    "live": "लाइव",
+    "checking": "जाँच हो रही है…",
+    "systemOnline": "सिस्टम चालू है",
+    "systemDown": "सर्वर से संपर्क नहीं",
+    "lastUpdate": "आखिरी अपडेट {time}"
   }
 }

@@ -13,7 +13,6 @@ import {
   EmptyState,
   Field,
   Input,
-  PageHeader,
   Pagination,
   Select,
   Skeleton,
@@ -23,6 +22,7 @@ import { Users } from 'lucide-react';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { ConsoleHero } from '@/components/shell/ConsoleHero';
 
 const PAGE_SIZE = 25;
 
@@ -70,7 +70,8 @@ export default function PlatformUsersPage() {
 
   return (
     <>
-      <PageHeader
+      <ConsoleHero
+        icon={<Users />}
         title={t('title')}
         description={t('description')}
         actions={

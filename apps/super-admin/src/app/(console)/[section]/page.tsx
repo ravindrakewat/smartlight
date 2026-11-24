@@ -1,9 +1,10 @@
-import { Button, EmptyState, PageHeader } from '@smart-light/ui';
+import { Button, EmptyState } from '@smart-light/ui';
 import { Construction } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
+import { ConsoleHero } from '@/components/shell/ConsoleHero';
 
 /** Console sections that exist in the navigation but are not built yet. */
 const SECTIONS = {
@@ -39,7 +40,7 @@ export default async function SectionPage({ params }: SectionPageProps) {
 
   return (
     <>
-      <PageHeader title={t(`Nav.${key}`)} />
+      <ConsoleHero title={t(`Nav.${key}`)} icon={<Construction />} />
       <EmptyState
         className="min-h-96"
         icon={<Construction />}

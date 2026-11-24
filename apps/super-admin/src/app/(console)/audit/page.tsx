@@ -1,23 +1,14 @@
 'use client';
 
 import type { AuditEntryDto, TenantDto } from '@smart-light/shared';
-import {
-  Alert,
-  Card,
-  cn,
-  EmptyState,
-  Field,
-  PageHeader,
-  Pagination,
-  Select,
-  Skeleton,
-} from '@smart-light/ui';
+import { Alert, Card, cn, EmptyState, Field, Pagination, Select, Skeleton } from '@smart-light/ui';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ScrollText, ShieldAlert } from 'lucide-react';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { AUDIT_CATEGORIES, auditCategory, isSecurityEvent } from '@/lib/audit';
+import { ConsoleHero } from '@/components/shell/ConsoleHero';
 
 const PAGE_SIZE = 30;
 
@@ -51,7 +42,7 @@ export default function AuditPage() {
 
   return (
     <>
-      <PageHeader title={t('title')} description={t('description')} />
+      <ConsoleHero icon={<ScrollText />} title={t('title')} description={t('description')} />
 
       <div className="mb-4 grid gap-3 rounded-2xl border border-border bg-surface p-4 sm:grid-cols-2 lg:max-w-3xl">
         <Field label={t('filters.city')}>

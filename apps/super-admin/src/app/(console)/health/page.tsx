@@ -9,15 +9,15 @@ import {
   CardHeader,
   CardTitle,
   cn,
-  PageHeader,
   Skeleton,
   StatusIndicator,
 } from '@smart-light/ui';
 import { useQuery } from '@tanstack/react-query';
-import { Database, RefreshCw, Radio, Server, Timer } from 'lucide-react';
+import { Database, RefreshCw, Radio, Server, Timer, Activity } from 'lucide-react';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { api } from '@/lib/api';
+import { ConsoleHero } from '@/components/shell/ConsoleHero';
 
 const SEGMENTS = 20;
 
@@ -98,7 +98,8 @@ export default function SystemHealthPage() {
 
   return (
     <>
-      <PageHeader
+      <ConsoleHero
+        icon={<Activity />}
         title={t('title')}
         description={t('description')}
         actions={

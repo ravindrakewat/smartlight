@@ -106,9 +106,22 @@ export function UserMenu() {
   if (!user) {
     return null;
   }
+  const initials = user.name
+    .replace(/\(.*?\)/g, '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
   return (
     <div className="flex items-center gap-2">
-      <div className="hidden text-right leading-tight sm:block">
+      <span
+        aria-hidden="true"
+        className="hidden size-10 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground ring-2 ring-primary-subtle sm:grid"
+      >
+        {initials}
+      </span>
+      <div className="hidden leading-tight md:block">
         <p className="text-sm font-semibold">{user.name}</p>
         <p className="text-xs text-muted-foreground">
           {t(`roles.${user.role}`)}

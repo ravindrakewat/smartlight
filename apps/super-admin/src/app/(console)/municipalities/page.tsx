@@ -10,15 +10,16 @@ import {
   CardTitle,
   Field,
   Input,
-  PageHeader,
   Skeleton,
 } from '@smart-light/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Building2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
 import { AddAdminForm } from '@/components/AddAdminForm';
 import { TenantsTable } from '@/components/TenantsTable';
 import { api } from '@/lib/api';
+import { ConsoleHero } from '@/components/shell/ConsoleHero';
 
 const EMPTY_FORM = { name: '', nameHi: '', slug: '', code: '', slaHours: '24' };
 const KNOWN_ERRORS = new Set(['CONFLICT', 'VALIDATION_ERROR']);
@@ -80,7 +81,7 @@ export default function MunicipalitiesPage() {
 
   return (
     <>
-      <PageHeader title={t('title')} description={t('description')} />
+      <ConsoleHero icon={<Building2 />} title={t('title')} description={t('description')} />
 
       <div className="grid gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">

@@ -13,6 +13,7 @@ import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { UserMenu } from './Session';
+import { SystemStatus } from './shell/SystemStatus';
 
 export async function ConsoleShell({ children }: { children: ReactNode }) {
   const t = await getTranslations();
@@ -39,6 +40,7 @@ export async function ConsoleShell({ children }: { children: ReactNode }) {
         closeMenu: t('Common.closeMenu'),
         skipToContent: t('Common.skipToContent'),
       }}
+      sidebarFooter={<SystemStatus />}
       headerActions={
         <>
           <LocaleSwitcher />
