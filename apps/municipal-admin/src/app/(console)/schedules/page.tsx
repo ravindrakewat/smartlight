@@ -11,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
   Field,
-  PageHeader,
   Select,
   Skeleton,
 } from '@smart-light/ui';
@@ -23,6 +22,7 @@ import { ControlPanel } from '@/components/lighting/ControlPanel';
 import { ScheduleEditor, useStepLabel } from '@/components/lighting/ScheduleEditor';
 import { useSessionUser } from '@/components/Session';
 import { api } from '@/lib/api';
+import { ConsoleHero } from '@/components/shell/ConsoleHero';
 
 const ADMINS = new Set(['SUPER_ADMIN', 'MUNICIPAL_ADMIN']);
 const CONTROLLERS = new Set(['SUPER_ADMIN', 'MUNICIPAL_ADMIN', 'SUPERVISOR', 'OPERATOR']);
@@ -69,7 +69,8 @@ export default function SchedulesPage() {
 
   return (
     <>
-      <PageHeader
+      <ConsoleHero
+        icon={<CalendarClock />}
         title={t('title')}
         description={t('description')}
         actions={

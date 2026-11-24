@@ -8,7 +8,6 @@ import {
   Card,
   EmptyState,
   Input,
-  PageHeader,
   Pagination,
   Select,
   Skeleton,
@@ -22,6 +21,7 @@ import { AddStaffForm } from '@/components/staff/AddStaffForm';
 import { AgenciesCard } from '@/components/staff/AgenciesCard';
 import { api } from '@/lib/api';
 import { canManage } from '@/lib/staff-permissions';
+import { ConsoleHero } from '@/components/shell/ConsoleHero';
 
 const PAGE_SIZE = 25;
 const TENANT_ROLES = USER_ROLES.filter((role) => role !== 'SUPER_ADMIN');
@@ -144,7 +144,8 @@ export default function StaffPage() {
 
   return (
     <>
-      <PageHeader
+      <ConsoleHero
+        icon={<UsersRound />}
         title={t('title')}
         description={t('description')}
         actions={

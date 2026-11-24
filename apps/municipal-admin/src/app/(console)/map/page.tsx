@@ -1,14 +1,16 @@
 'use client';
 
 import { LIGHT_STATUSES, type LightStatusName, type PoleMapItemDto } from '@smart-light/shared';
-import { Alert, Button, Card, CardContent, PageHeader, Skeleton } from '@smart-light/ui';
+import { Alert, Button, Card, CardContent, Skeleton } from '@smart-light/ui';
 import { useQuery } from '@tanstack/react-query';
+import { Map as MapIcon } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
 import { LightStatusLabel } from '@/components/labels';
 import { api } from '@/lib/api';
+import { ConsoleHero } from '@/components/shell/ConsoleHero';
 
 /** MapLibre needs the browser (WebGL); load it only on this page. */
 const PoleMap = dynamic(
@@ -36,7 +38,8 @@ export default function MapPage() {
 
   return (
     <>
-      <PageHeader
+      <ConsoleHero
+        icon={<MapIcon />}
         title={t('title')}
         description={t('description')}
         actions={

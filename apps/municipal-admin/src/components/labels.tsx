@@ -13,7 +13,7 @@ const WORK_ORDER_TONES: Record<WorkOrderStatusName, Tone> = {
   CANCELLED: 'neutral',
 };
 
-const PRIORITY_TONES: Record<'CRITICAL' | 'HIGH' | 'NORMAL' | 'LOW', Tone> = {
+export const PRIORITY_TONES: Record<'CRITICAL' | 'HIGH' | 'NORMAL' | 'LOW', Tone> = {
   CRITICAL: 'danger',
   HIGH: 'warning',
   NORMAL: 'neutral',

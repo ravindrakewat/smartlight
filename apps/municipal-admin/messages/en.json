@@ -142,23 +142,32 @@
       "offline": "Offline",
       "controllers": "Controllers online",
       "controllersHint": "{online} of {total} controllers",
-      "shareOfTotal": "{percent} of all poles"
+      "shareOfTotal": "{percent} of all poles",
+      "heading": "Street lights at a glance",
+      "zones": "{count, plural, one {In # zone} other {Across # zones}}"
     },
     "map": {
       "title": "Live map",
       "description": "Every pole, coloured by its current status.",
       "emptyTitle": "No poles on the map yet",
       "emptyDescription": "Import poles to see them here with their live status.",
-      "openFull": "Open the full map"
+      "openFull": "View full map"
     },
     "openWork": {
       "title": "Most urgent repairs",
       "description": "Open work orders, nearest deadline first.",
-      "viewAll": "View all work orders",
-      "empty": "No open work orders. Every light is working."
+      "viewAll": "View all",
+      "empty": "No open work orders. Every light is working.",
+      "columns": {
+        "pole": "Pole",
+        "location": "Location",
+        "issue": "Issue",
+        "priority": "Priority",
+        "deadline": "Deadline"
+      }
     },
     "zones": {
-      "title": "Zones",
+      "title": "Zones with the most problems",
       "description": "Availability of street lights by zone.",
       "zone": "Zone",
       "total": "Poles",
@@ -166,6 +175,41 @@
       "faulty": "Faulty",
       "availability": "Availability",
       "openStreets": "Open street view"
+    },
+    "hero": {
+      "title": "Control",
+      "accent": "Centre",
+      "description": "{city} · every street light, live."
+    },
+    "overview": {
+      "title": "Pole status overview",
+      "working": "working",
+      "total": "Total"
+    },
+    "activity": {
+      "title": "Controllers over time",
+      "range": "Time range",
+      "ranges": {
+        "24h": "24h",
+        "7d": "7d",
+        "30d": "30d"
+      },
+      "reporting": "Controllers reporting",
+      "lit": "Lights on",
+      "faults": "New faults",
+      "readout": "{reporting} reporting · {lit} on · {faults} new faults",
+      "chartLabel": "Controllers reporting, lights on and new faults over time. Use the left and right arrow keys to read each point.",
+      "empty": "No controller readings in this period yet.",
+      "showTable": "Show the numbers as a table",
+      "when": "When"
+    },
+    "events": {
+      "title": "Recent controller events",
+      "viewAll": "View all",
+      "empty": "No controller events yet.",
+      "noAccess": "Controller events are not available for your role.",
+      "raised": "{fault} at pole {pole}",
+      "fixed": "Fixed: {fault} at pole {pole}"
     }
   },
   "WorkOrders": {
@@ -228,6 +272,13 @@
         "confirm": "Cancel work order",
         "keep": "Keep it"
       }
+    },
+    "summary": "Work orders at a glance",
+    "cards": {
+      "open": "Not yet resolved",
+      "overdue": "Past the repair deadline",
+      "pending": "Done, waiting for verification",
+      "resolved": "Fixed and verified"
     }
   },
   "Poles": {
@@ -553,7 +604,13 @@
       },
       "workOrder": "Work order",
       "resolve": "Mark handled",
-      "resolveFailed": "The alert could not be updated. Please try again."
+      "resolveFailed": "The alert could not be updated. Please try again.",
+      "summary": "Open alerts by severity",
+      "cards": {
+        "open": "Open alerts",
+        "openHint": "All severities",
+        "share": "{percent} of open alerts"
+      }
     },
     "schedules": {
       "title": "Lighting & schedules",
@@ -694,5 +751,18 @@
       "hint": "Point at or tab to a pole to see its details. Select it to open the pole.",
       "openHint": "select to open"
     }
+  },
+  "Shell": {
+    "search": "Search poles",
+    "searchPlaceholder": "Search poles by code, address or ward…",
+    "alerts": "Alerts",
+    "alertsOpen": "{count, plural, one {Alerts: # open alert} other {Alerts: # open alerts}}",
+    "openShort": "open",
+    "fullscreen": "Full screen",
+    "checking": "Checking…",
+    "systemOnline": "System online",
+    "systemDown": "Server not reachable",
+    "lastUpdate": "Last update {time}",
+    "live": "Live"
   }
 }

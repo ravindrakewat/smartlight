@@ -1,19 +1,28 @@
 'use client';
 
 import type { WorkOrderSummaryDto } from '@smart-light/shared';
-import { Alert, Card, EmptyState, PageHeader, Pagination, Skeleton, cn } from '@smart-light/ui';
+import { Alert, Card, EmptyState, KpiCard, Pagination, Skeleton, cn } from '@smart-light/ui';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { ClipboardCheck } from 'lucide-react';
+import {
+  CircleCheck,
+  ClipboardCheck,
+  ClipboardList,
+  Hourglass,
+  TriangleAlert,
+  Wrench,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
-import { Suspense } from 'react';
+import { useFormatter, useTranslations } from 'next-intl';
+import { Suspense, type ReactNode } from 'react';
 import {
   DeadlineLabel,
   PriorityBadge,
+  PRIORITY_TONES,
   useFaultLabel,
   WorkOrderStatusBadge,
 } from '@/components/labels';
+import { ConsoleHero } from '@/components/shell/ConsoleHero';
 import { api } from '@/lib/api';
 
 const FILTERS = {
@@ -26,10 +35,32 @@ const FILTERS = {
 type FilterKey = keyof typeof FILTERS;
 const PAGE_SIZE = 20;
 
+const PRIORITY_BORDER = {
+  danger: 'border-l-danger',
+  warning: 'border-l-brand',
+  info: 'border-l-primary',
+  success: 'border-l-success',
+  neutral: 'border-l-border',
+} as const;
+
+/** Number of work orders behind one filter, for the cards and tab counts. */
+function useFilterCount(filter: FilterKey) {
+  const { data } = useQuery({
+    queryKey: ['work-orders', 'count', filter],
+    queryFn: () =>
+      api.page<WorkOrderSummaryDto>('/v1/work-orders', {
+        query: { ...FILTERS[filter], pageSize: 1 },
+      }),
+    refetchInterval: 60_000,
+  });
+  return data?.pagination.totalItems;
+}
+
 function WorkOrdersView() {
   const t = useTranslations('WorkOrders');
   const tCommon = useTranslations('Common');
   const faultLabel = useFaultLabel();
+  const format = useFormatter();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -49,6 +80,27 @@ function WorkOrdersView() {
     refetchInterval: 60_000,
   });
 
+  const counts: Record<FilterKey, number | undefined> = {
+    open: useFilterCount('open'),
+    overdue: useFilterCount('overdue'),
+    pending: useFilterCount('pending'),
+    resolved: useFilterCount('resolved'),
+    all: useFilterCount('all'),
+  };
+  const number = (value: number | undefined) => (value === undefined ? '—' : format.number(value));
+  const shareOfAll = (value: number | undefined) =>
+    value !== undefined && counts.all ? value / counts.all : null;
+  const cards: {
+    key: Exclude<FilterKey, 'all'>;
+    icon: ReactNode;
+    tone: 'info' | 'danger' | 'warning' | 'success';
+  }[] = [
+    { key: 'open', icon: <ClipboardList />, tone: 'info' },
+    { key: 'overdue', icon: <TriangleAlert />, tone: 'danger' },
+    { key: 'pending', icon: <Hourglass />, tone: 'warning' },
+    { key: 'resolved', icon: <CircleCheck />, tone: 'success' },
+  ];
+
   function navigate(next: { filter?: FilterKey; page?: number }) {
     const params = new URLSearchParams(searchParams);
     if (next.filter) {
@@ -63,7 +115,23 @@ function WorkOrdersView() {
 
   return (
     <>
-      <PageHeader title={t('title')} description={t('description')} />
+      <ConsoleHero title={t('title')} description={t('description')} icon={<Wrench />} />
+
+      <section aria-label={t('summary')} className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {cards.map((card) => (
+          <KpiCard
+            key={card.key}
+            label={t(`filters.${card.key}`)}
+            value={number(counts[card.key])}
+            hint={t(`cards.${card.key}`)}
+            share={card.key === 'open' ? null : shareOfAll(counts[card.key])}
+            icon={card.icon}
+            tone={card.tone}
+            pressed={filter === card.key}
+            onClick={() => navigate({ filter: card.key })}
+          />
+        ))}
+      </section>
 
       <div role="tablist" aria-label={t('filters.label')} className="mb-4 flex flex-wrap gap-2">
         {(Object.keys(FILTERS) as FilterKey[]).map((key) => (
@@ -81,6 +149,9 @@ function WorkOrdersView() {
             )}
           >
             {t(`filters.${key}`)}
+            {counts[key] !== undefined ? (
+              <span className="ml-1.5 tabular-nums opacity-80">({number(counts[key])})</span>
+            ) : null}
           </button>
         ))}
       </div>
@@ -130,8 +201,14 @@ function WorkOrdersView() {
               </thead>
               <tbody className="divide-y divide-border">
                 {data.items.map((workOrder) => (
-                  <tr key={workOrder.id} className="hover:bg-surface-subtle/50">
-                    <th scope="row" className="px-5 py-3 font-medium">
+                  <tr
+                    key={workOrder.id}
+                    className={cn(
+                      'border-l-4 hover:bg-surface-subtle/50',
+                      PRIORITY_BORDER[PRIORITY_TONES[workOrder.priority]],
+                    )}
+                  >
+                    <th scope="row" className="py-3 pr-3 pl-4 font-medium">
                       <Link
                         href={`/work-orders/${workOrder.id}`}
                         className="text-primary hover:underline"
@@ -146,9 +223,11 @@ function WorkOrdersView() {
                     </th>
                     <td className="px-3 py-3">
                       <span className="font-mono">{workOrder.pole.code}</span>
-                      {workOrder.pole.zoneName ? (
-                        <span className="block text-xs text-muted-foreground">
-                          {workOrder.pole.zoneName}
+                      {workOrder.pole.zoneName || workOrder.pole.address ? (
+                        <span className="block max-w-[14rem] truncate text-xs text-muted-foreground">
+                          {[workOrder.pole.zoneName, workOrder.pole.address]
+                            .filter(Boolean)
+                            .join(' · ')}
                         </span>
                       ) : null}
                     </td>

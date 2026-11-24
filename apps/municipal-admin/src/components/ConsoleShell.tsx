@@ -15,6 +15,13 @@ import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { UserMenu } from './Session';
+import {
+  AlertsBell,
+  AlertsNavBadge,
+  FullscreenButton,
+  HeaderSearch,
+  SystemStatus,
+} from './shell/ShellWidgets';
 
 export async function ConsoleShell({ children }: { children: ReactNode }) {
   const t = await getTranslations();
@@ -24,7 +31,7 @@ export async function ConsoleShell({ children }: { children: ReactNode }) {
     { href: '/map', label: t('Nav.map'), icon: <MapIcon /> },
     { href: '/streets', label: t('Nav.streets'), icon: <LampWallDown /> },
     { href: '/poles', label: t('Nav.assets'), icon: <Lightbulb /> },
-    { href: '/alerts', label: t('Nav.alerts'), icon: <Bell /> },
+    { href: '/alerts', label: t('Nav.alerts'), icon: <Bell />, badge: <AlertsNavBadge /> },
     { href: '/work-orders', label: t('Nav.workOrders'), icon: <ClipboardList /> },
     { href: '/schedules', label: t('Nav.schedules'), icon: <CalendarClock /> },
     { href: '/reports', label: t('Nav.reports'), icon: <FileBarChart /> },
@@ -43,12 +50,16 @@ export async function ConsoleShell({ children }: { children: ReactNode }) {
         closeMenu: t('Common.closeMenu'),
         skipToContent: t('Common.skipToContent'),
       }}
+      headerStart={<HeaderSearch />}
       headerActions={
         <>
+          <AlertsBell />
+          <FullscreenButton />
           <LocaleSwitcher />
           <UserMenu />
         </>
       }
+      sidebarFooter={<SystemStatus />}
     >
       {children}
     </AppShell>

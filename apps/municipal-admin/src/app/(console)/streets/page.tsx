@@ -1,19 +1,9 @@
 'use client';
 
 import type { LightStatusName, PoleMapItemDto, ZoneDto } from '@smart-light/shared';
-import {
-  Alert,
-  Button,
-  cn,
-  Field,
-  Input,
-  PageHeader,
-  Select,
-  Skeleton,
-  StreetPole,
-} from '@smart-light/ui';
+import { Alert, Button, cn, Field, Input, Select, Skeleton, StreetPole } from '@smart-light/ui';
 import { useQuery } from '@tanstack/react-query';
-import { Map as MapIcon, RotateCcw, TriangleAlert } from 'lucide-react';
+import { Map as MapIcon, RotateCcw, TriangleAlert, LampWallDown } from 'lucide-react';
 import Link from 'next/link';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
@@ -24,6 +14,7 @@ import {
   ZoneStreet,
 } from '@/components/lighting/ZoneStreet';
 import { api } from '@/lib/api';
+import { ConsoleHero } from '@/components/shell/ConsoleHero';
 
 const PROBLEMS: LightStatusName[] = ['FAULT', 'OFFLINE'];
 
@@ -102,7 +93,8 @@ export default function StreetViewPage() {
 
   return (
     <>
-      <PageHeader
+      <ConsoleHero
+        icon={<LampWallDown />}
         title={t('title')}
         description={t('description')}
         actions={

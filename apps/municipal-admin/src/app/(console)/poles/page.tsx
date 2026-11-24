@@ -7,26 +7,27 @@ import {
   Card,
   EmptyState,
   Input,
-  PageHeader,
   Pagination,
   Select,
   Skeleton,
 } from '@smart-light/ui';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { FileUp, Printer, Search } from 'lucide-react';
+import { FileUp, Printer, Search, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
-import { useEffect, useId, useState } from 'react';
+import { Suspense, useEffect, useId, useState } from 'react';
 import { LightStatusLabel } from '@/components/labels';
 import { LiveRoad } from '@/components/lighting/LiveRoad';
 import { useSessionUser } from '@/components/Session';
 import { api } from '@/lib/api';
+import { ConsoleHero } from '@/components/shell/ConsoleHero';
 
 const PAGE_SIZE = 25;
 /** Mirrors the API's asset-editor roles; the API still enforces them. */
 const ASSET_EDITORS = new Set(['SUPER_ADMIN', 'MUNICIPAL_ADMIN', 'SUPERVISOR']);
 
-export default function PolesPage() {
+function PolesView() {
   const t = useTranslations('Poles');
   const tCommon = useTranslations('Common');
   const tLight = useTranslations('LightStatus');
@@ -35,8 +36,15 @@ export default function PolesPage() {
   const searchId = useId();
   const statusId = useId();
 
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get('search') ?? '';
+  const [search, setSearch] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch.trim());
+
+  // A new search from the top bar while this page is open.
+  useEffect(() => {
+    setSearch(initialSearch);
+  }, [initialSearch]);
   const [status, setStatus] = useState<LightStatusName | ''>('');
   const [page, setPage] = useState(1);
 
@@ -59,7 +67,8 @@ export default function PolesPage() {
 
   return (
     <>
-      <PageHeader
+      <ConsoleHero
+        icon={<Lightbulb />}
         title={t('title')}
         description={t('description')}
         actions={
@@ -226,5 +235,13 @@ export default function PolesPage() {
         />
       ) : null}
     </>
+  );
+}
+
+export default function PolesPage() {
+  return (
+    <Suspense fallback={<Skeleton className="h-96" />}>
+      <PolesView />
+    </Suspense>
   );
 }

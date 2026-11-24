@@ -8,12 +8,13 @@ import {
   CardHeader,
   CardTitle,
   ChangePasswordForm,
-  PageHeader,
 } from '@smart-light/ui';
+import { Settings as SettingsIcon } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { useSessionUser } from '@/components/Session';
 import { api } from '@/lib/api';
+import { ConsoleHero } from '@/components/shell/ConsoleHero';
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -53,7 +54,7 @@ export default function SettingsPage() {
 
   return (
     <>
-      <PageHeader title={t('title')} description={t('description')} />
+      <ConsoleHero icon={<SettingsIcon />} title={t('title')} description={t('description')} />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>

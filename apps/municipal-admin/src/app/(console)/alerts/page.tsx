@@ -6,24 +6,47 @@ import {
   Badge,
   Button,
   Card,
+  cn,
   EmptyState,
-  PageHeader,
+  KpiCard,
   Pagination,
   Select,
   Skeleton,
 } from '@smart-light/ui';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BellOff } from 'lucide-react';
+import { Bell, BellOff, CircleAlert, Info, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import { useId, useState } from 'react';
 import { useFaultLabel } from '@/components/labels';
 import { useSessionUser } from '@/components/Session';
+import { ConsoleHero } from '@/components/shell/ConsoleHero';
 import { api } from '@/lib/api';
 
 const PAGE_SIZE = 25;
 const RESOLVERS = new Set(['SUPER_ADMIN', 'MUNICIPAL_ADMIN', 'SUPERVISOR', 'OPERATOR']);
 const SEVERITY_TONE = { critical: 'danger', warning: 'warning', info: 'info' } as const;
+const SEVERITIES = ['critical', 'warning', 'info'] as const;
+const SEVERITY_BORDER = {
+  critical: 'border-l-danger',
+  warning: 'border-l-brand',
+  info: 'border-l-primary',
+} as const;
+const SEVERITY_ICON_CLASS = {
+  critical: 'text-danger',
+  warning: 'text-warning',
+  info: 'text-info',
+} as const;
+
+/** Open alerts of one severity (or all), for the summary cards. */
+function useOpenCount(severity: '' | DeviceEventDto['severity']) {
+  const { data } = useQuery({
+    queryKey: ['alerts', 'open-count', severity],
+    queryFn: () => api.page<DeviceEventDto>('/v1/alerts', { query: { severity, pageSize: 1 } }),
+    refetchInterval: 30_000,
+  });
+  return data?.pagination.totalItems;
+}
 
 export default function AlertsPage() {
   const t = useTranslations('Lighting.alerts');
@@ -34,7 +57,6 @@ export default function AlertsPage() {
   const user = useSessionUser();
   const queryClient = useQueryClient();
   const showId = useId();
-  const severityId = useId();
 
   const [open, setOpen] = useState(true);
   const [severity, setSeverity] = useState<'' | DeviceEventDto['severity']>('');
@@ -50,6 +72,23 @@ export default function AlertsPage() {
     refetchInterval: 30_000,
   });
 
+  const totals = {
+    all: useOpenCount(''),
+    critical: useOpenCount('critical'),
+    warning: useOpenCount('warning'),
+    info: useOpenCount('info'),
+  };
+  const shareOf = (value: number | undefined) =>
+    value !== undefined && totals.all ? value / totals.all : null;
+  const percent = (value: number | null) =>
+    value === null
+      ? undefined
+      : format.number(value, { style: 'percent', maximumFractionDigits: 1 });
+  const chooseSeverity = (next: '' | DeviceEventDto['severity']) => {
+    setSeverity((current) => (current === next ? '' : next));
+    setPage(1);
+  };
+
   const resolve = useMutation({
     mutationFn: (id: string) => api.request(`/v1/alerts/${id}/resolve`, { method: 'POST' }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['alerts'] }),
@@ -57,21 +96,48 @@ export default function AlertsPage() {
 
   return (
     <>
-      <PageHeader
-        title={t('title')}
-        description={t('description')}
-        actions={
-          alerts.data ? (
-            <span className="text-sm text-muted-foreground">
-              {t('total', { count: alerts.data.pagination.totalItems })}
-            </span>
-          ) : null
-        }
-      />
+      <ConsoleHero title={t('title')} description={t('description')} icon={<Bell />} />
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:max-w-xl">
-        <div>
-          <label htmlFor={showId} className="sr-only">
+      <section aria-label={t('summary')} className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          label={t('cards.open')}
+          value={totals.all === undefined ? '—' : format.number(totals.all)}
+          hint={t('cards.openHint')}
+          icon={<Bell />}
+          tone="info"
+          pressed={severity === ''}
+          onClick={() => chooseSeverity('')}
+        />
+        {SEVERITIES.map((value) => (
+          <KpiCard
+            key={value}
+            label={t(`severities.${value}`)}
+            value={totals[value] === undefined ? '—' : format.number(totals[value])}
+            hint={
+              percent(shareOf(totals[value]))
+                ? t('cards.share', { percent: percent(shareOf(totals[value])) ?? '' })
+                : undefined
+            }
+            share={shareOf(totals[value])}
+            icon={
+              value === 'critical' ? (
+                <TriangleAlert />
+              ) : value === 'warning' ? (
+                <CircleAlert />
+              ) : (
+                <Info />
+              )
+            }
+            tone={SEVERITY_TONE[value]}
+            pressed={severity === value}
+            onClick={() => chooseSeverity(value)}
+          />
+        ))}
+      </section>
+
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div className="w-full sm:w-64">
+          <label htmlFor={showId} className="mb-1 block text-sm font-medium">
             {t('show')}
           </label>
           <Select
@@ -86,23 +152,11 @@ export default function AlertsPage() {
             <option value="all">{t('all')}</option>
           </Select>
         </div>
-        <div>
-          <label htmlFor={severityId} className="sr-only">
-            {t('severity')}
-          </label>
-          <Select
-            id={severityId}
-            value={severity}
-            onChange={(event) => {
-              setSeverity(event.target.value as '' | DeviceEventDto['severity']);
-              setPage(1);
-            }}
-          >
-            <option value="">{t('allSeverities')}</option>
-            <option value="critical">{t('severities.critical')}</option>
-            <option value="warning">{t('severities.warning')}</option>
-          </Select>
-        </div>
+        {alerts.data ? (
+          <p className="text-sm text-muted-foreground" aria-live="polite">
+            {t('total', { count: alerts.data.pagination.totalItems })}
+          </p>
+        ) : null}
       </div>
 
       {alerts.error ? (
@@ -147,9 +201,32 @@ export default function AlertsPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {alerts.data.items.map((alert) => (
-                  <tr key={alert.id} className="hover:bg-surface-subtle/50">
-                    <th scope="row" className="px-5 py-3 font-normal">
+                  <tr
+                    key={alert.id}
+                    className={cn(
+                      'border-l-4 hover:bg-surface-subtle/50',
+                      alert.resolvedAt ? 'border-l-border' : SEVERITY_BORDER[alert.severity],
+                    )}
+                  >
+                    <th scope="row" className="py-3 pr-3 pl-4 font-normal">
                       <span className="flex flex-wrap items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            '[&_svg]:size-5',
+                            alert.resolvedAt
+                              ? 'text-muted-foreground'
+                              : SEVERITY_ICON_CLASS[alert.severity],
+                          )}
+                        >
+                          {alert.severity === 'critical' ? (
+                            <TriangleAlert />
+                          ) : alert.severity === 'warning' ? (
+                            <CircleAlert />
+                          ) : (
+                            <Info />
+                          )}
+                        </span>
                         <span className="font-medium">{faultLabel(alert.type)}</span>
                         <Badge tone={SEVERITY_TONE[alert.severity]}>
                           {t(`severities.${alert.severity}`)}
