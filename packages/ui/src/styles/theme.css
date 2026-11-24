@@ -60,6 +60,17 @@
   --color-lamp-off: var(--sl-lamp-off);
   --color-night-danger: var(--sl-night-danger);
   --color-night-warning: var(--sl-night-warning);
+  --color-night-accent: var(--sl-night-accent);
+
+  /* Console sidebar: deep navy in both themes. */
+  --color-sidebar: var(--sl-sidebar);
+  --color-sidebar-soft: var(--sl-sidebar-soft);
+  --color-sidebar-foreground: var(--sl-sidebar-foreground);
+  --color-sidebar-muted: var(--sl-sidebar-muted);
+
+  /* Chart series (validated for colour-vision deficiency in both themes). */
+  --color-chart-1: var(--sl-chart-1);
+  --color-chart-2: var(--sl-chart-2);
 }
 
 :root {
@@ -104,6 +115,15 @@
   --sl-lamp-off: #3b4660;
   --sl-night-danger: #f87171;
   --sl-night-warning: #fb923c;
+  --sl-night-accent: #7cb3ff;
+
+  --sl-sidebar: #0b1a3d;
+  --sl-sidebar-soft: #152a57;
+  --sl-sidebar-foreground: #eef3fb;
+  --sl-sidebar-muted: #b4c2db;
+
+  --sl-chart-1: #2563eb;
+  --sl-chart-2: #d97706;
 }
 
 /* Screen only: printouts (QR plates, reports) always use the light palette. */
@@ -137,6 +157,12 @@
     --sl-info-subtle: #172544;
     --sl-neutral: #a3afc2;
     --sl-neutral-subtle: #1b2434;
+
+    --sl-sidebar: #070f24;
+    --sl-sidebar-soft: #12203f;
+
+    --sl-chart-1: #5b8cf5;
+    --sl-chart-2: #b87a12;
   }
 }
 
@@ -224,5 +250,16 @@
   }
   to {
     left: -4rem;
+  }
+}
+
+/* Slow drift of the hero banner's light pools (only with motion allowed). */
+@keyframes sl-hero-pulse {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
   }
 }
