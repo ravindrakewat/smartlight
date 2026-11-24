@@ -35,6 +35,9 @@ export default async function setup(): Promise<() => Promise<void>> {
     port,
     persistent: false,
     initdbFlags: ['--encoding=UTF8', '--locale=C'],
+    // UTC sessions like the hosted database; the OS zone (e.g. IST) would shift every
+    // timestamp Prisma writes, because it sends them without an offset.
+    postgresFlags: ['-c', 'timezone=UTC'],
     onLog: () => {},
   });
   await pg.initialise();

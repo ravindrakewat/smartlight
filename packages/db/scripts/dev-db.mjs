@@ -26,6 +26,9 @@ const pg = new EmbeddedPostgres({
   persistent: true,
   // UTF-8 regardless of the OS locale (Windows defaults to WIN1252, which cannot store Hindi).
   initdbFlags: ['--encoding=UTF8', '--locale=C'],
+  // UTC sessions like the hosted database; the OS zone (e.g. IST) would shift every
+  // timestamp Prisma writes, because it sends them without an offset.
+  postgresFlags: ['-c', 'timezone=UTC'],
   onLog: () => {},
 });
 
