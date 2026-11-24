@@ -1,10 +1,14 @@
 /**
  * Dashboard: live counts for the municipal control centre.
  */
-import type { LightStatus } from '@smart-light/db';
+import { Prisma, type LightStatus } from '@smart-light/db';
 import {
+  dashboardActivityQuerySchema,
+  dashboardActivitySchema,
   dashboardSummarySchema,
   successEnvelope,
+  type DashboardActivityDto,
+  type DashboardRange,
   type DashboardSummaryDto,
 } from '@smart-light/shared';
 import { Router, type Request, type Response } from 'express';
@@ -70,6 +74,79 @@ const dashboardService = {
   },
 };
 
+const RANGES: Record<DashboardRange, { bucket: 'hour' | 'day'; steps: number }> = {
+  '24h': { bucket: 'hour', steps: 24 },
+  '7d': { bucket: 'day', steps: 7 },
+  '30d': { bucket: 'day', steps: 30 },
+};
+
+interface ActivityRow {
+  at: Date;
+  reporting: number;
+  lit: number;
+  faults: number;
+}
+
+const activityService = {
+  /** Buckets in the city's time zone, oldest first, including empty ones. */
+  async activity(tenantId: string, range: DashboardRange): Promise<DashboardActivityDto> {
+    const { bucket, steps } = RANGES[range];
+    const tenant = await prisma.tenant.findUniqueOrThrow({
+      where: { id: tenantId },
+      select: { timezone: true },
+    });
+    const zone = tenant.timezone;
+    const unit = Prisma.raw(`'${bucket}'`);
+    const step = Prisma.raw(`interval '1 ${bucket}'`);
+    const span = Prisma.raw(`interval '${steps - 1} ${bucket}'`);
+    const rows = await prisma.$queryRaw<ActivityRow[]>`
+      WITH series AS (
+        SELECT generate_series(
+          date_trunc(${unit}, now() AT TIME ZONE ${zone}) - ${span},
+          date_trunc(${unit}, now() AT TIME ZONE ${zone}),
+          ${step}
+        ) AS local_at
+      ),
+      readings AS (
+        SELECT date_trunc(${unit}, r."receivedAt" AT TIME ZONE ${zone}) AS local_at,
+               count(DISTINCT r."deviceId")::int AS reporting,
+               count(DISTINCT r."deviceId") FILTER (WHERE r."lampOn")::int AS lit
+        FROM "device_readings" r
+        WHERE r."tenantId" = ${tenantId}::uuid
+          AND r."receivedAt" >= (SELECT min(local_at) FROM series) AT TIME ZONE ${zone}
+        GROUP BY 1
+      ),
+      faults AS (
+        SELECT date_trunc(${unit}, e."receivedAt" AT TIME ZONE ${zone}) AS local_at,
+               count(*)::int AS faults
+        FROM "device_events" e
+        WHERE e."tenantId" = ${tenantId}::uuid
+          AND e."severity" IN ('warning', 'critical')
+          AND e."type" NOT IN ('boot', 'fault_cleared')
+          AND e."receivedAt" >= (SELECT min(local_at) FROM series) AT TIME ZONE ${zone}
+        GROUP BY 1
+      )
+      SELECT s.local_at AT TIME ZONE ${zone} AS at,
+             coalesce(r.reporting, 0) AS reporting,
+             coalesce(r.lit, 0) AS lit,
+             coalesce(f.faults, 0) AS faults
+      FROM series s
+      LEFT JOIN readings r ON r.local_at = s.local_at
+      LEFT JOIN faults f ON f.local_at = s.local_at
+      ORDER BY s.local_at`;
+    return {
+      range,
+      bucket,
+      points: rows.map((row) => ({
+        at: row.at.toISOString(),
+        reporting: row.reporting,
+        lit: row.lit,
+        faults: row.faults,
+      })),
+    };
+  },
+};
+
 // ── Controller & routes ──
 const tenantQuery = z.object({ tenantId: z.uuid().optional() });
 
@@ -94,5 +171,32 @@ registry.registerPath({
   responses: {
     200: { description: 'Summary', content: jsonContent(successEnvelope(dashboardSummarySchema)) },
     ...errorResponses(401, 403),
+  },
+});
+
+dashboardRouter.get(
+  '/activity',
+  authenticate,
+  requireRoles(...ROLE_GROUPS.tenantManagers, 'AGENCY_MANAGER'),
+  async (req: Request, res: Response) => {
+    const query = dashboardActivityQuerySchema.parse(req.query);
+    const tenantId = requireTenantId(getAuth(res), query.tenantId);
+    sendData(res, await activityService.activity(tenantId, query.range));
+  },
+);
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/dashboard/activity',
+  tags: ['Dashboard'],
+  summary: 'Controllers reporting, lamps lit and new faults over time',
+  security: AUTHENTICATED,
+  request: { query: dashboardActivityQuerySchema },
+  responses: {
+    200: {
+      description: 'History',
+      content: jsonContent(successEnvelope(dashboardActivitySchema)),
+    },
+    ...errorResponses(400, 401, 403),
   },
 });

@@ -456,4 +456,57 @@ describe('device commissioning and dashboard', () => {
     });
     expect(response.body.data.zones[0]).toMatchObject({ code: 'Z01', total: 2, fault: 1 });
   });
+
+  it('returns controller history in buckets, newest last', async () => {
+    const city = await setupCity();
+    const pole = await createPole(city.auth, { zoneId: city.zone.id });
+    const device = await prisma.device.create({
+      data: { tenantId: city.tenant.id, deviceId: `sl-${uniqueSuffix()}`, poleId: pole.id },
+    });
+    const reading = {
+      deviceId: device.id,
+      tenantId: city.tenant.id,
+      deviceTs: 0,
+      dimPercent: 100,
+      mode: 'auto',
+      voltageV: 230,
+      currentA: 0.4,
+      powerW: 90,
+      energyWh: 10,
+      rssiDbm: -70,
+    };
+    await prisma.deviceReading.createMany({
+      data: [
+        { ...reading, lampOn: true },
+        { ...reading, lampOn: false },
+      ],
+    });
+    await prisma.deviceEvent.create({
+      data: {
+        tenantId: city.tenant.id,
+        deviceId: device.id,
+        poleId: pole.id,
+        type: 'lamp_failure',
+        severity: 'critical',
+        deviceTs: 0,
+      },
+    });
+
+    const daily = await request(app).get('/api/v1/dashboard/activity').set(city.auth);
+    expect(daily.status).toBe(200);
+    expect(daily.body.data).toMatchObject({ range: '7d', bucket: 'day' });
+    expect(daily.body.data.points).toHaveLength(7);
+    expect(daily.body.data.points.at(-1)).toMatchObject({ reporting: 1, lit: 1, faults: 1 });
+    expect(daily.body.data.points[0]).toMatchObject({ reporting: 0, lit: 0, faults: 0 });
+
+    const hourly = await request(app).get('/api/v1/dashboard/activity?range=24h').set(city.auth);
+    expect(hourly.body.data.points).toHaveLength(24);
+    expect(hourly.body.data.points.at(-1)).toMatchObject({ reporting: 1, lit: 1, faults: 1 });
+
+    const other = await setupCity();
+    const isolated = await request(app).get('/api/v1/dashboard/activity').set(other.auth);
+    expect(
+      isolated.body.data.points.every((point: { reporting: number }) => point.reporting === 0),
+    ).toBe(true);
+  });
 });

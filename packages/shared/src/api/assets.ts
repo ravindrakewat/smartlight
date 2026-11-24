@@ -192,3 +192,37 @@ export const dashboardSummarySchema = z
   .meta({ id: 'DashboardSummary' });
 
 export type DashboardSummaryDto = z.infer<typeof dashboardSummarySchema>;
+
+/** Time windows for the dashboard history chart. */
+export const DASHBOARD_RANGES = ['24h', '7d', '30d'] as const;
+export type DashboardRange = (typeof DASHBOARD_RANGES)[number];
+
+export const dashboardActivityQuerySchema = z.object({
+  range: z.enum(DASHBOARD_RANGES).default('7d'),
+  tenantId: z.uuid().optional(),
+});
+
+/**
+ * Controller history in hourly (24h) or daily (7d, 30d) buckets, in the city's time
+ * zone. Counts are distinct controllers that reported in the bucket.
+ */
+export const dashboardActivitySchema = z
+  .object({
+    range: z.enum(DASHBOARD_RANGES),
+    bucket: z.enum(['hour', 'day']),
+    points: z.array(
+      z.object({
+        /** Start of the bucket. */
+        at: z.iso.datetime(),
+        /** Controllers that sent at least one reading. */
+        reporting: z.number().int(),
+        /** Controllers that reported their lamp on at least once. */
+        lit: z.number().int(),
+        /** New warning or critical faults raised by controllers. */
+        faults: z.number().int(),
+      }),
+    ),
+  })
+  .meta({ id: 'DashboardActivity' });
+
+export type DashboardActivityDto = z.infer<typeof dashboardActivitySchema>;
