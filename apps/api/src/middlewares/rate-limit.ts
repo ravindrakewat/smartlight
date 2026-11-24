@@ -7,13 +7,18 @@ import { requestIdOf } from '../lib/http';
  * In-memory rate limiters (one API instance). Move to a Redis store when the API
  * is scaled to multiple instances.
  */
-function createLimiter(windowMinutes: number, limit: number) {
+export function createLimiter(
+  windowMinutes: number,
+  limit: number,
+  options: { enforceInTests?: boolean } = {},
+) {
   return rateLimit({
     windowMs: windowMinutes * 60 * 1000,
     limit,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
-    skip: () => env.NODE_ENV === 'test',
+    // Off in the automated suite (hundreds of logins); rate-limit.test.ts enforces it explicitly.
+    skip: () => env.NODE_ENV === 'test' && !options.enforceInTests,
     handler: (_req, res) => {
       const payload: ApiErrorResponse = {
         success: false,
