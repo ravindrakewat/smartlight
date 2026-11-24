@@ -1,6 +1,6 @@
 'use client';
 
-import type { HealthCheckData, TenantDto } from '@smart-light/shared';
+import type { AuditEntryDto, HealthCheckData, TenantDto } from '@smart-light/shared';
 import {
   Alert,
   Button,
@@ -16,10 +16,11 @@ import {
   StatusIndicator,
 } from '@smart-light/ui';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, Cpu, Lightbulb, Plus, Wifi } from 'lucide-react';
+import { Building2, Lightbulb, Plus, TriangleAlert, Wifi } from 'lucide-react';
 import Link from 'next/link';
 import { useFormatter, useTranslations } from 'next-intl';
-import { TenantsTable } from '@/components/TenantsTable';
+import { CityCard } from '@/components/CityCard';
+import { RecentActivity } from '@/components/RecentActivity';
 import { api } from '@/lib/api';
 
 export default function OverviewPage() {
@@ -30,6 +31,11 @@ export default function OverviewPage() {
   const tenants = useQuery({
     queryKey: ['tenants'],
     queryFn: () => api.request<TenantDto[]>('/v1/tenants'),
+    refetchInterval: 60_000,
+  });
+  const activity = useQuery({
+    queryKey: ['audit', 'recent'],
+    queryFn: () => api.page<AuditEntryDto>('/v1/audit', { query: { page: 1, pageSize: 6 } }),
     refetchInterval: 60_000,
   });
   const health = useQuery({
@@ -44,8 +50,18 @@ export default function OverviewPage() {
       devices: sum.devices + tenant.stats.devices,
       online: sum.online + tenant.stats.devicesOnline,
       poles: sum.poles + tenant.stats.poles,
+      problems:
+        sum.problems + (tenant.stats.lights?.FAULT ?? 0) + (tenant.stats.lights?.OFFLINE ?? 0),
     }),
-    { devices: 0, online: 0, poles: 0 },
+    { devices: 0, online: 0, poles: 0, problems: 0 },
+  );
+  // Cities with the most lights needing repair first.
+  const cities = [...(tenants.data ?? [])].sort(
+    (a, b) =>
+      (b.stats.lights?.FAULT ?? 0) +
+        (b.stats.lights?.OFFLINE ?? 0) -
+        ((a.stats.lights?.FAULT ?? 0) + (a.stats.lights?.OFFLINE ?? 0)) ||
+      b.stats.poles - a.stats.poles,
   );
 
   const apiUp = health.isSuccess;
@@ -102,14 +118,10 @@ export default function OverviewPage() {
               icon={<Lightbulb />}
             />
             <StatCard
-              label={t('stats.devices')}
-              value={format.number(totals.devices)}
-              icon={<Cpu />}
-            />
-            <StatCard
               label={t('stats.online')}
               value={format.number(totals.online)}
               hint={t('stats.onlineHint', {
+                total: format.number(totals.devices),
                 percent: format.number(totals.devices ? totals.online / totals.devices : 0, {
                   style: 'percent',
                   maximumFractionDigits: 1,
@@ -118,33 +130,70 @@ export default function OverviewPage() {
               icon={<Wifi />}
               tone="success"
             />
+            <StatCard
+              label={t('stats.problems')}
+              value={format.number(totals.problems)}
+              hint={t('stats.problemsHint')}
+              icon={<TriangleAlert />}
+              tone={totals.problems > 0 ? 'danger' : 'success'}
+            />
           </>
         ) : (
           Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-[7.5rem]" />)
         )}
       </section>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-3">
+      <section aria-labelledby="cities-heading" className="mt-8">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 id="cities-heading" className="text-lg font-semibold">
+              {t('tenants.title')}
+            </h2>
+            <p className="text-sm text-muted-foreground">{t('tenants.description')}</p>
+          </div>
+          <Link href="/municipalities" className="text-sm font-medium text-primary hover:underline">
+            {t('tenants.manage')}
+          </Link>
+        </div>
+        {tenants.data ? (
+          cities.length === 0 ? (
+            <EmptyState icon={<Building2 />} title={t('tenants.empty')} />
+          ) : (
+            <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
+              {cities.map((tenant) => (
+                <CityCard key={tenant.id} tenant={tenant} />
+              ))}
+            </div>
+          )
+        ) : (
+          <div className="grid gap-5 md:grid-cols-2">
+            <Skeleton className="h-80" />
+            <Skeleton className="h-80" />
+          </div>
+        )}
+      </section>
+
+      <div className="mt-8 grid gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">
           <CardHeader>
             <div>
-              <CardTitle>{t('tenants.title')}</CardTitle>
-              <CardDescription>{t('tenants.description')}</CardDescription>
+              <CardTitle>{t('activity.title')}</CardTitle>
+              <CardDescription>{t('activity.description')}</CardDescription>
             </div>
+            <Link href="/audit" className="text-sm font-medium text-primary hover:underline">
+              {t('activity.all')}
+            </Link>
           </CardHeader>
           <CardContent>
-            {tenants.data ? (
-              tenants.data.length === 0 ? (
-                <EmptyState icon={<Building2 />} title={t('tenants.empty')} />
-              ) : (
-                <TenantsTable tenants={tenants.data} />
-              )
+            {activity.data ? (
+              <RecentActivity entries={activity.data.items} />
+            ) : activity.error ? (
+              <p className="text-sm text-muted-foreground">{tCommon('errorBody')}</p>
             ) : (
-              <Skeleton className="h-40" />
+              <Skeleton className="h-48" />
             )}
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <div>

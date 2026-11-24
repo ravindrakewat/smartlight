@@ -75,18 +75,21 @@
       "devices": "Controllers",
       "online": "Online now",
       "poles": "Poles",
-      "onlineHint": "{percent} of all controllers"
+      "onlineHint": "{percent} of {total} controllers",
+      "problems": "Lights needing repair",
+      "problemsHint": "Faulty lamps and offline controllers"
     },
     "tenants": {
       "title": "Municipalities",
-      "description": "Tenants, their fleet size and controller connectivity.",
+      "description": "Each city as a street at night. Cities with the most problems come first.",
       "name": "Municipality",
       "devices": "Controllers",
       "online": "Online",
       "users": "Staff",
       "status": "Status",
       "onboard": "Onboard municipality",
-      "empty": "No municipalities yet."
+      "empty": "No municipalities yet.",
+      "manage": "Manage municipalities"
     },
     "health": {
       "title": "System health",
@@ -98,6 +101,19 @@
       "operational": "Operational",
       "down": "Not reachable",
       "notConnected": "Not connected yet"
+    },
+    "city": {
+      "health": "{percent} working",
+      "noPoles": "No poles yet",
+      "poles": "Poles",
+      "online": "Online",
+      "openJobs": "Open jobs",
+      "devicesLink": "Controllers in {city}"
+    },
+    "activity": {
+      "title": "Recent activity",
+      "description": "The latest changes across all cities.",
+      "all": "Full audit log"
     }
   },
   "Municipalities": {
@@ -169,6 +185,158 @@
       "weak": "The new password does not meet the rules, or is the same as the current one.",
       "tooMany": "Too many attempts. Please wait a few minutes.",
       "failed": "The password could not be changed. Please try again."
+    }
+  },
+  "LightStatus": {
+    "UNKNOWN": "No controller",
+    "ON": "On",
+    "DIMMED": "Dimmed",
+    "OFF": "Off",
+    "FAULT": "Fault",
+    "OFFLINE": "Offline"
+  },
+  "Devices": {
+    "title": "Devices",
+    "description": "Every street-light controller on the platform. Offline controllers are listed first.",
+    "summary": "Controller summary",
+    "stats": {
+      "total": "Controllers",
+      "online": "Online now",
+      "share": "{percent} of controllers",
+      "offline": "Offline",
+      "offlineHint": "No message from the controller recently"
+    },
+    "filters": {
+      "city": "Municipality",
+      "allCities": "All municipalities",
+      "connection": "Connection",
+      "any": "Online and offline",
+      "search": "Find a controller",
+      "searchPlaceholder": "Controller id or pole code"
+    },
+    "columns": {
+      "device": "Controller and pole",
+      "city": "Municipality",
+      "connection": "Connection",
+      "lamp": "Lamp",
+      "firmware": "Firmware",
+      "lastSeen": "Last message"
+    },
+    "online": "Online",
+    "offline": "Offline",
+    "lampOn": "On",
+    "lampOff": "Off",
+    "notOnPole": "Not fitted to a pole",
+    "never": "Never",
+    "empty": "No controller matches these filters.",
+    "modes": {
+      "auto": "schedule",
+      "manual": "manual",
+      "failsafe": "fail-safe"
+    }
+  },
+  "Audit": {
+    "title": "Audit log",
+    "description": "Every important action on the platform, newest first. Entries cannot be changed or deleted.",
+    "empty": "No entries match these filters.",
+    "platform": "Platform",
+    "filters": {
+      "city": "Municipality",
+      "allCities": "All municipalities and platform",
+      "category": "Type of action",
+      "allCategories": "All actions"
+    },
+    "columns": {
+      "time": "Time",
+      "action": "Action",
+      "actor": "Done by",
+      "city": "Municipality",
+      "entity": "Record",
+      "ip": "IP address"
+    },
+    "actorTypes": {
+      "USER": "Staff",
+      "CITIZEN": "Citizen",
+      "SYSTEM": "System",
+      "DEVICE": "Controller"
+    },
+    "categories": {
+      "auth": "Sign-in",
+      "tenant": "Municipality",
+      "user": "Staff account",
+      "agency": "Agency",
+      "zone": "Zone",
+      "pole": "Pole",
+      "device": "Controller",
+      "lighting": "Light control",
+      "schedule": "Schedule",
+      "work_order": "Work order",
+      "complaint": "Complaint",
+      "alert": "Alert",
+      "citizen": "Citizen",
+      "other": "Other"
+    }
+  },
+  "Users": {
+    "title": "Platform users",
+    "description": "Staff accounts of every municipality. Accounts are managed in each city's municipal console.",
+    "total": "{count, plural, one {# account} other {# accounts}}",
+    "empty": "No account matches these filters.",
+    "platform": "Platform",
+    "neverSignedIn": "Never signed in",
+    "filters": {
+      "city": "Municipality",
+      "allCities": "All municipalities",
+      "role": "Role",
+      "allRoles": "All roles",
+      "status": "Status",
+      "anyStatus": "Active and disabled",
+      "search": "Find a person",
+      "searchPlaceholder": "Name or e-mail"
+    },
+    "columns": {
+      "name": "Name",
+      "role": "Role",
+      "city": "Municipality",
+      "status": "Status",
+      "lastLogin": "Last sign-in"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "DISABLED": "Disabled"
+    }
+  },
+  "Health": {
+    "title": "System health",
+    "description": "Live status of the platform services and controller connectivity. Checked every 30 seconds.",
+    "checkNow": "Check now",
+    "checking": "Checking…",
+    "lastChecked": "Last checked at {time}",
+    "servicesHeading": "Services",
+    "operational": "Operational",
+    "down": "Not reachable",
+    "notConnected": "Not connected yet",
+    "services": {
+      "api": "Central API",
+      "database": "Database",
+      "broker": "MQTT broker",
+      "queue": "Job queue"
+    },
+    "apiDetail": "Version {version} · {environment} · running for {uptime}",
+    "apiDown": "The API did not answer. Check the Render service.",
+    "latency": "Answered in {ms} ms",
+    "brokerDetail": "Connects the controllers on the poles. Set up when the broker is chosen.",
+    "queueDetail": "Background jobs such as repair-deadline checks. Not set up yet.",
+    "uptime": {
+      "days": "{count, plural, one {# day} other {# days}}",
+      "hours": "{count, plural, one {# hour} other {# hours}}",
+      "minutes": "{count, plural, one {# minute} other {# minutes}}"
+    },
+    "fleet": {
+      "title": "Controllers online by municipality",
+      "description": "Share of controllers that sent a message recently.",
+      "noDevices": "No controllers yet",
+      "online": "{online} of {total} online ({percent})"
     }
   }
 }

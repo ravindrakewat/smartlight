@@ -7,11 +7,7 @@ import { getTranslations } from 'next-intl/server';
 
 /** Console sections that exist in the navigation but are not built yet. */
 const SECTIONS = {
-  devices: 'devices',
   firmware: 'firmware',
-  users: 'users',
-  audit: 'audit',
-  health: 'health',
 } as const;
 
 type SectionKey = (typeof SECTIONS)[keyof typeof SECTIONS];
