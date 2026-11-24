@@ -25,16 +25,16 @@ export default function AppLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.foreground,
-        headerTitleStyle: { fontWeight: '700' },
+        headerStyle: { backgroundColor: colors.navy },
+        headerTintColor: colors.onNavy,
+        headerTitleStyle: { fontWeight: '800' },
         contentStyle: { backgroundColor: colors.background },
       }}
     >
-      <Stack.Screen name="index" options={{ title: m.jobs.title }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="job/[id]" options={{ title: '' }} />
-      <Stack.Screen name="scan" options={{ title: m.scan.title }} />
-      <Stack.Screen name="profile" options={{ title: m.profile.title }} />
+      <Stack.Screen name="history" options={{ title: m.history.title }} />
+      <Stack.Screen name="password" options={{ title: m.profile.changePassword }} />
     </Stack>
   );
 }

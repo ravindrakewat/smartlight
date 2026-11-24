@@ -25,6 +25,14 @@ export const colors = {
   infoSubtle: '#e8efff',
   neutral: '#475569',
   neutralSubtle: '#eef2f6',
+  // Deep navy for headers and the tab bar (same as the web console sidebar).
+  navy: '#0b1a3d',
+  navySoft: '#152a57',
+  onNavy: '#eef3fb',
+  onNavyMuted: '#b4c2db',
+  navyAccent: '#7cb3ff',
+  lamp: '#fde68a',
+  lampCore: '#fbbf24',
 } as const;
 
 export type ToneName = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
@@ -38,5 +46,14 @@ export const tones: Record<ToneName, { fg: string; bg: string }> = {
 };
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
-export const radius = { sm: 8, md: 12, lg: 16, pill: 999 } as const;
+export const radius = { sm: 8, md: 12, lg: 16, xl: 22, pill: 999 } as const;
 export const MIN_TOUCH = 48;
+
+/** Soft card shadow (iOS/web) with matching Android elevation. */
+export const shadow = {
+  shadowColor: '#0b1a3d',
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 4 },
+  elevation: 3,
+} as const;
