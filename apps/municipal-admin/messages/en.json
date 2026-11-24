@@ -249,7 +249,14 @@
     "empty": "No poles match your search.",
     "total": "{count, plural, one {# pole} other {# poles}}",
     "printPlates": "Print QR plates",
-    "importPoles": "Import poles"
+    "importPoles": "Import poles",
+    "road": {
+      "title": "Live road · {zone}",
+      "updated": "Updates every 30 seconds · last at {time}",
+      "allStreets": "All streets",
+      "zones": "Choose a zone",
+      "problems": "{count, plural, one {# problem} other {# problems}}"
+    }
   },
   "PoleImport": {
     "title": "Import poles",

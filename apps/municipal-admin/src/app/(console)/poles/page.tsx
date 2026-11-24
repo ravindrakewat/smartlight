@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useEffect, useId, useState } from 'react';
 import { LightStatusLabel } from '@/components/labels';
+import { LiveRoad } from '@/components/lighting/LiveRoad';
 import { useSessionUser } from '@/components/Session';
 import { api } from '@/lib/api';
 
@@ -125,6 +126,8 @@ export default function PolesPage() {
           </Select>
         </div>
       </div>
+
+      <LiveRoad statusFilter={status} />
 
       {error ? (
         <Alert tone="danger" title={tCommon('errorTitle')}>

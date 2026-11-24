@@ -207,3 +207,22 @@
     opacity: 0.35;
   }
 }
+
+/* Cars driving along the live road (only with motion allowed). */
+@keyframes sl-car-right {
+  from {
+    left: -4rem;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@keyframes sl-car-left {
+  from {
+    left: 100%;
+  }
+  to {
+    left: -4rem;
+  }
+}

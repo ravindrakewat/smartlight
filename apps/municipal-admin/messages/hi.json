@@ -249,7 +249,14 @@
     "empty": "आपकी खोज से कोई खंभा नहीं मिला।",
     "total": "{count, plural, one {# खंभा} other {# खंभे}}",
     "printPlates": "QR प्लेट छापें",
-    "importPoles": "पोल आयात करें"
+    "importPoles": "पोल आयात करें",
+    "road": {
+      "title": "लाइव सड़क · {zone}",
+      "updated": "हर 30 सेकंड में अपडेट · पिछला {time} पर",
+      "allStreets": "सभी सड़कें",
+      "zones": "ज़ोन चुनें",
+      "problems": "{count, plural, one {# समस्या} other {# समस्याएँ}}"
+    }
   },
   "PoleImport": {
     "title": "पोल आयात करें",
