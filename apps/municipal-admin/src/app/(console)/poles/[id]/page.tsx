@@ -11,6 +11,7 @@ import {
   CardTitle,
   EmptyState,
   Skeleton,
+  StreetPole,
 } from '@smart-light/ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Cpu, ExternalLink, MapPin } from 'lucide-react';
@@ -21,6 +22,7 @@ import type { ReactNode } from 'react';
 import { LightStatusLabel, useFaultLabel } from '@/components/labels';
 import { ControlPanel } from '@/components/lighting/ControlPanel';
 import { PowerChart } from '@/components/lighting/PowerChart';
+import { STREET_STATUS } from '@/components/lighting/ZoneStreet';
 import { useSessionUser } from '@/components/Session';
 import { api } from '@/lib/api';
 
@@ -129,70 +131,84 @@ export default function PoleDetailPage() {
               <CardHeader>
                 <CardTitle>{t('now.title')}</CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <LightStatusLabel status={info.lightStatus} />
-                  <Badge tone={device.online ? 'success' : 'warning'}>
-                    {device.online ? t('online') : t('offline')}
-                  </Badge>
-                  {device.mode ? (
-                    <Badge
-                      tone={
-                        device.mode === 'manual'
-                          ? 'info'
-                          : device.mode === 'failsafe'
-                            ? 'warning'
-                            : 'neutral'
-                      }
-                    >
-                      {t(`mode.${device.mode as 'auto'}`)}
-                    </Badge>
-                  ) : null}
+              <CardContent className="grid gap-4 sm:grid-cols-[9rem_minmax(0,1fr)]">
+                {/* The pole as it looks right now */}
+                <div className="relative flex min-h-56 items-end justify-center overflow-hidden rounded-xl bg-[radial-gradient(120%_100%_at_50%_0%,var(--color-night-soft),var(--color-night))] pt-6">
+                  <StreetPole
+                    status={STREET_STATUS[info.lightStatus]}
+                    dimPercent={device.lampOn ? device.dimPercent : null}
+                    size="lg"
+                    className="relative z-10 -mb-1"
+                  />
+                  <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-5 bg-road" />
                 </div>
-                <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <Reading
-                    label={t('readings.lamp')}
-                    value={
-                      device.lampOn === null
-                        ? '—'
-                        : device.lampOn
-                          ? t('readings.onAt', { value: device.dimPercent ?? 100 })
-                          : t('readings.off')
-                    }
-                  />
-                  <Reading label={t('readings.power')} value={`${number(device.powerW)} W`} />
-                  <Reading
-                    label={t('readings.voltage')}
-                    value={`${number(device.voltageV, 0)} V`}
-                  />
-                  <Reading
-                    label={t('readings.current')}
-                    value={`${number(device.currentA, 2)} A`}
-                  />
-                  <Reading
-                    label={t('readings.energy')}
-                    value={`${number(device.energyWh === null ? null : device.energyWh / 1000, 1)} kWh`}
-                  />
-                  <Reading
-                    label={t('readings.signal')}
-                    value={device.rssiDbm === null ? '—' : `${device.rssiDbm} dBm`}
-                  />
-                  <Reading
-                    label={t('readings.temperature')}
-                    value={device.boardTempC === null ? '—' : `${number(device.boardTempC, 0)} °C`}
-                  />
-                  <Reading
-                    label={t('readings.lastReport')}
-                    value={relative(device.lastTelemetryAt)}
-                  />
-                </dl>
-                <p className="text-xs text-muted-foreground">
-                  {t('controllerLine', {
-                    id: device.deviceId,
-                    firmware: device.firmwareVersion ?? '—',
-                    network: device.network ?? '—',
-                  })}
-                </p>
+                <div className="grid min-w-0 content-start gap-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <LightStatusLabel status={info.lightStatus} />
+                    <Badge tone={device.online ? 'success' : 'warning'}>
+                      {device.online ? t('online') : t('offline')}
+                    </Badge>
+                    {device.mode ? (
+                      <Badge
+                        tone={
+                          device.mode === 'manual'
+                            ? 'info'
+                            : device.mode === 'failsafe'
+                              ? 'warning'
+                              : 'neutral'
+                        }
+                      >
+                        {t(`mode.${device.mode as 'auto'}`)}
+                      </Badge>
+                    ) : null}
+                  </div>
+                  <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                    <Reading
+                      label={t('readings.lamp')}
+                      value={
+                        device.lampOn === null
+                          ? '—'
+                          : device.lampOn
+                            ? t('readings.onAt', { value: device.dimPercent ?? 100 })
+                            : t('readings.off')
+                      }
+                    />
+                    <Reading label={t('readings.power')} value={`${number(device.powerW)} W`} />
+                    <Reading
+                      label={t('readings.voltage')}
+                      value={`${number(device.voltageV, 0)} V`}
+                    />
+                    <Reading
+                      label={t('readings.current')}
+                      value={`${number(device.currentA, 2)} A`}
+                    />
+                    <Reading
+                      label={t('readings.energy')}
+                      value={`${number(device.energyWh === null ? null : device.energyWh / 1000, 1)} kWh`}
+                    />
+                    <Reading
+                      label={t('readings.signal')}
+                      value={device.rssiDbm === null ? '—' : `${device.rssiDbm} dBm`}
+                    />
+                    <Reading
+                      label={t('readings.temperature')}
+                      value={
+                        device.boardTempC === null ? '—' : `${number(device.boardTempC, 0)} °C`
+                      }
+                    />
+                    <Reading
+                      label={t('readings.lastReport')}
+                      value={relative(device.lastTelemetryAt)}
+                    />
+                  </dl>
+                  <p className="text-xs text-muted-foreground">
+                    {t('controllerLine', {
+                      id: device.deviceId,
+                      firmware: device.firmwareVersion ?? '—',
+                      network: device.network ?? '—',
+                    })}
+                  </p>
+                </div>
               </CardContent>
             </Card>
 

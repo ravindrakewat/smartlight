@@ -26,9 +26,12 @@ import {
   useFaultLabel,
   WorkOrderStatusBadge,
 } from '@/components/labels';
+import { ZoneStreet } from '@/components/lighting/ZoneStreet';
 import { api } from '@/lib/api';
 
 const REFRESH_MS = 60_000;
+/** Zones drawn as streets on the dashboard (most faults first); the rest are on Street view. */
+const DASHBOARD_STREETS = 6;
 
 /** MapLibre needs the browser (WebGL); load it only when the dashboard renders. */
 const PoleMap = dynamic(
@@ -225,66 +228,25 @@ export default function DashboardPage() {
             <CardDescription>{t('zones.description')}</CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          {summary.data ? (
-            <table className="w-full min-w-[36rem] text-left text-sm">
-              <thead>
-                <tr className="border-b border-border text-muted-foreground">
-                  <th scope="col" className="py-3 pr-4 font-medium">
-                    {t('zones.zone')}
-                  </th>
-                  <th scope="col" className="py-3 pr-4 text-right font-medium">
-                    {t('zones.total')}
-                  </th>
-                  <th scope="col" className="py-3 pr-4 text-right font-medium">
-                    {t('zones.working')}
-                  </th>
-                  <th scope="col" className="py-3 pr-4 text-right font-medium">
-                    {t('zones.faulty')}
-                  </th>
-                  <th scope="col" className="py-3 font-medium">
-                    {t('zones.availability')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {summary.data.zones.map((zone) => {
-                  const measured = zone.total - zone.unknown;
-                  const availability = measured === 0 ? 0 : zone.working / measured;
-                  return (
-                    <tr key={zone.id}>
-                      <th scope="row" className="py-3 pr-4 font-medium">
-                        {zone.name}{' '}
-                        <span className="font-mono text-xs text-muted-foreground">{zone.code}</span>
-                      </th>
-                      <td className="py-3 pr-4 text-right tabular-nums">
-                        {format.number(zone.total)}
-                      </td>
-                      <td className="py-3 pr-4 text-right tabular-nums">
-                        {format.number(zone.working)}
-                      </td>
-                      <td className="py-3 pr-4 text-right text-danger tabular-nums">
-                        {format.number(zone.fault)}
-                      </td>
-                      <td className="py-3">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="h-2 w-full max-w-40 overflow-hidden rounded-full bg-surface-subtle"
-                            aria-hidden="true"
-                          >
-                            <div
-                              className="h-full rounded-full bg-success"
-                              style={{ width: `${availability * 100}%` }}
-                            />
-                          </div>
-                          <span className="tabular-nums">{percent(zone.working, measured)}</span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <CardContent className="grid gap-3">
+          {summary.data && mapPoles.data ? (
+            <>
+              {[...summary.data.zones]
+                .sort((a, b) => b.fault - a.fault)
+                .slice(0, DASHBOARD_STREETS)
+                .map((zone) => (
+                  <ZoneStreet
+                    key={zone.id}
+                    zone={zone}
+                    poles={mapPoles.data.filter((pole) => pole.zoneId === zone.id)}
+                    compact
+                    headingLevel="h3"
+                  />
+                ))}
+              <Link href="/streets" className="text-sm font-semibold text-primary hover:underline">
+                {t('zones.openStreets')}
+              </Link>
+            </>
           ) : (
             <Skeleton className="h-48" />
           )}

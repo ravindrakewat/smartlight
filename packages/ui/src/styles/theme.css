@@ -47,6 +47,19 @@
   --color-info-subtle: var(--sl-info-subtle);
   --color-neutral: var(--sl-neutral);
   --color-neutral-subtle: var(--sl-neutral-subtle);
+
+  /* Night street scene (street view, pole illustrations). Always dark, in both themes. */
+  --color-night: var(--sl-night);
+  --color-night-soft: var(--sl-night-soft);
+  --color-night-foreground: var(--sl-night-foreground);
+  --color-night-muted: var(--sl-night-muted);
+  --color-road: var(--sl-road);
+  --color-pole: var(--sl-pole);
+  --color-lamp: var(--sl-lamp);
+  --color-lamp-core: var(--sl-lamp-core);
+  --color-lamp-off: var(--sl-lamp-off);
+  --color-night-danger: var(--sl-night-danger);
+  --color-night-warning: var(--sl-night-warning);
 }
 
 :root {
@@ -78,6 +91,19 @@
   --sl-info-subtle: #e8efff;
   --sl-neutral: #475569;
   --sl-neutral-subtle: #eef2f6;
+
+  /* Text pairs on --sl-night meet 4.5:1 (foreground 14:1, muted 6.6:1, danger 5.6:1). */
+  --sl-night: #0b1326;
+  --sl-night-soft: #18233f;
+  --sl-night-foreground: #e2e8f0;
+  --sl-night-muted: #a3b1c7;
+  --sl-road: #283350;
+  --sl-pole: #8b98b0;
+  --sl-lamp: #fde68a;
+  --sl-lamp-core: #fbbf24;
+  --sl-lamp-off: #3b4660;
+  --sl-night-danger: #f87171;
+  --sl-night-warning: #fb923c;
 }
 
 /* Screen only: printouts (QR plates, reports) always use the light palette. */
@@ -158,5 +184,26 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+}
+
+/* Street-light glow: a slow, soft breathing of lit lamps (disabled by reduced motion above). */
+@keyframes sl-lamp-glow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+
+@keyframes sl-fault-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
   }
 }

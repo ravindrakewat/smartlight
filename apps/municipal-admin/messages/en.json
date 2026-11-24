@@ -37,6 +37,7 @@
   "Nav": {
     "dashboard": "Dashboard",
     "map": "Live map",
+    "streets": "Street view",
     "assets": "Poles & lights",
     "alerts": "Alerts",
     "workOrders": "Work orders",
@@ -163,7 +164,8 @@
       "total": "Poles",
       "working": "Working",
       "faulty": "Faulty",
-      "availability": "Availability"
+      "availability": "Availability",
+      "openStreets": "Open street view"
     }
   },
   "WorkOrders": {
@@ -655,6 +657,35 @@
       "weak": "The new password does not meet the rules, or is the same as the current one.",
       "tooMany": "Too many attempts. Please wait a few minutes.",
       "failed": "The password could not be changed. Please try again."
+    }
+  },
+  "Streets": {
+    "title": "Street view",
+    "description": "Every zone drawn as a street at night. See at a glance which lights are on, dimmed, off or need repair. Zones with the most problems come first.",
+    "openMap": "Open map",
+    "empty": "No poles yet. Import poles to see your streets here.",
+    "noMatch": "No pole matches these filters.",
+    "filters": {
+      "heading": "Filters",
+      "zone": "Zone",
+      "allZones": "All zones",
+      "search": "Find a pole",
+      "searchPlaceholder": "Pole code or number, e.g. 245",
+      "status": "Light status (select one or more)",
+      "problemsOnly": "Only problems",
+      "reset": "Clear filters",
+      "showing": "Showing {shown} of {total} poles.",
+      "hiddenZones": "{count, plural, one {# zone has no matching poles and is hidden.} other {# zones have no matching poles and are hidden.}}"
+    },
+    "zone": {
+      "noZone": "Poles without a zone",
+      "poleCount": "{count, plural, one {# pole} other {# poles}}",
+      "health": "{percent} working",
+      "streetLabel": "{zone}: {count} poles along the street",
+      "poleLabel": "Pole {detail}",
+      "brightness": "{percent}% brightness",
+      "hint": "Point at or tab to a pole to see its details. Select it to open the pole.",
+      "openHint": "select to open"
     }
   }
 }

@@ -137,6 +137,9 @@ export const poleMapItemSchema = z
     latitude: z.number(),
     longitude: z.number(),
     lightStatus: lightStatusSchema,
+    zoneId: z.uuid().nullable(),
+    /** Last reported dimming level of the controller; null without one. */
+    dimPercent: z.number().int().min(0).max(100).nullable(),
   })
   .meta({ id: 'PoleMapItem' });
 

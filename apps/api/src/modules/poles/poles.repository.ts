@@ -32,7 +32,15 @@ export const polesRepository = {
   mapItems(where: Prisma.PoleWhereInput) {
     return prisma.pole.findMany({
       where,
-      select: { id: true, code: true, latitude: true, longitude: true, lightStatus: true },
+      select: {
+        id: true,
+        code: true,
+        latitude: true,
+        longitude: true,
+        lightStatus: true,
+        zoneId: true,
+        device: { select: { dimPercent: true } },
+      },
       orderBy: { serial: 'asc' },
       take: POLE_MAP_LIMIT,
     });

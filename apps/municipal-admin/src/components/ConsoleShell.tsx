@@ -4,6 +4,7 @@ import {
   CalendarClock,
   ClipboardList,
   FileBarChart,
+  LampWallDown,
   LayoutDashboard,
   Lightbulb,
   Map as MapIcon,
@@ -21,6 +22,7 @@ export async function ConsoleShell({ children }: { children: ReactNode }) {
   const navigation: AppShellNavItem[] = [
     { href: '/', label: t('Nav.dashboard'), icon: <LayoutDashboard /> },
     { href: '/map', label: t('Nav.map'), icon: <MapIcon /> },
+    { href: '/streets', label: t('Nav.streets'), icon: <LampWallDown /> },
     { href: '/poles', label: t('Nav.assets'), icon: <Lightbulb /> },
     { href: '/alerts', label: t('Nav.alerts'), icon: <Bell /> },
     { href: '/work-orders', label: t('Nav.workOrders'), icon: <ClipboardList /> },

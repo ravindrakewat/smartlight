@@ -9,6 +9,7 @@ import {
   type listPolesQuerySchema,
   type PaginationMeta,
   type PoleDto,
+  type PoleMapItemDto,
   type poleMapQuerySchema,
   type updatePoleSchema,
 } from '@smart-light/shared';
@@ -112,8 +113,11 @@ export const polesService = {
     return toPoleDto(await findPoleByCodeInTenant(code, tenantId));
   },
 
-  async map(tenantId: string, query: z.output<typeof poleMapQuerySchema>) {
-    return polesRepository.mapItems({
+  async map(
+    tenantId: string,
+    query: z.output<typeof poleMapQuerySchema>,
+  ): Promise<PoleMapItemDto[]> {
+    const rows = await polesRepository.mapItems({
       tenantId,
       assetStatus: 'ACTIVE',
       ...(query.zoneId ? { zoneId: query.zoneId } : {}),
@@ -124,6 +128,7 @@ export const polesService = {
         ? { longitude: { gte: query.minLng, lte: query.maxLng } }
         : {}),
     });
+    return rows.map(({ device, ...pole }) => ({ ...pole, dimPercent: device?.dimPercent ?? null }));
   },
 
   async create(
