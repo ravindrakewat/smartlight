@@ -59,7 +59,9 @@
       "TENANT_SUSPENDED": "This municipality is currently suspended.",
       "WRONG_PORTAL": "This account cannot use the Platform Console.",
       "NETWORK_ERROR": "Cannot reach the server. Check your connection.",
-      "generic": "Sign-in failed. Please try again."
+      "generic": "Sign-in failed. Please try again.",
+      "INVALID_MFA_CODE": "The code is not correct or has expired. Check the time on your phone and try the newest code.",
+      "MFA_CHALLENGE_INVALID": "This sign-in step has expired. Sign in again."
     }
   },
   "TenantStatus": {
@@ -345,5 +347,64 @@
     "systemOnline": "System online",
     "systemDown": "Server not reachable",
     "lastUpdate": "Last update {time}"
+  },
+  "Mfa": {
+    "verifyTitle": "Enter your code",
+    "verifyBody": "Open your authenticator app and enter the 6-digit code for Smart Street Light. Lost your phone? Enter one of your recovery codes instead.",
+    "setupTitle": "Set up two-factor sign-in",
+    "setupBody": "Your role requires a second step when you sign in. It takes one minute and is needed only once.",
+    "setupSteps": "1. Install an authenticator app (Google Authenticator, Microsoft Authenticator or similar). 2. Scan this QR code with it. 3. Enter the 6-digit code it shows.",
+    "qrLabel": "QR code to add Smart Street Light to your authenticator app",
+    "manual": "Cannot scan? Type this key into the app:",
+    "setupCodeHint": "The 6-digit code from your authenticator app.",
+    "code": "Code",
+    "codeHint": "6-digit code, or a recovery code like abcd-efgh.",
+    "verify": "Verify and sign in",
+    "verifying": "Checking…",
+    "confirm": "Confirm",
+    "back": "Back to sign in",
+    "doneTitle": "Two-factor sign-in is on",
+    "recovery": {
+      "title": "Save your recovery codes now",
+      "body": "Each code works once if you lose your phone. They will not be shown again. Keep them somewhere safe, away from your phone.",
+      "copy": "Copy codes",
+      "copied": "Copied",
+      "download": "Download as text",
+      "fileName": "smart-street-light-recovery-codes.txt",
+      "confirm": "I have saved my recovery codes",
+      "continue": "Continue"
+    },
+    "settingsTitle": "Two-factor sign-in",
+    "settingsDescription": "A code from your phone in addition to your password.",
+    "on": "On",
+    "off": "Off",
+    "requiredBadge": "Required for your role",
+    "enabledSince": "Turned on {date}",
+    "codesLeft": "{count, plural, one {# recovery code left} other {# recovery codes left}}",
+    "intro": "Protect this account even if the password leaks: sign-in will also ask for a code from an authenticator app.",
+    "turnOn": "Turn on",
+    "turnOff": "Turn off",
+    "turnOffHint": "Enter your password and a current code to turn two-factor sign-in off.",
+    "password": "Password",
+    "newCodes": "New recovery codes",
+    "newCodesHint": "Enter a current code. Your old recovery codes will stop working.",
+    "cancel": "Cancel",
+    "errors": {
+      "code": "The code is not correct or has expired.",
+      "password": "The password is not correct.",
+      "tooMany": "Too many attempts. Please wait a few minutes.",
+      "generic": "That did not work. Please try again."
+    }
+  },
+  "Sessions": {
+    "title": "Signed-in devices",
+    "description": "Where this account is signed in now.",
+    "current": "This device",
+    "web": "Web browser",
+    "mobile": "Mobile app",
+    "since": "Since {date}",
+    "revokeOthers": "Sign out all other devices",
+    "revoked": "{count, plural, =0 {No other device was signed in.} one {# device signed out.} other {# devices signed out.}}",
+    "none": "No active sessions."
   }
 }

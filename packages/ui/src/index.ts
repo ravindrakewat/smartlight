@@ -46,3 +46,18 @@ export {
   type ChangePasswordFormProps,
   type ChangePasswordLabels,
 } from './components/ChangePasswordForm';
+export {
+  CodeForm,
+  EnrolPanel,
+  QrCodeSvg,
+  RecoveryCodesPanel,
+  SessionsList,
+  TwoFactorSettings,
+  type CodeFormLabels,
+  type EnrolLabels,
+  type RecoveryCodesLabels,
+  type SessionRow,
+  type SessionsLabels,
+  type TwoFactorSettingsLabels,
+  type TwoFactorStatusValue,
+} from './components/TwoFactor';

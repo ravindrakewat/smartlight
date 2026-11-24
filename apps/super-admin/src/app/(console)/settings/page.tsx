@@ -13,6 +13,7 @@ import { Settings as SettingsIcon } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { useSessionUser } from '@/components/Session';
+import { SecurityCards } from '@/components/SecurityCards';
 import { api } from '@/lib/api';
 import { ConsoleHero } from '@/components/shell/ConsoleHero';
 
@@ -95,6 +96,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+      <SecurityCards />
     </>
   );
 }
