@@ -6,7 +6,7 @@ import { prisma } from '../../lib/prisma';
 import { errors } from '../../utils/errors';
 import { recordAudit } from '../audit/audit.service';
 import type { AuthContext } from '../auth/auth.context';
-import { EMPTY_TENANT_STATS, tenantsRepository, type TenantStats } from './tenants.repository';
+import { emptyTenantStats, tenantsRepository, type TenantStats } from './tenants.repository';
 
 function toDto(tenant: Tenant, stats: TenantStats): TenantDto {
   return {
@@ -29,7 +29,7 @@ export const tenantsService = {
       tenantsRepository.findAll(),
       tenantsRepository.statsByTenant(),
     ]);
-    return tenants.map((tenant) => toDto(tenant, stats.get(tenant.id) ?? EMPTY_TENANT_STATS));
+    return tenants.map((tenant) => toDto(tenant, stats.get(tenant.id) ?? emptyTenantStats()));
   },
 
   async create(
@@ -54,7 +54,7 @@ export const tenantsService = {
       );
       return created;
     });
-    return toDto(tenant, EMPTY_TENANT_STATS);
+    return toDto(tenant, emptyTenantStats());
   },
 
   async update(
@@ -81,7 +81,7 @@ export const tenantsService = {
       return updated;
     });
     const stats = await tenantsRepository.statsByTenant();
-    return toDto(tenant, stats.get(id) ?? EMPTY_TENANT_STATS);
+    return toDto(tenant, stats.get(id) ?? emptyTenantStats());
   },
 
   /** Citizen-portal branding. Suspended municipalities are hidden. */

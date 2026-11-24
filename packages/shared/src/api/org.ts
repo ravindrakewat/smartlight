@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { MQTT_ID_PATTERN } from '../iot/topics';
 import { paginationQuerySchema } from '../schemas/pagination';
+import { lightStatusSchema } from './assets';
 import { userRoleSchema } from './auth';
 
 // ─── Tenants (municipal corporations) ────────────────────────────────────────
@@ -23,6 +24,10 @@ export const tenantSchema = z
       devices: z.number().int(),
       devicesOnline: z.number().int(),
       users: z.number().int(),
+      /** Poles per light status, e.g. `{ ON: 120, FAULT: 3 }`; statuses with no poles are left out. */
+      lights: z.partialRecord(lightStatusSchema, z.number().int()),
+      /** Work orders not yet closed (open, assigned, in progress or awaiting verification). */
+      openWorkOrders: z.number().int(),
     }),
   })
   .meta({ id: 'Tenant' });

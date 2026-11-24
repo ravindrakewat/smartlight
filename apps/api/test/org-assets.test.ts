@@ -54,7 +54,15 @@ describe('municipalities (SUPER_ADMIN)', () => {
     expect(created.body.data).toMatchObject({ slug, status: 'ONBOARDING', slaHours: 24 });
 
     const list = await request(app).get('/api/v1/tenants').set(superAuth);
-    expect(list.body.data.some((tenant: { slug: string }) => tenant.slug === slug)).toBe(true);
+    const listed = list.body.data.find((tenant: { slug: string }) => tenant.slug === slug);
+    expect(listed?.stats).toEqual({
+      poles: 0,
+      devices: 0,
+      devicesOnline: 0,
+      users: 0,
+      lights: {},
+      openWorkOrders: 0,
+    });
   });
 
   it('forbids municipal admins from platform endpoints', async () => {
