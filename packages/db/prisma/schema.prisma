@@ -56,6 +56,7 @@ model Tenant {
   wards          Ward[]
   streets        Street[]
   gateways       Gateway[]
+  spareParts     SparePart[]
 
   @@map("tenants")
 }
@@ -156,6 +157,8 @@ model User {
   createdWorkOrders  WorkOrder[]       @relation("WorkOrderCreator")
   workOrderEvents    WorkOrderEvent[]
   workOrderPhotos    WorkOrderPhoto[]
+  workOrderParts     WorkOrderPart[]
+  stockMovements     StockMovement[]
   mfaChallenges      MfaChallenge[]
   mfaRecoveryCodes   MfaRecoveryCode[]
 
@@ -487,6 +490,8 @@ model WorkOrder {
   /// e.g. `LAMP_REPLACED`, `DRIVER_REPLACED`, `WIRING_REPAIRED`
   resolutionCode       String?
   resolutionNotes      String?
+  /// Repair checklist items the technician ticked (ids from REPAIR_CHECKLIST in @smart-light/shared).
+  checklist            String[]            @default([])
   createdAt            DateTime            @default(now()) @db.Timestamptz(3)
   updatedAt            DateTime            @updatedAt @db.Timestamptz(3)
 
@@ -498,6 +503,7 @@ model WorkOrder {
   complaints Complaint[]
   events     WorkOrderEvent[]
   photos     WorkOrderPhoto[]
+  parts      WorkOrderPart[]
 
   @@index([tenantId, status, slaDueAt])
   @@index([assignedTechnicianId, status])
@@ -898,4 +904,78 @@ model LorawanUplink {
 
   @@index([devEui, receivedAt])
   @@map("lorawan_uplinks")
+}
+
+// ─── Spare parts inventory ────────────────────────────────────────────────────
+
+/// A spare part the municipality stocks (lamp, driver, fuse, ...). Stock is per municipality.
+model SparePart {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  tenantId  String   @db.Uuid
+  /// Short code printed on store records, e.g. `LED-90W`.
+  code      String
+  name      String
+  nameHi    String?
+  /// e.g. `pcs`, `m` (cable)
+  unit      String   @default("pcs")
+  /// Current stock; can go below zero when field use is recorded before a restock.
+  stockQty  Int      @default(0)
+  /// Reorder level shown as "low stock".
+  minStock  Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  tenant    Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  usages    WorkOrderPart[]
+  movements StockMovement[]
+
+  @@unique([tenantId, code])
+  @@map("spare_parts")
+}
+
+/// Parts used on a repair, recorded by the technician when completing it.
+model WorkOrderPart {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  workOrderId  String   @db.Uuid
+  sparePartId  String   @db.Uuid
+  quantity     Int
+  recordedById String?  @db.Uuid
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+
+  workOrder  WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  sparePart  SparePart @relation(fields: [sparePartId], references: [id], onDelete: Restrict)
+  recordedBy User?     @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+
+  @@index([workOrderId])
+  @@index([sparePartId, createdAt])
+  @@map("work_order_parts")
+}
+
+enum StockMovementKind {
+  /// Received into the store.
+  RECEIVED
+  /// Used on a repair (negative quantity).
+  USED
+  /// Stock count correction (either sign).
+  ADJUSTED
+}
+
+/// Ledger of every stock change; `spare_parts.stockQty` is the running total.
+model StockMovement {
+  id          String            @id @default(uuid(7)) @db.Uuid
+  sparePartId String            @db.Uuid
+  kind        StockMovementKind
+  /// Signed change applied to stock.
+  quantity    Int
+  workOrderId String?           @db.Uuid
+  note        String?
+  actorUserId String?           @db.Uuid
+  createdAt   DateTime          @default(now()) @db.Timestamptz(3)
+
+  sparePart SparePart @relation(fields: [sparePartId], references: [id], onDelete: Restrict)
+  actor     User?     @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([sparePartId, createdAt])
+  @@map("stock_movements")
 }

@@ -35,6 +35,24 @@ export const RESOLUTION_CODES = [
 ] as const;
 export const resolutionCodeSchema = z.enum(RESOLUTION_CODES);
 
+/** Repair checklist the technician ticks before completing a job. */
+export const REPAIR_CHECKLIST = [
+  'POWER_ISOLATED',
+  'FAULT_IDENTIFIED',
+  'PARTS_FITTED',
+  'WIRING_EARTHING_CHECKED',
+  'LIGHT_TESTED',
+  'SITE_CLEARED',
+] as const;
+export const repairChecklistItemSchema = z.enum(REPAIR_CHECKLIST);
+export type RepairChecklistItem = z.infer<typeof repairChecklistItemSchema>;
+
+/** Spare part used on a repair. */
+export const usedPartSchema = z.object({
+  sparePartId: z.uuid(),
+  quantity: z.number().int().min(1).max(100),
+});
+
 export const workOrderEventTypeSchema = z.enum([
   'CREATED',
   'ASSIGNED',
@@ -99,6 +117,17 @@ export const workOrderDetailSchema = workOrderSummarySchema
     resolutionNotes: z.string().nullable(),
     verificationMethod: z.enum(['IOT_TELEMETRY', 'SUPERVISOR']).nullable(),
     startedAt: z.iso.datetime().nullable(),
+    checklist: z.array(z.string()),
+    parts: z.array(
+      z.object({
+        id: z.uuid(),
+        sparePartId: z.uuid(),
+        code: z.string(),
+        name: z.string(),
+        unit: z.string(),
+        quantity: z.number().int(),
+      }),
+    ),
     events: z.array(workOrderEventSchema),
   })
   .meta({ id: 'WorkOrderDetail' });
@@ -149,6 +178,19 @@ export const completeWorkOrderSchema = fieldLocationSchema
   .extend({
     resolutionCode: resolutionCodeSchema,
     notes: z.string().trim().max(1000).optional(),
+    /** Checklist items done; optional so older app versions keep working. */
+    checklist: z
+      .array(repairChecklistItemSchema)
+      .max(REPAIR_CHECKLIST.length)
+      .default([])
+      .transform((items) => [...new Set(items)]),
+    parts: z
+      .array(usedPartSchema)
+      .max(20)
+      .default([])
+      .refine((parts) => new Set(parts.map((part) => part.sparePartId)).size === parts.length, {
+        error: 'List each spare part once',
+      }),
   })
   .meta({ id: 'CompleteWorkOrderRequest' });
 

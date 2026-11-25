@@ -33,6 +33,10 @@ export const workOrderDetailInclude = {
     orderBy: { createdAt: 'asc' },
     include: { actor: { select: { name: true } } },
   },
+  parts: {
+    orderBy: { createdAt: 'asc' },
+    include: { sparePart: { select: { code: true, name: true, unit: true } } },
+  },
 } satisfies Prisma.WorkOrderInclude;
 
 export type WorkOrderWithRelations = Prisma.WorkOrderGetPayload<{

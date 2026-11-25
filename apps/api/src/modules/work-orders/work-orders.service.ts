@@ -75,6 +75,15 @@ function toDetailDto(workOrder: WorkOrderWithEvents): WorkOrderDetailDto {
     resolutionNotes: workOrder.resolutionNotes,
     verificationMethod: workOrder.verificationMethod,
     startedAt: toIso(workOrder.startedAt),
+    checklist: workOrder.checklist,
+    parts: workOrder.parts.map((part) => ({
+      id: part.id,
+      sparePartId: part.sparePartId,
+      code: part.sparePart.code,
+      name: part.sparePart.name,
+      unit: part.sparePart.unit,
+      quantity: part.quantity,
+    })),
     events: workOrder.events.map((event) => ({
       id: event.id,
       type: event.type,
@@ -139,6 +148,56 @@ function assertOnSite(
     });
   }
   return Math.round(distance);
+}
+
+/**
+ * Parts used on a repair: one usage row and one stock movement per part, stock
+ * reduced in the same transaction. Stock may go below zero (field use recorded
+ * before the store was restocked); the inventory page shows that as low stock.
+ */
+async function recordPartsUsed(
+  tx: Prisma.TransactionClient,
+  auth: AuthContext,
+  tenantId: string,
+  workOrder: { id: string; number: string },
+  parts: { sparePartId: string; quantity: number }[],
+): Promise<void> {
+  if (parts.length === 0) return;
+  const known = await tx.sparePart.findMany({
+    where: { tenantId, active: true, id: { in: parts.map((part) => part.sparePartId) } },
+    select: { id: true },
+  });
+  if (known.length !== parts.length) {
+    throw new AppError({
+      statusCode: 400,
+      code: 'UNKNOWN_SPARE_PART',
+      message: 'One of the spare parts is not stocked by this municipality',
+    });
+  }
+  for (const part of parts) {
+    await tx.workOrderPart.create({
+      data: {
+        workOrderId: workOrder.id,
+        sparePartId: part.sparePartId,
+        quantity: part.quantity,
+        recordedById: auth.userId,
+      },
+    });
+    await tx.stockMovement.create({
+      data: {
+        sparePartId: part.sparePartId,
+        kind: 'USED',
+        quantity: -part.quantity,
+        workOrderId: workOrder.id,
+        note: workOrder.number,
+        actorUserId: auth.userId,
+      },
+    });
+    await tx.sparePart.update({
+      where: { id: part.sparePartId },
+      data: { stockQty: { decrement: part.quantity } },
+    });
+  }
 }
 
 async function reload(db: DbClient, id: string): Promise<WorkOrderDetailDto> {
@@ -430,6 +489,7 @@ export const workOrdersService = {
       }
       assertStatus(workOrder, ['IN_PROGRESS'], 'complete');
       const distanceM = assertOnSite(workOrder.pole, input);
+      await recordPartsUsed(tx, auth, tenantId, workOrder, input.parts);
 
       await workOrdersRepository.update(
         id,
@@ -438,6 +498,7 @@ export const workOrdersService = {
           completedAt: new Date(),
           resolutionCode: input.resolutionCode,
           resolutionNotes: input.notes ?? null,
+          checklist: input.checklist,
         },
         tx,
       );
@@ -448,7 +509,12 @@ export const workOrdersService = {
         note: input.notes ?? null,
         latitude: input.latitude,
         longitude: input.longitude,
-        metadata: { resolutionCode: input.resolutionCode, distanceM },
+        metadata: {
+          resolutionCode: input.resolutionCode,
+          distanceM,
+          checklist: input.checklist,
+          parts: input.parts,
+        },
       });
       return reload(tx, id);
     });
