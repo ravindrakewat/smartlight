@@ -22,6 +22,7 @@ import {
 } from 'react-native';
 import { confirmAction, Icon, IconCircle, type IconName } from '../../../src/components/kit';
 import { LightTest } from '../../../src/components/LightTest';
+import { RepairRecord, SupervisorActions } from '../../../src/components/SupervisorActions';
 import { AppButton, Badge, Card, Message, styles as ui } from '../../../src/components/ui';
 import { useI18n, useRelativeTime } from '../../../src/i18n';
 import { api } from '../../../src/lib/api';
@@ -269,7 +270,7 @@ export default function JobScreen() {
           />
         </Card>
 
-        {wo.status === 'PENDING_VERIFICATION' ? (
+        {mine && wo.status === 'PENDING_VERIFICATION' ? (
           <Message
             tone="info"
             text={`${m.job.waiting} ${wo.pole.hasController ? m.job.controllerNote : m.job.supervisorNote}`}
@@ -417,6 +418,9 @@ export default function JobScreen() {
             <AppButton label={m.job.cancel} variant="ghost" onPress={() => setCompleting(false)} />
           </Card>
         ) : null}
+
+        <RepairRecord wo={wo} />
+        {!mine ? <SupervisorActions wo={wo} /> : null}
 
         {/* History of this job */}
         <Card style={shadow}>
