@@ -1,4 +1,11 @@
-import { ApiClientError, RESOLUTION_CODES, type WorkOrderDetailDto } from '@smart-light/shared';
+import {
+  ApiClientError,
+  REPAIR_CHECKLIST,
+  RESOLUTION_CODES,
+  type RepairChecklistItem,
+  type SparePartDto,
+  type WorkOrderDetailDto,
+} from '@smart-light/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Location from 'expo-location';
 import { Stack, useLocalSearchParams } from 'expo-router';
@@ -78,18 +85,40 @@ function InfoLine({
 
 export default function JobScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { messages: m } = useI18n();
+  const { messages: m, format, locale } = useI18n();
   const relative = useRelativeTime();
   const { user } = useSession();
   const queryClient = useQueryClient();
   const [completing, setCompleting] = useState(false);
   const [resolution, setResolution] = useState<Resolution | null>(null);
   const [notes, setNotes] = useState('');
+  const [checked, setChecked] = useState<RepairChecklistItem[]>([]);
+  const [parts, setParts] = useState<Record<string, number>>({});
 
   const job = useQuery({
     queryKey: ['job', id],
     queryFn: () => api.request<WorkOrderDetailDto>(`/v1/work-orders/${id}`),
   });
+
+  const spareParts = useQuery({
+    queryKey: ['spare-parts'],
+    queryFn: () => api.request<SparePartDto[]>('/v1/spare-parts'),
+    enabled: completing,
+    staleTime: 5 * 60_000,
+  });
+
+  const toggleItem = (item: RepairChecklistItem) =>
+    setChecked((current) =>
+      current.includes(item) ? current.filter((value) => value !== item) : [...current, item],
+    );
+  const changePart = (partId: string, delta: number) =>
+    setParts((current) => {
+      const next = Math.max(0, Math.min(100, (current[partId] ?? 0) + delta));
+      const copy = { ...current };
+      if (next === 0) delete copy[partId];
+      else copy[partId] = next;
+      return copy;
+    });
 
   const action = useMutation({
     mutationFn: async (kind: 'start' | 'complete') => {
@@ -99,7 +128,16 @@ export default function JobScreen() {
         body:
           kind === 'start'
             ? location
-            : { ...location, resolutionCode: resolution, notes: notes || undefined },
+            : {
+                ...location,
+                resolutionCode: resolution,
+                notes: notes || undefined,
+                checklist: checked,
+                parts: Object.entries(parts).map(([sparePartId, quantity]) => ({
+                  sparePartId,
+                  quantity,
+                })),
+              },
       });
     },
     onSuccess: (updated) => {
@@ -289,6 +327,74 @@ export default function JobScreen() {
                 );
               })}
             </View>
+            <Text style={ui.label}>{m.job.checklist}</Text>
+            <Text style={styles.hint}>{m.job.checklistHint}</Text>
+            <View style={{ gap: spacing.sm }}>
+              {REPAIR_CHECKLIST.map((item) => {
+                const done = checked.includes(item);
+                return (
+                  <Pressable
+                    key={item}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: done }}
+                    onPress={() => toggleItem(item)}
+                    style={[styles.option, done && styles.optionSelected]}
+                  >
+                    <Icon
+                      name={done ? 'checkbox' : 'square-outline'}
+                      size={22}
+                      color={done ? colors.primary : colors.muted}
+                    />
+                    <Text style={[styles.optionText, done && { color: colors.primary }]}>
+                      {m.job.checklistItems[item]}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text style={ui.label}>{m.job.parts}</Text>
+            <Text style={styles.hint}>{m.job.partsHint}</Text>
+            {spareParts.data && spareParts.data.length === 0 ? (
+              <Text style={styles.hint}>{m.job.noPartsStocked}</Text>
+            ) : null}
+            <View style={{ gap: spacing.sm }}>
+              {(spareParts.data ?? []).map((part) => {
+                const count = parts[part.id] ?? 0;
+                const name = locale === 'hi' && part.nameHi ? part.nameHi : part.name;
+                return (
+                  <View key={part.id} style={[styles.partRow, count > 0 && styles.optionSelected]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.optionText}>{name}</Text>
+                      <Text style={styles.hint}>
+                        {format(m.job.inStock, { count: `${part.stockQty} ${part.unit}` })}
+                      </Text>
+                    </View>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={format(m.job.fewer, { name })}
+                      disabled={count === 0}
+                      onPress={() => changePart(part.id, -1)}
+                      style={[styles.stepper, count === 0 && { opacity: 0.4 }]}
+                    >
+                      <Icon name="remove" size={22} color={colors.primary} />
+                    </Pressable>
+                    <Text style={styles.count} accessibilityLiveRegion="polite">
+                      {count}
+                    </Text>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={format(m.job.more, { name })}
+                      onPress={() => changePart(part.id, 1)}
+                      style={styles.stepper}
+                    >
+                      <Icon name="add" size={22} color={colors.primary} />
+                    </Pressable>
+                  </View>
+                );
+              })}
+            </View>
+
             <Text style={ui.label}>{m.job.notes}</Text>
             <TextInput
               accessibilityLabel={m.job.notes}
@@ -372,6 +478,34 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySubtle,
   },
   optionText: { fontSize: 16, fontWeight: '600', color: colors.foreground },
+  hint: { fontSize: 14, color: colors.muted },
+  partRow: {
+    minHeight: MIN_TOUCH + 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingLeft: spacing.md,
+    paddingRight: spacing.xs,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  stepper: {
+    width: MIN_TOUCH,
+    height: MIN_TOUCH,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  count: {
+    minWidth: 28,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.foreground,
+  },
   sectionTitle: { fontSize: 18, fontWeight: '800', color: colors.foreground },
   event: { flexDirection: 'row', gap: spacing.md },
   eventLine: { width: 2, flex: 1, backgroundColor: colors.border, marginVertical: 2 },
