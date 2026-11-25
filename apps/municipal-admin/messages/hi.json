@@ -982,5 +982,24 @@
     "WIRING_EARTHING_CHECKED": "वायरिंग और अर्थिंग जांची",
     "LIGHT_TESTED": "लाइट चालू कर जांची",
     "SITE_CLEARED": "जगह साफ़ और सुरक्षित की"
+  },
+  "Notifications": {
+    "button": "सूचनाएं",
+    "buttonUnread": "सूचनाएं, {count} अपठित",
+    "title": "सूचनाएं",
+    "markAll": "सभी पढ़ी हुई करें",
+    "loading": "लोड हो रहा है…",
+    "empty": "आपके लिए कोई सूचना नहीं है।",
+    "unread": "अपठित",
+    "kinds": {
+      "work_order": {
+        "assigned": "खंभा {poleCode} का कार्य आदेश {number} आपको सौंपा गया",
+        "fix_rejected": "{number} ({poleCode}) की मरम्मत स्वीकार नहीं हुई। कृपया फिर जांचें",
+        "verified": "{number} ({poleCode}) पर आपकी मरम्मत सत्यापित हुई",
+        "awaiting_verification": "{number} ({poleCode}) की मरम्मत हो गई है, आपके सत्यापन का इंतज़ार है",
+        "sla_breached": "{number} ({poleCode}) की SLA समय-सीमा निकल गई है"
+      },
+      "other": "{number} पर अपडेट"
+    }
   }
 }

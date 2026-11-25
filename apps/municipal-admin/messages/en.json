@@ -982,5 +982,24 @@
     "WIRING_EARTHING_CHECKED": "Wiring and earthing checked",
     "LIGHT_TESTED": "Light switched on and tested",
     "SITE_CLEARED": "Site cleared and safe"
+  },
+  "Notifications": {
+    "button": "Notifications",
+    "buttonUnread": "Notifications, {count} unread",
+    "title": "Notifications",
+    "markAll": "Mark all read",
+    "loading": "Loading…",
+    "empty": "You have no notifications.",
+    "unread": "unread",
+    "kinds": {
+      "work_order": {
+        "assigned": "Work order {number} for pole {poleCode} was assigned to you",
+        "fix_rejected": "The repair on {number} ({poleCode}) was not accepted. Please check again",
+        "verified": "Your repair on {number} ({poleCode}) was verified",
+        "awaiting_verification": "{number} ({poleCode}) is repaired and waiting for your verification",
+        "sla_breached": "{number} ({poleCode}) is past its SLA deadline"
+      },
+      "other": "Update on {number}"
+    }
   }
 }

@@ -15,6 +15,7 @@ import {
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { LocaleSwitcher } from './LocaleSwitcher';
+import { NotificationsMenu } from './shell/NotificationsMenu';
 import { UserMenu } from './Session';
 import {
   AlertsBell,
@@ -55,6 +56,7 @@ export async function ConsoleShell({ children }: { children: ReactNode }) {
       headerStart={<HeaderSearch />}
       headerActions={
         <>
+          <NotificationsMenu />
           <AlertsBell />
           <FullscreenButton />
           <LocaleSwitcher />

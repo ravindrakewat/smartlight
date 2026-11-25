@@ -57,6 +57,18 @@ is simulator-based and labelled as such.
 - Staging stack files `infra/lorawan/` (ChirpStack v4, gateway bridge IN865, Mosquitto
   TLS + ACL): **written, never started** (no Docker on this PC).
 
+### Phase 4 — operations modules (`feat/phase2-iot-foundation`)
+Gateways / LoRaWAN screens are parked on the owner's request (2026-11-25).
+- Reports page (console): `/v1/reports/breakdown` (daily/monthly trend, faults, wards incl.
+  legacy ward text, technician and agency performance, simulated-controller count); CSV per
+  table, work-order CSV, A4 print view for Save as PDF. Energy is measured only; no savings
+  estimate until a baseline wattage is agreed. No true .xlsx export (CSV opens in Excel).
+- Spare parts: migration `20261125103600_spare_parts_inventory_and_checklist` (additive,
+  **local dev DB only**; backup `C:\Users\HP\SmartLight-db-backups\pgdata-before-spare-parts-20261125-103531`).
+  `/v1/spare-parts` with a stock ledger; console Spare parts page; job completion records a
+  checklist and parts used (stock reduced in the same transaction); mobile completion form
+  has the checklist and a parts picker; work order detail shows both.
+
 What is NOT done for LoRaWAN: no real OTAA join, no radio frame, no gateway, no ChirpStack
 instance, no RAK3172 firmware driver, no automatic device creation in ChirpStack (devices
 must also be added in the ChirpStack UI), no dashboard screens yet.
