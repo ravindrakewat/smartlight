@@ -1,6 +1,11 @@
 'use client';
 
-import { ApiClientError, type StaffUserDto, type WorkOrderDetailDto } from '@smart-light/shared';
+import {
+  ApiClientError,
+  REPAIR_CHECKLIST,
+  type StaffUserDto,
+  type WorkOrderDetailDto,
+} from '@smart-light/shared';
 import {
   Alert,
   Button,
@@ -14,7 +19,7 @@ import {
   Textarea,
 } from '@smart-light/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ExternalLink, MapPin } from 'lucide-react';
+import { ArrowLeft, CircleCheck, CircleMinus, ExternalLink, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
@@ -49,6 +54,7 @@ export default function WorkOrderDetailPage() {
   const tSource = useTranslations('Source');
   const tEvent = useTranslations('Event');
   const tResolution = useTranslations('Resolution');
+  const tChecklist = useTranslations('Checklist');
   const format = useFormatter();
   const faultLabel = useFaultLabel();
   const user = useSessionUser();
@@ -193,6 +199,59 @@ export default function WorkOrderDetailPage() {
               </dl>
               {wo.description ? (
                 <p className="mt-4 rounded-lg bg-surface-subtle p-3">{wo.description}</p>
+              ) : null}
+              {wo.completedAt ? (
+                <div className="mt-5 grid gap-5 border-t border-border pt-4 sm:grid-cols-2">
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold">{t('checklist')}</h3>
+                    <ul className="grid gap-1.5 text-sm">
+                      {REPAIR_CHECKLIST.map((item) => {
+                        const done = wo.checklist.includes(item);
+                        return (
+                          <li key={item} className="flex items-center gap-2">
+                            {done ? (
+                              <CircleCheck aria-hidden="true" className="size-4 text-success" />
+                            ) : (
+                              <CircleMinus
+                                aria-hidden="true"
+                                className="size-4 text-muted-foreground"
+                              />
+                            )}
+                            <span className={done ? undefined : 'text-muted-foreground'}>
+                              {tChecklist(item)}
+                              <span className="sr-only">
+                                {' '}
+                                ({done ? t('checklistDone') : t('checklistNotDone')})
+                              </span>
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold">{t('partsUsed')}</h3>
+                    {wo.parts.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">{t('noParts')}</p>
+                    ) : (
+                      <ul className="grid gap-1.5 text-sm">
+                        {wo.parts.map((part) => (
+                          <li key={part.id} className="flex justify-between gap-3">
+                            <span>
+                              {part.name}{' '}
+                              <span className="font-mono text-xs text-muted-foreground">
+                                {part.code}
+                              </span>
+                            </span>
+                            <span className="tabular-nums font-medium">
+                              {part.quantity} {part.unit}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
               ) : null}
             </CardContent>
           </Card>

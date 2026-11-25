@@ -44,7 +44,8 @@
     "schedules": "Schedules",
     "reports": "Reports",
     "settings": "Settings",
-    "staff": "Staff & agencies"
+    "staff": "Staff & agencies",
+    "inventory": "Spare parts"
   },
   "Login": {
     "title": "Sign in",
@@ -273,7 +274,12 @@
         "reason": "Reason for cancelling",
         "confirm": "Cancel work order",
         "keep": "Keep it"
-      }
+      },
+      "checklist": "Repair checklist",
+      "checklistDone": "done",
+      "checklistNotDone": "not ticked",
+      "partsUsed": "Spare parts used",
+      "noParts": "No parts recorded."
     },
     "summary": "Work orders at a glance",
     "cards": {
@@ -903,5 +909,78 @@
       "technician": "Technician",
       "agency": "Agency"
     }
+  },
+  "Inventory": {
+    "title": "Spare parts",
+    "description": "Store stock of lamps, drivers and other parts. Field use is recorded when technicians complete repairs.",
+    "manage": "Stock",
+    "history": "History",
+    "cancel": "Cancel",
+    "saveFailed": "Could not save. Check the values and try again.",
+    "add": {
+      "open": "Add part",
+      "title": "Add a spare part",
+      "submit": "Add part"
+    },
+    "fields": {
+      "code": "Code",
+      "codeHint": "Store code, e.g. LED-90W",
+      "name": "Name",
+      "nameHi": "Name in Hindi",
+      "unit": "Unit",
+      "minStock": "Reorder level",
+      "minStockHint": "Shown as low stock at or below this",
+      "openingStock": "Opening stock"
+    },
+    "kpi": {
+      "parts": "Parts stocked",
+      "low": "Low stock",
+      "lowHint": "At or below the reorder level",
+      "used": "Used in last 30 days",
+      "usedHint": "Units recorded on repairs"
+    },
+    "columns": {
+      "part": "Part",
+      "stock": "In stock",
+      "minStock": "Reorder level",
+      "used": "Used (30 days)",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "ok": "In stock",
+      "low": "Low stock",
+      "inactive": "Not stocked"
+    },
+    "stock": {
+      "title": "Update stock",
+      "kind": "Type",
+      "quantity": "Quantity",
+      "adjustHint": "Negative to reduce, e.g. -2",
+      "note": "Note",
+      "submit": "Save"
+    },
+    "kind": {
+      "RECEIVED": "Received",
+      "USED": "Used on repair",
+      "ADJUSTED": "Count correction"
+    },
+    "ledger": {
+      "title": "Stock history",
+      "empty": "No stock changes yet."
+    },
+    "empty": {
+      "title": "No spare parts yet",
+      "editor": "Add the parts your store keeps to track stock and field use.",
+      "viewer": "An administrator or supervisor can add the parts the store keeps."
+    }
+  },
+  "Checklist": {
+    "POWER_ISOLATED": "Power isolated before work",
+    "FAULT_IDENTIFIED": "Fault identified",
+    "PARTS_FITTED": "Parts fitted and secured",
+    "WIRING_EARTHING_CHECKED": "Wiring and earthing checked",
+    "LIGHT_TESTED": "Light switched on and tested",
+    "SITE_CLEARED": "Site cleared and safe"
   }
 }

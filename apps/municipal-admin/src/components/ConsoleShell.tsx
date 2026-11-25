@@ -1,5 +1,6 @@
 import { AppShell, type AppShellNavItem } from '@smart-light/ui';
 import {
+  Boxes,
   Bell,
   CalendarClock,
   ClipboardList,
@@ -34,6 +35,7 @@ export async function ConsoleShell({ children }: { children: ReactNode }) {
     { href: '/alerts', label: t('Nav.alerts'), icon: <Bell />, badge: <AlertsNavBadge /> },
     { href: '/work-orders', label: t('Nav.workOrders'), icon: <ClipboardList /> },
     { href: '/schedules', label: t('Nav.schedules'), icon: <CalendarClock /> },
+    { href: '/inventory', label: t('Nav.inventory'), icon: <Boxes /> },
     { href: '/reports', label: t('Nav.reports'), icon: <FileBarChart /> },
     { href: '/staff', label: t('Nav.staff'), icon: <UsersRound /> },
     { href: '/settings', label: t('Nav.settings'), icon: <Settings /> },
