@@ -67,4 +67,7 @@ firmware/**/provisioning/
 
 # Database package: local PostgreSQL data and generated Prisma client
 packages/db/.pgdata/
+# Repair photos stored on disk in development (PHOTO_STORAGE=local)
+apps/api/.uploads/
+apps/api/.uploads-test/
 packages/db/src/generated/

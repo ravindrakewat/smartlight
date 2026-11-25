@@ -207,3 +207,31 @@ export const cancelWorkOrderSchema = z
 
 /** Technicians must be this close to the pole to start or complete work. */
 export const ON_SITE_RADIUS_M = 100;
+
+/** Most photos of each kind (before / after) on one work order. */
+export const MAX_PHOTOS_PER_KIND = 6;
+/** Largest accepted photo upload in bytes (5 MB). */
+export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
+export const uploadPhotoQuerySchema = z.object({
+  kind: z.enum(['BEFORE', 'AFTER']),
+  latitude: z.coerce.number().min(-90).max(90).optional(),
+  longitude: z.coerce.number().min(-180).max(180).optional(),
+  /** When the photo was taken (phone clock); defaults to upload time. */
+  takenAt: z.iso.datetime().optional(),
+  tenantId: z.uuid().optional(),
+});
+
+export const workOrderPhotoSchema = z
+  .object({
+    id: z.uuid(),
+    kind: z.enum(['BEFORE', 'AFTER']),
+    takenAt: z.iso.datetime(),
+    latitude: z.number().nullable(),
+    longitude: z.number().nullable(),
+    uploadedBy: z.string().nullable(),
+    /** Short-lived link relative to the API base (`/v1/photos/…`); expires in 10 minutes. */
+    url: z.string(),
+  })
+  .meta({ id: 'WorkOrderPhoto' });
+export type WorkOrderPhotoDto = z.infer<typeof workOrderPhotoSchema>;

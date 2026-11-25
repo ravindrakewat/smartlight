@@ -19,6 +19,7 @@ import { polesRouter } from '../modules/poles/poles.routes';
 import { publicTenantsRouter, tenantsRouter } from '../modules/tenants/tenants.routes';
 import { usersRouter } from '../modules/users/users.routes';
 import { workOrdersRouter } from '../modules/work-orders/work-orders.routes';
+import { photosRouter, workOrderPhotosRouter } from '../modules/photos/photos.module';
 import { zonesRouter } from '../modules/zones/zones.module';
 
 /** Unauthenticated endpoints for the citizen portal. */
@@ -48,7 +49,9 @@ v1Router.use('/spare-parts', sparePartsRouter);
 v1Router.use('/notifications', notificationsRouter);
 v1Router.use('/audit', auditRouter);
 v1Router.use('/dashboard', dashboardRouter);
+v1Router.use('/work-orders', workOrderPhotosRouter);
 v1Router.use('/work-orders', workOrdersRouter);
+v1Router.use('/photos', photosRouter);
 v1Router.use('/complaints', complaintsRouter);
 v1Router.use('/lorawan', lorawanRouter);
 v1Router.use('/gateways', gatewaysRouter);

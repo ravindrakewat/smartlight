@@ -78,6 +78,14 @@ const apiEnvSchema = z
     CHIRPSTACK_MQTT_PASSWORD: z.string().min(1).optional(),
     /** ChirpStack application id (UUID) of the street-light devices; used for downlinks. */
     CHIRPSTACK_APPLICATION_ID: z.uuid().optional(),
+    /**
+     * Where repair photos are kept. `local` = files on this server's disk (development
+     * only; refused in production). Empty = uploads switched off. A cloud provider is
+     * a pending decision (PENDING_DECISIONS.md #6).
+     */
+    PHOTO_STORAGE: z.enum(['local', 'none']).optional(),
+    /** Folder for `PHOTO_STORAGE=local`, relative to the API's working directory. */
+    PHOTO_LOCAL_DIR: z.string().min(1).default('.uploads'),
     /** How often the API looks for work orders past their SLA (seconds); 0 = off. */
     SLA_SWEEP_INTERVAL_SECONDS: z.coerce.number().int().min(0).max(86_400).default(300),
     /** Roles that must use two-factor sign-in (comma-separated, from SUPER_ADMIN, MUNICIPAL_ADMIN). */
@@ -164,6 +172,13 @@ const apiEnvSchema = z
         code: 'custom',
         path: ['CHIRPSTACK_MQTT_URL'],
         message: 'Production must use TLS (mqtts://)',
+      });
+    }
+    if (value.NODE_ENV === NodeEnvironment.Production && value.PHOTO_STORAGE === 'local') {
+      context.addIssue({
+        code: 'custom',
+        path: ['PHOTO_STORAGE'],
+        message: 'Local photo storage is for development only; choose a private object store',
       });
     }
     if (value.NODE_ENV === NodeEnvironment.Production && value.MQTT_URL?.startsWith('mqtt://')) {

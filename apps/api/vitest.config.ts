@@ -15,6 +15,8 @@ export default defineConfig({
       API_DOCS_ENABLED: 'true',
       OTP_TEST_NUMBERS: '+919000000001:246810',
       CHIRPSTACK_APPLICATION_ID: '7d1c1b2e-3f4a-4b5c-8d6e-9f0a1b2c3d4e',
+      PHOTO_STORAGE: 'local',
+      PHOTO_LOCAL_DIR: '.uploads-test',
     },
   },
 });
