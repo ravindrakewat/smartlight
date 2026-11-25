@@ -2,8 +2,10 @@
  * Reports for municipal management and audits:
  *   GET /v1/reports/summary?days=30          SLA, repairs, complaints, energy, availability
  *   GET /v1/reports/work-orders.csv?days=30  every work order created in the period (Excel-ready)
+ *   GET /v1/reports/breakdown?days=30        trend, faults, wards, technicians, agencies
  */
 import {
+  reportBreakdownSchema,
   reportQuerySchema,
   reportSummarySchema,
   successEnvelope,
@@ -18,6 +20,7 @@ import { ROLE_GROUPS } from '../../lib/roles';
 import { authenticate } from '../../middlewares/authenticate';
 import { requireRoles } from '../../middlewares/authorize';
 import { getAuth, requireTenantId } from '../auth/auth.context';
+import { reportBreakdown } from './reports.breakdown';
 
 const HOUR_MS = 60 * 60 * 1000;
 const OPEN = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'PENDING_VERIFICATION'] as const;
@@ -181,6 +184,11 @@ const reportsController = {
     const tenantId = requireTenantId(getAuth(res), query.tenantId);
     sendData(res, await reportsService.summary(tenantId, query.days));
   },
+  async breakdown(req: Request, res: Response): Promise<void> {
+    const query = reportQuerySchema.parse(req.query);
+    const tenantId = requireTenantId(getAuth(res), query.tenantId);
+    sendData(res, await reportBreakdown(tenantId, query.days));
+  },
   async workOrdersCsv(req: Request, res: Response): Promise<void> {
     const query = reportQuerySchema.parse(req.query);
     const tenantId = requireTenantId(getAuth(res), query.tenantId);
@@ -202,6 +210,7 @@ export const reportsRouter = Router();
 reportsRouter.use(authenticate, requireRoles(...ROLE_GROUPS.tenantManagers));
 reportsRouter.get('/summary', reportsController.summary);
 reportsRouter.get('/work-orders.csv', reportsController.workOrdersCsv);
+reportsRouter.get('/breakdown', reportsController.breakdown);
 
 const TAG = 'Reports';
 registry.registerPath({
@@ -213,6 +222,21 @@ registry.registerPath({
   request: { query: reportQuerySchema },
   responses: {
     200: { description: 'Report', content: jsonContent(successEnvelope(reportSummarySchema)) },
+    ...errorResponses(400, 401, 403),
+  },
+});
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/reports/breakdown',
+  tags: [TAG],
+  summary: 'Daily or monthly trend, faults, ward, technician and agency tables for a period',
+  security: AUTHENTICATED,
+  request: { query: reportQuerySchema },
+  responses: {
+    200: {
+      description: 'Report tables',
+      content: jsonContent(successEnvelope(reportBreakdownSchema)),
+    },
     ...errorResponses(400, 401, 403),
   },
 });

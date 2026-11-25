@@ -825,5 +825,83 @@
     "revokeOthers": "बाकी सभी डिवाइस से साइन आउट करें",
     "revoked": "{count, plural, =0 {कोई और डिवाइस साइन इन नहीं था।} one {# डिवाइस साइन आउट हुआ।} other {# डिवाइस साइन आउट हुए।}}",
     "none": "कोई सक्रिय सत्र नहीं।"
+  },
+  "Reports": {
+    "title": "रिपोर्ट",
+    "description": "चुनी गई अवधि की मरम्मत, SLA, खराबी, वार्ड, कर्मचारी और ऊर्जा। रिपोर्ट लाइव रिकॉर्ड से बनती है।",
+    "period": "अवधि",
+    "lastDays": "पिछले {days} दिन",
+    "workOrdersCsv": "कार्य आदेश (CSV)",
+    "printPdf": "प्रिंट / PDF",
+    "print": "प्रिंट करें या PDF सहेजें",
+    "backToReports": "रिपोर्ट पर वापस",
+    "printTitle": "स्ट्रीट लाइट रिपोर्ट",
+    "printPeriod": "अवधि: {from} से {to}",
+    "downloadCsv": "CSV",
+    "empty": "इस अवधि में कुछ नहीं।",
+    "noWard": "वार्ड तय नहीं",
+    "hoursValue": "{hours} घंटे",
+    "kwhValue": "{kwh} kWh",
+    "simulatedTitle": "इसमें सिम्युलेटर डेटा शामिल है",
+    "simulatedBody": "इस अवधि में रिपोर्ट करने वाले {total} कंट्रोलर में से {simulated} सिम्युलेटेड हैं, लगाए गए हार्डवेयर नहीं। ऊर्जा और टेलीमेट्री के आंकड़ों में उनकी रीडिंग शामिल है।",
+    "kpi": {
+      "sla": "SLA अनुपालन",
+      "slaHint": "{resolved} में से {within} मरम्मत समय पर",
+      "repairTime": "औसत मरम्मत समय",
+      "repairTimeHint": "शिकायत से मरम्मत पूरी होने तक",
+      "workOrders": "बनाए / हल किए गए कार्य आदेश",
+      "workOrdersValue": "{created} / {resolved}",
+      "workOrdersHint": "अभी {open} खुले, {overdue} समय से अधिक",
+      "complaints": "प्राप्त / हल की गई नागरिक शिकायतें",
+      "complaintsValue": "{received} / {resolved}",
+      "complaintsHint": "अवधि में दर्ज शिकायतें",
+      "energy": "ऊर्जा खपत (मापी गई)",
+      "energyHint": "{controllers} कंट्रोलर रिपोर्ट कर रहे हैं",
+      "availability": "अभी चालू लाइटें",
+      "availabilityHint": "{total} में से {working} खंभे · {controllers} में से {online} कंट्रोलर ऑनलाइन"
+    },
+    "trend": {
+      "title": "रुझान",
+      "daily": "प्रति दिन (भारतीय समय)",
+      "monthly": "प्रति माह (भारतीय समय)",
+      "created": "बनाए गए कार्य आदेश",
+      "energy": "ऊर्जा खपत (मापी गई)",
+      "showTable": "तालिका के रूप में देखें",
+      "energyNote": "ऊर्जा कंट्रोलर के मीटर से मापी जाती है। बेसलाइन वॉटेज तय होने तक बचत का अनुमान नहीं दिखाया जाता।"
+    },
+    "faults": {
+      "title": "दर्ज खराबियां",
+      "description": "अवधि में बने कार्य आदेश, खराबी के प्रकार अनुसार"
+    },
+    "wards": {
+      "title": "वार्ड-वार प्रदर्शन",
+      "description": "खंभों की वर्तमान स्थिति; खंभे के वार्ड अनुसार मरम्मत"
+    },
+    "technicians": {
+      "title": "तकनीशियन प्रदर्शन",
+      "description": "हर तकनीशियन को सौंपे गए काम"
+    },
+    "agencies": {
+      "title": "एजेंसी और ठेकेदार प्रदर्शन",
+      "description": "हर एजेंसी को सौंपे गए काम"
+    },
+    "columns": {
+      "date": "तारीख",
+      "created": "बनाए",
+      "resolved": "हल",
+      "complaints": "शिकायतें",
+      "energy": "ऊर्जा (kWh)",
+      "ward": "वार्ड",
+      "poles": "खंभे",
+      "working": "चालू",
+      "faulty": "खराब",
+      "offline": "ऑफ़लाइन",
+      "open": "खुले",
+      "overdue": "समय से अधिक",
+      "withinSla": "समय पर",
+      "avgHours": "औसत घंटे",
+      "technician": "तकनीशियन",
+      "agency": "एजेंसी"
+    }
   }
 }

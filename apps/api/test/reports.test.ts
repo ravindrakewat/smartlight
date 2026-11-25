@@ -121,6 +121,137 @@ describe('reports', () => {
     expect(lines[1]).toContain(`"'=HYPERLINK(""http://evil"")"`);
   });
 
+  it('breaks the period down by day, fault, ward, technician and agency', async () => {
+    const city = await setupCity();
+    const ward = await prisma.ward.create({
+      data: { tenantId: city.tenant.id, code: `W${uniqueSuffix()}`.slice(0, 10), name: 'Ward 36' },
+    });
+    await prisma.pole.update({ where: { id: city.pole.id }, data: { wardId: ward.id } });
+    const legacyPole = await prisma.pole.create({
+      data: {
+        tenantId: city.tenant.id,
+        serial: 2,
+        code: formatPoleCode(city.tenant.code, 2),
+        latitude: 22.7,
+        longitude: 75.8,
+        ward: 'Old ward 5',
+        lightStatus: 'FAULT',
+      },
+    });
+    const agency = await prisma.agency.create({
+      data: { tenantId: city.tenant.id, name: `Contractor ${uniqueSuffix()}`, type: 'CONTRACTOR' },
+    });
+    const technician = await createUser({
+      role: 'TECHNICIAN',
+      tenantId: city.tenant.id,
+      agencyId: agency.id,
+    });
+    const now = Date.now();
+    const job = {
+      tenantId: city.tenant.id,
+      source: 'IOT_ALERT' as const,
+      assignedAgencyId: agency.id,
+      assignedTechnicianId: technician.id,
+    };
+    await prisma.workOrder.create({
+      data: {
+        ...job,
+        poleId: city.pole.id,
+        number: `B-${uniqueSuffix()}`,
+        faultType: 'LAMP_FAILURE',
+        status: 'RESOLVED',
+        createdAt: new Date(now - hours(10)),
+        slaDueAt: new Date(now + hours(14)),
+        completedAt: new Date(now - hours(6)),
+        verifiedAt: new Date(now - hours(5)),
+      },
+    });
+    await prisma.workOrder.create({
+      data: {
+        ...job,
+        poleId: legacyPole.id,
+        number: `B-${uniqueSuffix()}`,
+        faultType: 'LAMP_FAILURE',
+        status: 'ASSIGNED',
+        slaDueAt: new Date(now - hours(1)),
+      },
+    });
+    await prisma.device.update({ where: { id: city.device.id }, data: { isSimulated: true } });
+    await prisma.deviceReading.createMany({
+      data: [1000, 1400].map((energyWh) => ({
+        deviceId: city.device.id,
+        tenantId: city.tenant.id,
+        deviceTs: 0,
+        lampOn: true,
+        dimPercent: 100,
+        mode: 'auto',
+        voltageV: 230,
+        currentA: 0.4,
+        powerW: 90,
+        energyWh,
+        rssiDbm: -70,
+      })),
+    });
+
+    const response = await request(app).get('/api/v1/reports/breakdown?days=7').set(city.auth);
+    expect(response.status).toBe(200);
+    const report = response.body.data;
+    expect(report.bucket).toBe('day');
+    expect(report.trend.length).toBeGreaterThanOrEqual(7);
+    const totals = report.trend.reduce(
+      (sum: { created: number; resolved: number; kwh: number }, point: Record<string, number>) => ({
+        created: sum.created + (point.workOrdersCreated ?? 0),
+        resolved: sum.resolved + (point.workOrdersResolved ?? 0),
+        kwh: sum.kwh + (point.energyKWh ?? 0),
+      }),
+      { created: 0, resolved: 0, kwh: 0 },
+    );
+    expect(totals).toEqual({ created: 2, resolved: 1, kwh: 0.4 });
+    expect(report.faults).toEqual([{ faultType: 'LAMP_FAILURE', count: 2 }]);
+    expect(report.wards).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          wardId: ward.id,
+          name: 'Ward 36',
+          poles: 1,
+          working: 1,
+          resolved: 1,
+          resolvedWithinSla: 1,
+          averageRepairHours: 4,
+        }),
+        expect.objectContaining({
+          wardId: null,
+          name: 'Old ward 5',
+          poles: 1,
+          faulty: 1,
+          open: 1,
+          overdue: 1,
+        }),
+      ]),
+    );
+    expect(report.technicians).toEqual([
+      expect.objectContaining({
+        id: technician.id,
+        agency: agency.name,
+        open: 1,
+        overdue: 1,
+        resolved: 1,
+        resolvedWithinSla: 1,
+      }),
+    ]);
+    expect(report.agencies).toEqual([
+      expect.objectContaining({ id: agency.id, open: 1, resolved: 1 }),
+    ]);
+    expect(report.dataSources).toEqual({
+      controllersReporting: 1,
+      simulatedControllersReporting: 1,
+    });
+
+    const year = await request(app).get('/api/v1/reports/breakdown?days=365').set(city.auth);
+    expect(year.body.data.bucket).toBe('month');
+    expect(year.body.data.trend.length).toBeGreaterThanOrEqual(12);
+  });
+
   it('is limited to management roles and to the own city', async () => {
     const city = await setupCity();
     const technician = await createUser({ role: 'TECHNICIAN', tenantId: city.tenant.id });
@@ -128,6 +259,10 @@ describe('reports', () => {
       .get('/api/v1/reports/summary')
       .set(await bearerFor(technician.email));
     expect(forbidden.status).toBe(403);
+    const forbiddenBreakdown = await request(app)
+      .get('/api/v1/reports/breakdown')
+      .set(await bearerFor(technician.email));
+    expect(forbiddenBreakdown.status).toBe(403);
 
     const other = await createTenant();
     const crossCity = await request(app)

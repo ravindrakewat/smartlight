@@ -825,5 +825,83 @@
     "revokeOthers": "Sign out all other devices",
     "revoked": "{count, plural, =0 {No other device was signed in.} one {# device signed out.} other {# devices signed out.}}",
     "none": "No active sessions."
+  },
+  "Reports": {
+    "title": "Reports",
+    "description": "Repairs, SLA, faults, wards, staff and energy for a period. Built from live records.",
+    "period": "Period",
+    "lastDays": "Last {days} days",
+    "workOrdersCsv": "Work orders (CSV)",
+    "printPdf": "Print / PDF",
+    "print": "Print or save as PDF",
+    "backToReports": "Back to reports",
+    "printTitle": "Street lighting report",
+    "printPeriod": "Period: {from} to {to}",
+    "downloadCsv": "CSV",
+    "empty": "Nothing in this period.",
+    "noWard": "No ward set",
+    "hoursValue": "{hours} h",
+    "kwhValue": "{kwh} kWh",
+    "simulatedTitle": "Includes simulator data",
+    "simulatedBody": "{simulated} of the {total} controllers that reported in this period are simulated, not installed hardware. Energy and telemetry figures include their readings.",
+    "kpi": {
+      "sla": "SLA compliance",
+      "slaHint": "{within} of {resolved} repairs on time",
+      "repairTime": "Average repair time",
+      "repairTimeHint": "From report to finished repair",
+      "workOrders": "Work orders created / resolved",
+      "workOrdersValue": "{created} / {resolved}",
+      "workOrdersHint": "{open} open now, {overdue} overdue",
+      "complaints": "Citizen complaints received / resolved",
+      "complaintsValue": "{received} / {resolved}",
+      "complaintsHint": "Complaints filed in the period",
+      "energy": "Energy used (measured)",
+      "energyHint": "{controllers} controllers reporting",
+      "availability": "Lights working now",
+      "availabilityHint": "{working} of {total} poles · {online} of {controllers} controllers online"
+    },
+    "trend": {
+      "title": "Trend",
+      "daily": "Per day (India time)",
+      "monthly": "Per month (India time)",
+      "created": "Work orders created",
+      "energy": "Energy used (measured)",
+      "showTable": "Show as table",
+      "energyNote": "Energy is measured by the controllers' meters. No savings estimate is shown until a baseline wattage is agreed."
+    },
+    "faults": {
+      "title": "Faults reported",
+      "description": "Work orders created in the period, by fault type"
+    },
+    "wards": {
+      "title": "Ward-wise performance",
+      "description": "Poles by current state; repairs by the pole's ward"
+    },
+    "technicians": {
+      "title": "Technician performance",
+      "description": "Jobs assigned to each technician"
+    },
+    "agencies": {
+      "title": "Agency and contractor performance",
+      "description": "Jobs assigned to each agency"
+    },
+    "columns": {
+      "date": "Date",
+      "created": "Created",
+      "resolved": "Resolved",
+      "complaints": "Complaints",
+      "energy": "Energy (kWh)",
+      "ward": "Ward",
+      "poles": "Poles",
+      "working": "Working",
+      "faulty": "Faulty",
+      "offline": "Offline",
+      "open": "Open",
+      "overdue": "Overdue",
+      "withinSla": "On time",
+      "avgHours": "Avg. hours",
+      "technician": "Technician",
+      "agency": "Agency"
+    }
   }
 }

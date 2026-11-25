@@ -52,3 +52,68 @@ export const reportSummarySchema = z
   .meta({ id: 'ReportSummary' });
 
 export type ReportSummaryDto = z.infer<typeof reportSummarySchema>;
+
+const performanceRow = {
+  /** Open jobs right now (assigned, in progress or waiting for verification). */
+  open: z.number().int(),
+  /** Open jobs past their SLA deadline right now. */
+  overdue: z.number().int(),
+  /** Jobs verified as repaired within the period. */
+  resolved: z.number().int(),
+  resolvedWithinSla: z.number().int(),
+  /** Average hours from report to finished repair for `resolved`; null when none. */
+  averageRepairHours: z.number().nullable(),
+};
+
+/** Detailed tables behind the Reports page (same period rules as the summary). */
+export const reportBreakdownSchema = z
+  .object({
+    from: z.iso.datetime(),
+    to: z.iso.datetime(),
+    /** `day` for periods up to 90 days, `month` for a year. Dates are India time. */
+    bucket: z.enum(['day', 'month']),
+    trend: z.array(
+      z.object({
+        /** First day of the bucket, `YYYY-MM-DD` (Asia/Kolkata). */
+        date: z.string(),
+        workOrdersCreated: z.number().int(),
+        workOrdersResolved: z.number().int(),
+        complaints: z.number().int(),
+        /** Measured by controllers; energy that crosses a bucket boundary is not counted. */
+        energyKWh: z.number(),
+      }),
+    ),
+    faults: z.array(z.object({ faultType: z.string(), count: z.number().int() })),
+    wards: z.array(
+      z.object({
+        /** Ward record id; null for legacy text wards or poles without a ward. */
+        wardId: z.uuid().nullable(),
+        code: z.string().nullable(),
+        /** Ward name, legacy ward text, or null for poles without a ward. */
+        name: z.string().nullable(),
+        poles: z.number().int(),
+        working: z.number().int(),
+        faulty: z.number().int(),
+        offline: z.number().int(),
+        workOrdersCreated: z.number().int(),
+        ...performanceRow,
+      }),
+    ),
+    technicians: z.array(
+      z.object({
+        id: z.uuid(),
+        name: z.string(),
+        agency: z.string().nullable(),
+        ...performanceRow,
+      }),
+    ),
+    agencies: z.array(z.object({ id: z.uuid(), name: z.string(), ...performanceRow })),
+    /** Controllers that reported energy in the period, and how many of them are simulated. */
+    dataSources: z.object({
+      controllersReporting: z.number().int(),
+      simulatedControllersReporting: z.number().int(),
+    }),
+  })
+  .meta({ id: 'ReportBreakdown' });
+
+export type ReportBreakdownDto = z.infer<typeof reportBreakdownSchema>;
