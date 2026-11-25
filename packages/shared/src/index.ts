@@ -17,3 +17,4 @@ export * from './client/api-client';
 export * from './api/iot-control';
 export * from './api/reports';
 export * from './api/platform';
+export * from './api/lorawan';

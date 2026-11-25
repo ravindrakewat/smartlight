@@ -10,6 +10,7 @@ import { createDocsRouter } from '../modules/docs/docs.routes';
 import { healthRouter } from '../modules/health/health.routes';
 import { alertsRouter, lightingRouter, poleLiveRouter } from '../modules/iot/lighting.module';
 import { schedulesRouter, zoneScheduleRouter } from '../modules/iot/schedules.module';
+import { gatewaysRouter, lorawanRouter } from '../modules/lorawan/lorawan.module';
 import { auditRouter, deviceListRouter } from '../modules/platform/platform.module';
 import { reportsRouter } from '../modules/reports/reports.module';
 import { polesRouter } from '../modules/poles/poles.routes';
@@ -45,6 +46,8 @@ v1Router.use('/audit', auditRouter);
 v1Router.use('/dashboard', dashboardRouter);
 v1Router.use('/work-orders', workOrdersRouter);
 v1Router.use('/complaints', complaintsRouter);
+v1Router.use('/lorawan', lorawanRouter);
+v1Router.use('/gateways', gatewaysRouter);
 
 /** Everything under /api. Health stays unversioned for infrastructure probes. */
 export const apiRouter = Router();
