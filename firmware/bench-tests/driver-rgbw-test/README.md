@@ -38,7 +38,8 @@ Join Wi-Fi `SmartLight-RGBW` (password `test12345`) and open http://192.168.4.1.
    and a `DEVICE_ID` that exists on a pole in the production database. The pole page in the
    municipal console shows it ("Controller sl-…"); demo data uses `sl-indore-mc-<pole number>`.
 4. With TLS the board waits for internet time (SNTP) before connecting: certificates have
-   validity dates. Trusted roots: `src/mqtt_ca.h` (DigiCert Global Root G2 for EMQX Cloud,
+   validity dates. Trusted roots: `src/mqtt_ca.h` (DigiCert Global Root G2 and Global Root CA
+   for EMQX Cloud,
    ISRG Root X1 for Let's Encrypt). A broker signed by another CA needs its root added there.
 
 Supported commands: `set_output`, `set_auto`, `set_config`, `reboot`. `set_schedule` and
