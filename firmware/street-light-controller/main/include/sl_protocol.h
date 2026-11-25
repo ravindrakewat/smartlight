@@ -29,6 +29,7 @@
 /* Network interfaces (NetworkInterface) */
 #define SL_NET_CELLULAR "cellular"
 #define SL_NET_WIFI "wifi"
+#define SL_NET_LORAWAN "lorawan"
 
 /* Command acknowledgement status (CommandAckStatus) */
 #define SL_ACK_ACCEPTED "accepted"
@@ -55,3 +56,31 @@
 
 /* Longest manual override accepted from the cloud (7 days). */
 #define SL_MAX_OVERRIDE_S (7 * 24 * 3600)
+/* ---- LoRaWAN compact frames, version 1 (packages/shared/src/iot/lorawan.ts) ----
+ * Big-endian. Byte 0 = SL_LW_VERSION. Sizes fit IN865 DR0 (51 bytes).
+ * Port 10 telemetry (22): flags(b0 lamp on, b1 motion, b2 dark, b3 dark known,
+ *   b4-5 mode 0 auto/1 manual/2 failsafe), dim %, V*10 u16, mA u16, W*10 u16,
+ *   Wh u32, board temp i8 (-128 = none), ts u32, uptime s u32.
+ * Port 20 event (8): event code, severity 0/1/2, ts u32, clears code (0 = none).
+ * Port 30 ack (18): command id (16 raw UUID bytes), status 0 accepted/1 rejected/
+ *   2 completed/3 failed.
+ * Port 40 command (downlink): command id, action 1 set_output (28 bytes: on, dim,
+ *   overrideUntil u32, expiresAt u32) or 2 set_auto (22 bytes: expiresAt u32).
+ * Not implemented in this firmware yet: the RAK3172 driver waits for the module.
+ */
+#define SL_LW_VERSION 1
+#define SL_LW_PORT_TELEMETRY 10
+#define SL_LW_PORT_EVENT 20
+#define SL_LW_PORT_ACK 30
+#define SL_LW_PORT_COMMAND 40
+#define SL_LW_EVT_LAMP_FAILURE 1
+#define SL_LW_EVT_RELAY_STUCK 2
+#define SL_LW_EVT_DAY_BURNING 3
+#define SL_LW_EVT_OVER_CURRENT 4
+#define SL_LW_EVT_OVER_VOLTAGE 5
+#define SL_LW_EVT_UNDER_VOLTAGE 6
+#define SL_LW_EVT_SENSOR_FAULT 7
+#define SL_LW_EVT_FAULT_CLEARED 8
+#define SL_LW_EVT_BOOT 9
+
+

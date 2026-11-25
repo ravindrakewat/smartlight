@@ -70,7 +70,17 @@ function lightStatusFrom(telemetry: TelemetryPayload, faulty: boolean): LightSta
   return telemetry.lamp.dimPercent < 100 ? 'DIMMED' : 'ON';
 }
 
-async function handleTelemetry(device: KnownDevice, payload: unknown): Promise<IngestOutcome> {
+/** Which link carried a message, and its radio quality where the network reports it. */
+export interface LinkMeta {
+  via?: 'wifi' | 'cellular' | 'lorawan';
+  snrDb?: number;
+}
+
+async function handleTelemetry(
+  device: KnownDevice,
+  payload: unknown,
+  meta: LinkMeta = {},
+): Promise<IngestOutcome> {
   const parsed = telemetryPayloadSchema.safeParse(payload);
   if (!parsed.success) {
     return 'invalid_payload';
@@ -93,6 +103,8 @@ async function handleTelemetry(device: KnownDevice, payload: unknown): Promise<I
         powerW: telemetry.electrical.powerW,
         energyWh: telemetry.electrical.energyWh,
         rssiDbm: telemetry.device.rssiDbm,
+        snrDb: meta.snrDb ?? null,
+        via: meta.via ?? telemetry.device.network,
         boardTempC: telemetry.device.boardTempC ?? null,
         motion: telemetry.environment.motionDetected,
       },
@@ -296,9 +308,17 @@ async function handleAck(device: KnownDevice, payload: unknown): Promise<IngestO
       failed: 'FAILED',
     } as const
   )[ack.status];
+  const now = new Date();
+  // Protocol v1: `accepted` means valid and applied; `completed` ends a long job (OTA).
+  const applied = status === 'ACCEPTED' || status === 'COMPLETED';
   await prisma.deviceCommand.update({
     where: { id: command.id },
-    data: { status, reason: ack.reason ?? null, ackAt: new Date() },
+    data: {
+      status,
+      reason: ack.reason ?? null,
+      ackAt: command.ackAt ?? now,
+      ...(applied ? { appliedAt: now } : {}),
+    },
   });
   if (command.action === 'set_schedule' && status === 'ACCEPTED') {
     const scheduleId = (command.payload as { scheduleId?: unknown }).scheduleId;
@@ -347,6 +367,37 @@ export const ingestService = {
       logger.warn('Invalid controller payload dropped', { deviceId, channel });
     }
     return outcome;
+  },
+
+  /**
+   * Entry point for messages that did not come over the controller MQTT topics
+   * (e.g. LoRaWAN frames decoded by the LoRaWAN service) for a known device id.
+   */
+  async handleForDevice(
+    deviceRecordId: string,
+    channel: DeviceTopicChannel,
+    payload: unknown,
+    meta: LinkMeta = {},
+  ): Promise<IngestOutcome> {
+    const device = await prisma.device.findUnique({
+      where: { id: deviceRecordId },
+      include: { tenant: { select: { slug: true } } },
+    });
+    if (!device) {
+      return 'unknown_device';
+    }
+    switch (channel) {
+      case DeviceTopicChannel.Telemetry:
+        return handleTelemetry(device, payload, meta);
+      case DeviceTopicChannel.Event:
+        return handleEvent(device, payload);
+      case DeviceTopicChannel.CommandAck:
+        return handleAck(device, payload);
+      case DeviceTopicChannel.Status:
+        return handleStatus(device, payload);
+      default:
+        return 'ignored';
+    }
   },
 
   /** Marks undelivered commands whose deadline passed as expired. */

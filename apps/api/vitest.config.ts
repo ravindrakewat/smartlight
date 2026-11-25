@@ -14,6 +14,7 @@ export default defineConfig({
       CORS_ORIGINS: 'http://localhost:3000,http://localhost:3001,http://localhost:3002',
       API_DOCS_ENABLED: 'true',
       OTP_TEST_NUMBERS: '+919000000001:246810',
+      CHIRPSTACK_APPLICATION_ID: '7d1c1b2e-3f4a-4b5c-8d6e-9f0a1b2c3d4e',
     },
   },
 });

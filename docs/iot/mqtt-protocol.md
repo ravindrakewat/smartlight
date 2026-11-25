@@ -110,3 +110,31 @@ with a backend credential, stores readings and events, opens a work order for `l
 `relay_stuck` and `over_current` (one per pole), verifies repairs from telemetry, and publishes
 commands from the database outbox (`device_commands`). A controller that comes back online is
 sent its current schedule if it does not have it.
+
+## LoRaWAN link (RAK3172, ChirpStack v4)
+
+A controller may also carry a RAK3172 LoRaWAN module as an **additional** link
+(4G and Wi-Fi stay). LoRaWAN frames are too small for the JSON documents above, so
+the controller sends compact binary frames; the backend decodes them into the same
+v1 payloads. Source of truth: `packages/shared/src/iot/lorawan.ts`, mirrored in
+`sl_protocol.h` (`SL_LW_*`).
+
+| Port | Direction | Bytes | Content |
+| --- | --- | --- | --- |
+| 10 | up | 22 | Telemetry: flags (lamp, motion, dark, dark-known, mode), dim %, V x10, mA, W x10, Wh, board C (-128 = none), clock, uptime |
+| 20 | up | 8 | Event: event code, severity, clock, cleared-event code |
+| 30 | up | 18 | Command acknowledgement: command id (16 bytes), status |
+| 40 | down | 28 / 22 | `set_output` (on, dim, override-until, expiry) / `set_auto` (expiry) |
+
+Big-endian, byte 0 = version 1. Everything fits IN865 DR0 (51 bytes). Schedules and
+configuration are not sent over LoRaWAN (too large); they use Wi-Fi / 4G.
+
+ChirpStack topics (JSON marshaler): events on
+`application/{applicationId}/device/{devEui}/event/{up,join,ack,txack}`; downlinks
+published to `application/{applicationId}/device/{devEui}/command/down` with the
+command id as the queue item id, confirmed, port 40.
+
+**Status: simulator-tested only.** The RAK3172 and the gateway are ordered and not
+yet received; no real OTAA join or radio frame has been tested. The firmware driver
+is not written yet.
+

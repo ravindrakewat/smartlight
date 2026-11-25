@@ -671,26 +671,28 @@ enum DeviceCommandStatus {
 /// Command outbox: the API writes, the MQTT bridge publishes and records the ack.
 /// `id` is the protocol `cmdId`.
 model DeviceCommand {
-  id          String              @id @default(uuid(7)) @db.Uuid
-  tenantId    String              @db.Uuid
-  deviceId    String              @db.Uuid
+  id            String              @id @default(uuid(7)) @db.Uuid
+  tenantId      String              @db.Uuid
+  deviceId      String              @db.Uuid
   /// e.g. `set_output`, `set_schedule`
-  action      String
+  action        String
   /// Full protocol payload (deviceCommandSchema), ready to publish.
-  payload     Json
-  status      DeviceCommandStatus @default(PENDING)
-  reason      String?
-  createdById String?             @db.Uuid
-  createdAt   DateTime            @default(now()) @db.Timestamptz(3)
-  sentAt      DateTime?           @db.Timestamptz(3)
-  ackAt       DateTime?           @db.Timestamptz(3)
+  payload       Json
+  status        DeviceCommandStatus @default(PENDING)
+  reason        String?
+  createdById   String?             @db.Uuid
+  createdAt     DateTime            @default(now()) @db.Timestamptz(3)
+  sentAt        DateTime?           @db.Timestamptz(3)
+  ackAt         DateTime?           @db.Timestamptz(3)
   /// The device reported the change as applied (COMPLETED); separate from acknowledgement.
-  appliedAt   DateTime?           @db.Timestamptz(3)
+  appliedAt     DateTime?           @db.Timestamptz(3)
   /// `mqtt` (Wi-Fi / 4G) or `lorawan`
-  channel     String              @default("mqtt")
+  channel       String              @default("mqtt")
   /// Network server reference for a LoRaWAN downlink (ChirpStack queue item id).
-  downlinkId  String?
-  expiresAt   DateTime            @db.Timestamptz(3)
+  downlinkId    String?
+  /// A gateway transmitted the LoRaWAN downlink (ChirpStack txack); not proof of receipt.
+  transmittedAt DateTime?           @db.Timestamptz(3)
+  expiresAt     DateTime            @db.Timestamptz(3)
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
@@ -807,32 +809,34 @@ model DeviceInterface {
 /// LoRaWAN registration of a controller's radio (OTAA). The AppKey is stored
 /// encrypted and is never returned by the API.
 model LorawanDevice {
-  id              String    @id @default(uuid(7)) @db.Uuid
-  interfaceId     String    @unique @db.Uuid
+  id                String    @id @default(uuid(7)) @db.Uuid
+  interfaceId       String    @unique @db.Uuid
   /// 16 hex characters, lower-case.
-  devEui          String    @unique
+  devEui            String    @unique
   /// JoinEUI (LoRaWAN 1.0.4+ name for AppEUI), 16 hex characters.
-  joinEui         String
+  joinEui           String
   /// AES-GCM envelope (`v1:`); null until provisioned.
-  appKeyEncrypted String?
+  appKeyEncrypted   String?
+  /// Keyed hash of the AppKey: unique, so no two devices ever share a key.
+  appKeyFingerprint String?   @unique
   /// ChirpStack device-profile id or name.
-  deviceProfile   String
+  deviceProfile     String
   /// e.g. `1.0.3` (what the module firmware supports)
-  macVersion      String    @default("1.0.3")
-  region          String    @default("IN865")
+  macVersion        String    @default("1.0.3")
+  region            String    @default("IN865")
   /// Only OTAA is used.
-  activation      String    @default("OTAA")
+  activation        String    @default("OTAA")
   /// `A` or `C`
-  deviceClass     String    @default("A")
+  deviceClass       String    @default("A")
   /// `NOT_JOINED` | `JOINED` (as reported by the network server, or by the simulator)
-  joinStatus      String    @default("NOT_JOINED")
-  joinedAt        DateTime? @db.Timestamptz(3)
-  lastFCntUp      Int?
-  lastUplinkAt    DateTime? @db.Timestamptz(3)
+  joinStatus        String    @default("NOT_JOINED")
+  joinedAt          DateTime? @db.Timestamptz(3)
+  lastFCntUp        Int?
+  lastUplinkAt      DateTime? @db.Timestamptz(3)
   /// Simulator device: no radio involved. Joins and uplinks are not real radio events.
-  isSimulated     Boolean   @default(false)
-  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime  @updatedAt @db.Timestamptz(3)
+  isSimulated       Boolean   @default(false)
+  createdAt         DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @db.Timestamptz(3)
 
   interface DeviceInterface @relation(fields: [interfaceId], references: [id], onDelete: Cascade)
 

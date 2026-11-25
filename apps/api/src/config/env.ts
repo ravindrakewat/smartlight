@@ -56,6 +56,28 @@ const apiEnvSchema = z
       .refine((value) => !value || Buffer.from(value, 'base64').length === 32, {
         error: 'MFA_ENCRYPTION_KEY must be 32 bytes, base64 (openssl rand -base64 32)',
       }),
+    /**
+     * 32-byte key (base64) that encrypts device secrets such as LoRaWAN AppKeys:
+     * openssl rand -base64 32. Production: LoRaWAN provisioning is refused until set.
+     */
+    DEVICE_SECRET_KEY: z
+      .string()
+      .optional()
+      .refine((value) => !value || Buffer.from(value, 'base64').length === 32, {
+        error: 'DEVICE_SECRET_KEY must be 32 bytes, base64 (openssl rand -base64 32)',
+      }),
+    /**
+     * ChirpStack v4 MQTT integration broker for the IoT worker (LoRaWAN). Empty =
+     * LoRaWAN bridge off. May be the same broker as MQTT_URL.
+     */
+    CHIRPSTACK_MQTT_URL: z
+      .string()
+      .regex(/^mqtts?:\/\/.+/, { error: 'Use mqtts://host:8883 (or mqtt:// locally)' })
+      .optional(),
+    CHIRPSTACK_MQTT_USERNAME: z.string().min(1).optional(),
+    CHIRPSTACK_MQTT_PASSWORD: z.string().min(1).optional(),
+    /** ChirpStack application id (UUID) of the street-light devices; used for downlinks. */
+    CHIRPSTACK_APPLICATION_ID: z.uuid().optional(),
     /** Roles that must use two-factor sign-in (comma-separated, from SUPER_ADMIN, MUNICIPAL_ADMIN). */
     MFA_REQUIRED_ROLES: z
       .string()
@@ -130,6 +152,16 @@ const apiEnvSchema = z
         code: 'custom',
         path: ['MFA_ENCRYPTION_KEY'],
         message: 'Required in production (openssl rand -base64 32)',
+      });
+    }
+    if (
+      value.NODE_ENV === NodeEnvironment.Production &&
+      value.CHIRPSTACK_MQTT_URL?.startsWith('mqtt://')
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['CHIRPSTACK_MQTT_URL'],
+        message: 'Production must use TLS (mqtts://)',
       });
     }
     if (value.NODE_ENV === NodeEnvironment.Production && value.MQTT_URL?.startsWith('mqtt://')) {

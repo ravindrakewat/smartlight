@@ -119,7 +119,8 @@ export function startMqttBridge(options: MqttBridgeOptions): MqttBridge {
       return 0;
     }
     const pending = await prisma.deviceCommand.findMany({
-      where: { status: 'PENDING', expiresAt: { gt: new Date() } },
+      // LoRaWAN commands go through the network server (chirpstack-bridge.ts).
+      where: { status: 'PENDING', channel: 'mqtt', expiresAt: { gt: new Date() } },
       orderBy: { createdAt: 'asc' },
       take: OUTBOX_BATCH,
       include: { device: { select: { deviceId: true, tenant: { select: { slug: true } } } } },

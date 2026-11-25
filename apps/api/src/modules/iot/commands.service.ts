@@ -51,6 +51,30 @@ export function utcOffsetMinutes(timeZone: string, at = new Date()): number {
 type CommandBody = DistributiveOmit<DeviceCommand, 'v' | 'cmdId' | 'issuedAt' | 'expiresAt'>;
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
+/** Actions small enough for a LoRaWAN downlink (see @smart-light/shared lorawan.ts). */
+export const LORAWAN_ACTIONS = new Set(['set_output', 'set_auto']);
+
+/**
+ * Picks the link for a command: LoRaWAN only when it is the controller's
+ * preferred enabled link and the command fits a downlink; otherwise MQTT
+ * (Wi-Fi / 4G). Controllers without registered links use MQTT, as before.
+ */
+export async function chooseChannel(
+  db: DbClient,
+  deviceId: string,
+  action: string,
+): Promise<'mqtt' | 'lorawan'> {
+  if (!LORAWAN_ACTIONS.has(action)) {
+    return 'mqtt';
+  }
+  const preferred = await db.deviceInterface.findFirst({
+    where: { deviceId, enabled: true },
+    orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
+    select: { kind: true },
+  });
+  return preferred?.kind === 'LORAWAN' ? 'lorawan' : 'mqtt';
+}
+
 /** Builds, validates and stores one command for one controller. */
 async function queueCommand(
   db: DbClient,
@@ -75,6 +99,7 @@ async function queueCommand(
       deviceId: device.id,
       action: payload.action,
       payload: payload as Prisma.InputJsonValue,
+      channel: await chooseChannel(db, device.id, payload.action),
       createdById,
       expiresAt: new Date((issuedAt + ttlSeconds) * 1000),
     },

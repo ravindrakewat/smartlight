@@ -33,6 +33,8 @@ export enum LightOperatingMode {
 export enum NetworkInterface {
   Cellular = 'cellular',
   Wifi = 'wifi',
+  /** RAK3172 link; telemetry arrives as compact frames (lorawan.ts), decoded by the backend. */
+  Lorawan = 'lorawan',
 }
 
 // ─── Telemetry ────────────────────────────────────────────────────────────────
