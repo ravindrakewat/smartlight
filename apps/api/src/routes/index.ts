@@ -13,6 +13,7 @@ import { schedulesRouter, zoneScheduleRouter } from '../modules/iot/schedules.mo
 import { gatewaysRouter, lorawanRouter } from '../modules/lorawan/lorawan.module';
 import { auditRouter, deviceListRouter } from '../modules/platform/platform.module';
 import { sparePartsRouter } from '../modules/inventory/inventory.module';
+import { notificationsRouter } from '../modules/notifications/notifications.module';
 import { reportsRouter } from '../modules/reports/reports.module';
 import { polesRouter } from '../modules/poles/poles.routes';
 import { publicTenantsRouter, tenantsRouter } from '../modules/tenants/tenants.routes';
@@ -44,6 +45,7 @@ v1Router.use('/devices', deviceListRouter);
 v1Router.use('/devices', devicesRouter);
 v1Router.use('/reports', reportsRouter);
 v1Router.use('/spare-parts', sparePartsRouter);
+v1Router.use('/notifications', notificationsRouter);
 v1Router.use('/audit', auditRouter);
 v1Router.use('/dashboard', dashboardRouter);
 v1Router.use('/work-orders', workOrdersRouter);

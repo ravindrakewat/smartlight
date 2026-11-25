@@ -78,6 +78,8 @@ const apiEnvSchema = z
     CHIRPSTACK_MQTT_PASSWORD: z.string().min(1).optional(),
     /** ChirpStack application id (UUID) of the street-light devices; used for downlinks. */
     CHIRPSTACK_APPLICATION_ID: z.uuid().optional(),
+    /** How often the API looks for work orders past their SLA (seconds); 0 = off. */
+    SLA_SWEEP_INTERVAL_SECONDS: z.coerce.number().int().min(0).max(86_400).default(300),
     /** Roles that must use two-factor sign-in (comma-separated, from SUPER_ADMIN, MUNICIPAL_ADMIN). */
     MFA_REQUIRED_ROLES: z
       .string()

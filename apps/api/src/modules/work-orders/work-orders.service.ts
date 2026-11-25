@@ -20,6 +20,7 @@ import { sendSmsInBackground } from '../../lib/sms';
 import { AppError } from '../../utils/app-error';
 import { errors } from '../../utils/errors';
 import { recordAudit } from '../audit/audit.service';
+import { notifyUsers, supervisorIds } from '../notifications/notifications.module';
 import { requireTenantId, type AuthContext } from '../auth/auth.context';
 import { findPoleByCodeInTenant } from '../poles/poles.service';
 import {
@@ -266,6 +267,24 @@ async function resolveTx(
     note,
     metadata: { method },
   });
+  const job = await db.workOrder.findUniqueOrThrow({
+    where: { id: workOrderId },
+    select: {
+      tenantId: true,
+      number: true,
+      assignedTechnicianId: true,
+      pole: { select: { code: true } },
+    },
+  });
+  await notifyUsers(db, {
+    userIds: [job.assignedTechnicianId],
+    tenantId: job.tenantId,
+    kind: 'work_order.verified',
+    data: { number: job.number, poleCode: job.pole.code, method },
+    entityType: 'work_order',
+    entityId: workOrderId,
+    exceptUserId: actorUserId,
+  });
   const complaints = await db.complaint.findMany({
     where: { workOrderId, status: { in: ['SUBMITTED', 'IN_PROGRESS'] } },
     include: { citizen: { select: { phone: true } } },
@@ -426,6 +445,22 @@ export const workOrdersService = {
         note: input.note ?? null,
         metadata: { agencyId, technicianId, technicianName },
       });
+      if (technicianId && technicianId !== workOrder.assignedTechnicianId) {
+        await notifyUsers(tx, {
+          userIds: [technicianId],
+          tenantId,
+          kind: 'work_order.assigned',
+          data: {
+            number: workOrder.number,
+            poleCode: workOrder.pole.code,
+            priority: workOrder.priority,
+            faultType: workOrder.faultType,
+          },
+          entityType: 'work_order',
+          entityId: id,
+          exceptUserId: auth.userId,
+        });
+      }
       if (technicianId) {
         await tx.complaint.updateMany({
           where: { workOrderId: id, status: 'SUBMITTED' },
@@ -516,6 +551,18 @@ export const workOrdersService = {
           parts: input.parts,
         },
       });
+      // Poles with a controller are verified by telemetry; the rest need a supervisor.
+      if (workOrder.pole.device === null) {
+        await notifyUsers(tx, {
+          userIds: await supervisorIds(tx, tenantId),
+          tenantId,
+          kind: 'work_order.awaiting_verification',
+          data: { number: workOrder.number, poleCode: workOrder.pole.code },
+          entityType: 'work_order',
+          entityId: id,
+          exceptUserId: auth.userId,
+        });
+      }
       return reload(tx, id);
     });
   },
@@ -547,6 +594,19 @@ export const workOrdersService = {
           type: 'VERIFICATION_FAILED',
           actorUserId: auth.userId,
           note: input.note ?? 'Fix not accepted by supervisor',
+        });
+        await notifyUsers(tx, {
+          userIds: [workOrder.assignedTechnicianId],
+          tenantId,
+          kind: 'work_order.fix_rejected',
+          data: {
+            number: workOrder.number,
+            poleCode: workOrder.pole.code,
+            note: input.note ?? null,
+          },
+          entityType: 'work_order',
+          entityId: id,
+          exceptUserId: auth.userId,
         });
       }
       await recordAudit(

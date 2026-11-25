@@ -2,6 +2,7 @@ import http from 'node:http';
 import { createApp } from './app';
 import { env } from './config/env';
 import { prisma } from './lib/prisma';
+import { startSlaEscalation } from './modules/work-orders/sla-escalation';
 import { logger } from './utils/logger';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
@@ -50,6 +51,9 @@ server.listen(env.PORT, env.API_HOST, () => {
     healthEndpoint: `/api/health`,
   });
 });
+
+// Marks overdue work orders once and tells the technician and supervisors.
+startSlaEscalation(env.SLA_SWEEP_INTERVAL_SECONDS);
 
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));

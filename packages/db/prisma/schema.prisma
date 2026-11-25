@@ -159,6 +159,8 @@ model User {
   workOrderPhotos    WorkOrderPhoto[]
   workOrderParts     WorkOrderPart[]
   stockMovements     StockMovement[]
+  notifications      Notification[]
+  pushDevices        PushDevice[]
   mfaChallenges      MfaChallenge[]
   mfaRecoveryCodes   MfaRecoveryCode[]
 
@@ -978,4 +980,46 @@ model StockMovement {
 
   @@index([sparePartId, createdAt])
   @@map("stock_movements")
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+/// In-app notification for a staff user. Text is rendered by the client from
+/// `kind` + `data`, so each person reads it in their own language.
+model Notification {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  userId     String    @db.Uuid
+  tenantId   String?   @db.Uuid
+  /// e.g. `work_order.assigned`, `work_order.sla_breached`
+  kind       String
+  /// Values the text needs, e.g. { number, poleCode }.
+  data       Json?
+  entityType String?
+  entityId   String?
+  readAt     DateTime? @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+/// Push token of a staff member's phone. Stored only; sending needs FCM / APNs
+/// credentials, which are not configured (see PENDING_DECISIONS.md).
+model PushDevice {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  userId     String   @db.Uuid
+  /// FCM registration token or Expo push token.
+  token      String   @unique
+  /// `android` | `ios` | `web`
+  platform   String
+  lastSeenAt DateTime @default(now()) @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_devices")
 }
