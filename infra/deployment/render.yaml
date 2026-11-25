@@ -37,6 +37,9 @@ services:
       # Random 32+ character signing key, generated once by Render.
       - key: JWT_ACCESS_SECRET
         generateValue: true
+      # Encrypts two-factor secrets at rest (openssl rand -base64 32). Required in production.
+      - key: MFA_ENCRYPTION_KEY
+        sync: false
       # Parent domain shared with the web consoles, e.g. .smartlight.example.in
       - key: COOKIE_DOMAIN
         sync: false
@@ -69,6 +72,9 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: JWT_ACCESS_SECRET
+        sync: false
+      # Same value as the web service: the worker loads the same validated configuration.
+      - key: MFA_ENCRYPTION_KEY
         sync: false
       # Broker (EMQX Cloud or a VPS in India): mqtts://host:8883 and a backend-only credential
       # whose ACL allows publish/subscribe on sl/v1/#.
