@@ -34,6 +34,7 @@ export default function AppLayout() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="job/[id]" options={{ title: '' }} />
       <Stack.Screen name="history" options={{ title: m.history.title }} />
+      <Stack.Screen name="notifications" options={{ title: m.notifications.title }} />
       <Stack.Screen name="password" options={{ title: m.profile.changePassword }} />
     </Stack>
   );

@@ -44,6 +44,22 @@ export const en = {
     fixed: 'Fixed',
     severity: { critical: 'Critical', warning: 'Warning', info: 'Info' },
   },
+  notifications: {
+    title: 'Notifications',
+    markAll: 'Mark all read',
+    empty: 'You have no notifications.',
+    unread: 'Unread',
+    kinds: {
+      'work_order.assigned': 'Work order {number} for pole {poleCode} was assigned to you',
+      'work_order.fix_rejected':
+        'The repair on {number} ({poleCode}) was not accepted. Please check again',
+      'work_order.verified': 'Your repair on {number} ({poleCode}) was verified',
+      'work_order.awaiting_verification':
+        '{number} ({poleCode}) is repaired and waiting for your verification',
+      'work_order.sla_breached': '{number} ({poleCode}) is past its SLA deadline',
+      other: 'Update on {number}',
+    },
+  },
   history: {
     title: 'Work history',
     all: 'All',
@@ -293,6 +309,21 @@ export const hi: Messages = {
     empty: 'कोई अलर्ट नहीं। सभी लाइटें ठीक हैं।',
     fixed: 'ठीक हुआ',
     severity: { critical: 'गंभीर', warning: 'चेतावनी', info: 'सूचना' },
+  },
+  notifications: {
+    title: 'सूचनाएं',
+    markAll: 'सभी पढ़ी हुई करें',
+    empty: 'आपके लिए कोई सूचना नहीं है।',
+    unread: 'अपठित',
+    kinds: {
+      'work_order.assigned': 'खंभा {poleCode} का कार्य आदेश {number} आपको सौंपा गया',
+      'work_order.fix_rejected': '{number} ({poleCode}) की मरम्मत स्वीकार नहीं हुई। कृपया फिर जांचें',
+      'work_order.verified': '{number} ({poleCode}) पर आपकी मरम्मत सत्यापित हुई',
+      'work_order.awaiting_verification':
+        '{number} ({poleCode}) की मरम्मत हो गई है, आपके सत्यापन का इंतज़ार है',
+      'work_order.sla_breached': '{number} ({poleCode}) की SLA समय-सीमा निकल गई है',
+      other: '{number} पर अपडेट',
+    },
   },
   history: {
     title: 'काम का इतिहास',

@@ -55,3 +55,12 @@ export function useOpenAlertCount(): number | null {
   });
   return data ? data.pagination.totalItems : null;
 }
+
+/** Unread in-app notifications of the signed-in person (header badge). */
+export function useUnreadNotifications() {
+  return useQuery({
+    queryKey: ['notifications', 'unread'],
+    queryFn: () => api.request<{ unread: number }>('/v1/notifications/unread-count'),
+    refetchInterval: 60_000,
+  });
+}

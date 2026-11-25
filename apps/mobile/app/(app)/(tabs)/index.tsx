@@ -16,7 +16,12 @@ import {
 import { Message } from '../../../src/components/ui';
 import { useI18n } from '../../../src/i18n';
 import { api } from '../../../src/lib/api';
-import { useAlerts, useMyJobs, useOpenAlertCount } from '../../../src/lib/queries';
+import {
+  useAlerts,
+  useMyJobs,
+  useOpenAlertCount,
+  useUnreadNotifications,
+} from '../../../src/lib/queries';
 import { useSession } from '../../../src/lib/session';
 import { colors, radius, shadow, spacing, type ToneName } from '../../../src/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,6 +34,7 @@ export default function HomeScreen() {
   const jobs = useMyJobs();
   const alerts = useAlerts();
   const alertCount = useOpenAlertCount();
+  const unreadNotifications = useUnreadNotifications();
   const health = useQuery({
     queryKey: ['health'],
     queryFn: () => api.request<HealthCheckData>('/health/ready'),
@@ -122,6 +128,12 @@ export default function HomeScreen() {
               {user ? `${m.home.hello}, ${user.name}` : ''}
             </Text>
           </View>
+          <HeaderButton
+            icon="mail-outline"
+            label={m.notifications.title}
+            badge={unreadNotifications.data?.unread || undefined}
+            onPress={() => router.push('/notifications')}
+          />
           <HeaderButton
             icon="notifications-outline"
             label={m.nav.alerts}
