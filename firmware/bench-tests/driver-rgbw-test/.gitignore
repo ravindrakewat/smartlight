@@ -1,0 +1,4 @@
+.pio/
+.vscode/
+# Wi-Fi password and broker address: never commit
+src/secrets.h
