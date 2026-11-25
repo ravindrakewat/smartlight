@@ -1,0 +1,15 @@
+# Mosquitto ACL for the ChirpStack staging stack. Users are created with
+# mosquitto_passwd into ./passwd (not committed).
+
+# ChirpStack and the gateway bridge: gateway and application traffic.
+user chirpstack
+topic readwrite in865/gateway/#
+topic readwrite application/#
+
+user gateway-bridge
+topic readwrite in865/gateway/#
+
+# Smart Street Light IoT worker: reads device events, enqueues downlinks only.
+user sl-worker
+topic read application/+/device/+/event/#
+topic write application/+/device/+/command/down

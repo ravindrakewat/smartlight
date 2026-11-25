@@ -1,0 +1,35 @@
+# ChirpStack v4 main configuration (staging). Values in $VARS come from the
+# container environment (docker-compose.yml / .env). UNTESTED: validate on staging.
+
+[logging]
+  level = "info"
+
+[postgresql]
+  dsn = "postgres://chirpstack:$CHIRPSTACK_POSTGRES_PASSWORD@$POSTGRESQL_HOST/chirpstack?sslmode=disable"
+  max_open_connections = 10
+
+[redis]
+  servers = ["redis://$REDIS_HOST/"]
+
+[network]
+  # Assign your own NetID when going to production (000000 is for private networks).
+  net_id = "000000"
+  # Only India's IN865 band is enabled.
+  enabled_regions = ["in865"]
+
+[api]
+  bind = "0.0.0.0:8080"
+  # Signs API tokens and sessions; 32+ random bytes, never committed.
+  secret = "$CHIRPSTACK_API_SECRET"
+
+[integration]
+  enabled = ["mqtt"]
+
+  [integration.mqtt]
+    server = "tcp://$MQTT_BROKER_HOST:1883/"
+    username = "chirpstack"
+    password = "$CHIRPSTACK_MQTT_PASSWORD"
+    # The platform worker parses JSON events (apps/api/src/modules/lorawan).
+    json = true
+    event_topic = "application/{{application_id}}/device/{{dev_eui}}/event/{{event}}"
+    command_topic = "application/{{application_id}}/device/{{dev_eui}}/command/{{command}}"

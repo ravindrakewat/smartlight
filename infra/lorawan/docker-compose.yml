@@ -1,0 +1,78 @@
+# ChirpStack v4 staging stack for the Smart Street Light LoRaWAN link (IN865).
+# STATUS: written from the ChirpStack v4 documentation; NOT yet started anywhere
+# (the development PC has no Docker). Validate on the staging host first; see README.md.
+#
+# Secrets come from .env next to this file (copy .env.example). Never commit .env.
+services:
+  chirpstack:
+    image: chirpstack/chirpstack:4
+    command: -c /etc/chirpstack
+    restart: unless-stopped
+    volumes:
+      - ./configuration/chirpstack:/etc/chirpstack:ro
+    depends_on:
+      - postgres
+      - mosquitto
+      - redis
+    environment:
+      - MQTT_BROKER_HOST=mosquitto
+      - REDIS_HOST=redis
+      - POSTGRESQL_HOST=postgres
+      - CHIRPSTACK_POSTGRES_PASSWORD=${CHIRPSTACK_POSTGRES_PASSWORD:?set in .env}
+      - CHIRPSTACK_API_SECRET=${CHIRPSTACK_API_SECRET:?set in .env}
+      - CHIRPSTACK_MQTT_PASSWORD=${CHIRPSTACK_MQTT_PASSWORD:?set in .env}
+    ports:
+      # Web UI + gRPC API. Bind to localhost and reach it through an SSH tunnel or
+      # a TLS reverse proxy; never expose it plainly.
+      - 127.0.0.1:8080:8080
+
+  chirpstack-gateway-bridge-in865:
+    image: chirpstack/chirpstack-gateway-bridge:4
+    restart: unless-stopped
+    ports:
+      # Semtech UDP packet forwarder from the gateway (UDP has no authentication:
+      # restrict the source IP with the host firewall).
+      - 1700:1700/udp
+    volumes:
+      - ./configuration/gateway-bridge:/etc/chirpstack-gateway-bridge:ro
+    environment:
+      - INTEGRATION__MQTT__EVENT_TOPIC_TEMPLATE=in865/gateway/{{ .GatewayID }}/event/{{ .EventType }}
+      - INTEGRATION__MQTT__STATE_TOPIC_TEMPLATE=in865/gateway/{{ .GatewayID }}/state/{{ .StateType }}
+      - INTEGRATION__MQTT__COMMAND_TOPIC_TEMPLATE=in865/gateway/{{ .GatewayID }}/command/#
+      - INTEGRATION__MQTT__AUTH__GENERIC__USERNAME=gateway-bridge
+      - INTEGRATION__MQTT__AUTH__GENERIC__PASSWORD=${GATEWAY_BRIDGE_MQTT_PASSWORD:?set in .env}
+    depends_on:
+      - mosquitto
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    ports:
+      # TLS listener for the platform worker (certificates in ./certs, not committed).
+      - 8883:8883
+    volumes:
+      - ./configuration/mosquitto:/mosquitto/config:ro
+      - ./certs:/mosquitto/certs:ro
+      - mosquitto-data:/mosquitto/data
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - ./configuration/postgresql/initdb:/docker-entrypoint-initdb.d:ro
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_ROOT_PASSWORD:?set in .env}
+      - CHIRPSTACK_POSTGRES_PASSWORD=${CHIRPSTACK_POSTGRES_PASSWORD:?set in .env}
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save 300 1 --save 60 100 --appendonly no
+    volumes:
+      - redis-data:/data
+
+volumes:
+  postgres-data:
+  redis-data:
+  mosquitto-data:

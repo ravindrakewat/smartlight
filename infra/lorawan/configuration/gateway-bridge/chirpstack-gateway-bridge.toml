@@ -1,0 +1,13 @@
+# ChirpStack Gateway Bridge v4 for IN865 gateways using the Semtech UDP packet
+# forwarder. UNTESTED. If the delivered gateway speaks LoRa Basics Station instead,
+# switch the backend to "basic_station" (see README.md, decision #3).
+
+[integration.mqtt.auth.generic]
+  servers = ["tcp://mosquitto:1883"]
+  # Username / password come from the environment (docker-compose.yml).
+
+[backend]
+  type = "semtech_udp"
+
+  [backend.semtech_udp]
+    udp_bind = "0.0.0.0:1700"
