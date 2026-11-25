@@ -279,7 +279,13 @@
       "checklistDone": "done",
       "checklistNotDone": "not ticked",
       "partsUsed": "Spare parts used",
-      "noParts": "No parts recorded."
+      "noParts": "No parts recorded.",
+      "photos": "Repair photos",
+      "noPhotos": "No photos yet.",
+      "photoBefore": "Before",
+      "photoAfter": "After",
+      "photoAlt": "{kind} photo taken {at}",
+      "photoGps": "with GPS"
     },
     "summary": "Work orders at a glance",
     "cards": {

@@ -279,7 +279,13 @@
       "checklistDone": "पूरा",
       "checklistNotDone": "टिक नहीं किया",
       "partsUsed": "इस्तेमाल हुए पुर्ज़े",
-      "noParts": "कोई पुर्ज़ा दर्ज नहीं।"
+      "noParts": "कोई पुर्ज़ा दर्ज नहीं।",
+      "photos": "मरम्मत की फोटो",
+      "noPhotos": "अभी कोई फोटो नहीं।",
+      "photoBefore": "पहले",
+      "photoAfter": "बाद में",
+      "photoAlt": "{kind} की फोटो, {at} को ली गई",
+      "photoGps": "GPS के साथ"
     },
     "summary": "कार्य आदेश एक नज़र में",
     "cards": {

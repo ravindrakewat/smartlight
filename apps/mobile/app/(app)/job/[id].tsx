@@ -22,6 +22,7 @@ import {
 } from 'react-native';
 import { confirmAction, Icon, IconCircle, type IconName } from '../../../src/components/kit';
 import { LightTest } from '../../../src/components/LightTest';
+import { RepairPhotos } from '../../../src/components/RepairPhotos';
 import { RepairRecord, SupervisorActions } from '../../../src/components/SupervisorActions';
 import { AppButton, Badge, Card, Message, styles as ui } from '../../../src/components/ui';
 import { useI18n, useRelativeTime } from '../../../src/i18n';
@@ -419,6 +420,7 @@ export default function JobScreen() {
           </Card>
         ) : null}
 
+        <RepairPhotos wo={wo} canAdd={mine} />
         <RepairRecord wo={wo} />
         {!mine ? <SupervisorActions wo={wo} /> : null}
 

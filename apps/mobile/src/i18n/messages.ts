@@ -44,6 +44,15 @@ export const en = {
     fixed: 'Fixed',
     severity: { critical: 'Critical', warning: 'Warning', info: 'Info' },
   },
+  photos: {
+    title: 'Repair photos',
+    before: 'Before',
+    after: 'After',
+    addBefore: 'Take a before photo',
+    addAfter: 'Take an after photo',
+    shutter: 'Take photo',
+    uploading: 'Uploading photo…',
+  },
   supervisor: {
     record: 'Repair record',
     notTicked: 'not ticked',
@@ -328,6 +337,15 @@ export const hi: Messages = {
     empty: 'कोई अलर्ट नहीं। सभी लाइटें ठीक हैं।',
     fixed: 'ठीक हुआ',
     severity: { critical: 'गंभीर', warning: 'चेतावनी', info: 'सूचना' },
+  },
+  photos: {
+    title: 'मरम्मत की फोटो',
+    before: 'पहले',
+    after: 'बाद में',
+    addBefore: 'पहले की फोटो लें',
+    addAfter: 'बाद की फोटो लें',
+    shutter: 'फोटो लें',
+    uploading: 'फोटो अपलोड हो रही है…',
   },
   supervisor: {
     record: 'मरम्मत का रिकॉर्ड',

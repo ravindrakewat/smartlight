@@ -64,3 +64,48 @@ export const api = createApiClient({
     tokens ? { Authorization: `Bearer ${tokens.accessToken}` } : {},
   onUnauthorized: refreshTokens,
 });
+
+/**
+ * Uploads a local file (e.g. a photo the camera saved) as a raw request body.
+ * Retries once after refreshing an expired access token.
+ */
+export async function uploadFile(
+  path: string,
+  fileUri: string,
+  contentType: string,
+  query: Record<string, string | number | undefined> = {},
+): Promise<unknown> {
+  const file = await (await fetch(fileUri)).blob();
+  const search = new URLSearchParams(
+    Object.entries(query).flatMap(([key, value]) =>
+      value === undefined ? [] : [[key, String(value)]],
+    ),
+  ).toString();
+  const url = `${baseUrl}${path}${search ? `?${search}` : ''}`;
+  const send = () =>
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': contentType,
+        ...(tokens ? { Authorization: `Bearer ${tokens.accessToken}` } : {}),
+      },
+      body: file,
+    });
+  let response = await send();
+  if (response.status === 401 && (await refreshTokens())) {
+    response = await send();
+  }
+  const body = (await response.json().catch(() => null)) as {
+    data?: unknown;
+    error?: { message?: string };
+  } | null;
+  if (!response.ok) {
+    throw new Error(body?.error?.message ?? `Upload failed (${response.status})`);
+  }
+  return body?.data;
+}
+
+/** Absolute URL for a path the API returned relative to its base (e.g. signed photo links). */
+export function apiUrl(path: string): string {
+  return `${baseUrl}${path}`;
+}

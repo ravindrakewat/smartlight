@@ -5,6 +5,7 @@ import {
   REPAIR_CHECKLIST,
   type StaffUserDto,
   type WorkOrderDetailDto,
+  type WorkOrderPhotoDto,
 } from '@smart-light/shared';
 import {
   Alert,
@@ -33,9 +34,82 @@ import {
 } from '@/components/labels';
 import { useSessionUser } from '@/components/Session';
 import { api } from '@/lib/api';
+import { municipalEnv } from '@/lib/env';
 
 const DISPATCHERS = new Set(['MUNICIPAL_ADMIN', 'SUPERVISOR', 'AGENCY_MANAGER']);
 const VERIFIERS = new Set(['MUNICIPAL_ADMIN', 'SUPERVISOR']);
+
+/** Before / after photos with GPS; links are signed by the API and expire in 10 minutes. */
+function RepairPhotos({ workOrderId }: { workOrderId: string }) {
+  const t = useTranslations('WorkOrders.detail');
+  const format = useFormatter();
+  const photos = useQuery({
+    queryKey: ['work-order', workOrderId, 'photos'],
+    queryFn: () => api.request<WorkOrderPhotoDto[]>(`/v1/work-orders/${workOrderId}/photos`),
+    staleTime: 5 * 60_000,
+    refetchInterval: 8 * 60_000,
+  });
+  const items = photos.data ?? [];
+  if (photos.isLoading) return <Skeleton className="h-40" />;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('photos')}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {items.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t('noPhotos')}</p>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2">
+            {(['BEFORE', 'AFTER'] as const).map((kind) => (
+              <section key={kind}>
+                <h3 className="mb-2 text-sm font-semibold">
+                  {kind === 'BEFORE' ? t('photoBefore') : t('photoAfter')}
+                </h3>
+                <ul className="grid grid-cols-2 gap-2">
+                  {items
+                    .filter((photo) => photo.kind === kind)
+                    .map((photo) => (
+                      <li key={photo.id}>
+                        <a
+                          href={`${municipalEnv.NEXT_PUBLIC_API_BASE_URL}${photo.url}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block overflow-hidden rounded-lg border border-border"
+                        >
+                          {/* Signed, short-lived API link; next/image would cache it past expiry. */}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`${municipalEnv.NEXT_PUBLIC_API_BASE_URL}${photo.url}`}
+                            alt={t('photoAlt', {
+                              kind: kind === 'BEFORE' ? t('photoBefore') : t('photoAfter'),
+                              at: format.dateTime(new Date(photo.takenAt), {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              }),
+                            })}
+                            className="aspect-[4/3] w-full object-cover"
+                            loading="lazy"
+                          />
+                        </a>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {format.dateTime(new Date(photo.takenAt), {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                          })}
+                          {photo.latitude !== null ? ` · ${t('photoGps')}` : ''}
+                        </p>
+                      </li>
+                    ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 function Detail({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -255,6 +329,8 @@ export default function WorkOrderDetailPage() {
               ) : null}
             </CardContent>
           </Card>
+
+          <RepairPhotos workOrderId={wo.id} />
 
           <Card>
             <CardHeader>
