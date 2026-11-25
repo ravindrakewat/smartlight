@@ -14,6 +14,9 @@ configurable so no option is locked in.
 | 7 | Production hosting region (Render Singapore today) | Go-live | Unchanged | Government data may need India-region hosting |
 | 8 | Run the ward mapping and demo-simulated marking on production | After approval of #1-style review | Run on local dev only | `npm run map:wards -w @smart-light/db` (dry run first) |
 | 9 | Remove the 23 November demo data from production | Go-live | Untouched | `demo:clear:render` exists; needs explicit approval |
+| 11 | Mobile offline mode: add a local database (expo-sqlite) and network detection to the app | Offline technician workflow | Online only | Needs new native packages and a new EAS build; server gets idempotency keys for start / complete / photos |
+| 12 | Push notifications: Firebase project (FCM) and Apple push key | Sending push | In-app notifications only; tokens stored | Credentials are production secrets; owner creates them |
+| 13 | Deploy reports, spare parts, notifications, photos (2 new migrations) | Production | Local dev DB only | Run after #1; photo uploads stay off in production until #6 |
 | 10 | Rotate the Render database password (was pasted in chat) | As soon as possible | Owner action | Not done by the assistant (production secret) |
 
 Hardware choices already fixed by the owner (do not change without a written comparison and

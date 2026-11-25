@@ -68,6 +68,18 @@ Gateways / LoRaWAN screens are parked on the owner's request (2026-11-25).
   `/v1/spare-parts` with a stock ledger; console Spare parts page; job completion records a
   checklist and parts used (stock reduced in the same transaction); mobile completion form
   has the checklist and a parts picker; work order detail shows both.
+- Notifications: migration `20261125105500_staff_notifications_and_push_devices` (additive,
+  local dev DB only; backup `pgdata-before-notifications-20261125-105351`). In-app
+  notifications for assignment, fix rejected, verified, awaiting verification and SLA breach;
+  console inbox in the top bar; mobile notifications screen. SLA sweep runs inside the API
+  (`SLA_SWEEP_INTERVAL_SECONDS`, default 300). Push tokens are stored only: **no FCM/APNs
+  sending** (credentials not configured).
+- Repair photos: existing `work_order_photos` table; private upload by the assigned technician,
+  10-minute signed links; storage driver interface with local disk for development only.
+  Production returns 503 until an object store is chosen (PENDING_DECISIONS #6). Mobile camera
+  capture (not testable in the headless browser; upload path tested via API), console gallery.
+- Mobile supervisor / agency manager: approve or send back repairs, assign technicians,
+  repair record (checklist, parts, photos).
 
 What is NOT done for LoRaWAN: no real OTAA join, no radio frame, no gateway, no ChirpStack
 instance, no RAK3172 firmware driver, no automatic device creation in ChirpStack (devices
