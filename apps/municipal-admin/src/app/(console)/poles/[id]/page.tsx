@@ -28,6 +28,7 @@ import { api } from '@/lib/api';
 
 const CONTROLLERS = new Set(['SUPER_ADMIN', 'MUNICIPAL_ADMIN', 'SUPERVISOR', 'OPERATOR']);
 const LIVE_REFRESH_MS = 15_000;
+const COMMAND_SETTLE_MS = 3_000;
 
 function Reading({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -49,9 +50,12 @@ export default function PoleDetailPage() {
   const user = useSessionUser();
   const queryClient = useQueryClient();
 
+  // The server derives lightStatus (on/off/dimmed/fault) from each report: refresh it with the
+  // live readings so the pole picture and status label follow the lamp.
   const pole = useQuery({
     queryKey: ['pole', id],
     queryFn: () => api.request<PoleDto>(`/v1/poles/${id}`),
+    refetchInterval: LIVE_REFRESH_MS,
   });
   const live = useQuery({
     queryKey: ['pole-live', id],
@@ -291,9 +295,16 @@ export default function PoleDetailPage() {
                 <CardContent>
                   <ControlPanel
                     target={{ type: 'pole', poleId: info.id }}
-                    onSent={() =>
-                      void queryClient.invalidateQueries({ queryKey: ['pole-live', id] })
-                    }
+                    onSent={() => {
+                      // Now (command list) and again once the controller has had time to
+                      // acknowledge and report its new state.
+                      const refresh = () => {
+                        void queryClient.invalidateQueries({ queryKey: ['pole-live', id] });
+                        void queryClient.invalidateQueries({ queryKey: ['pole', id] });
+                      };
+                      refresh();
+                      setTimeout(refresh, COMMAND_SETTLE_MS);
+                    }}
                   />
                 </CardContent>
               </Card>

@@ -36,7 +36,9 @@ export function StreetPole({
   const id = useId().replace(/:/g, '');
   const lit = status === 'on' || status === 'dimmed';
   const level = Math.max(0, Math.min(100, dimPercent ?? (status === 'dimmed' ? 60 : 100)));
-  const coneOpacity = lit ? 0.18 + 0.5 * (level / 100) : 0;
+  // Brightness must read at a glance: 10 % is a faint glow, 100 % a full cone.
+  const brightness = level / 100;
+  const coneOpacity = lit ? 0.06 + 0.72 * brightness : 0;
   const unknown = status === 'unknown';
 
   return (
@@ -74,7 +76,13 @@ export function StreetPole({
             opacity={coneOpacity * 0.8}
           />
           {/* Halo around the lamp */}
-          <circle cx="32" cy="19" r={8 + 6 * (level / 100)} fill={`url(#halo-${id})`} />
+          <circle
+            cx="32"
+            cy="19"
+            r={4 + 11 * brightness}
+            fill={`url(#halo-${id})`}
+            opacity={0.35 + 0.65 * brightness}
+          />
         </g>
       ) : null}
 
@@ -113,7 +121,17 @@ export function StreetPole({
         strokeDasharray={unknown ? '3 2' : undefined}
         strokeWidth={unknown ? 1.2 : 0}
       />
-      {lit ? <rect x="26" y="17" width="12" height="2.5" rx="1.25" className="fill-lamp" /> : null}
+      {lit ? (
+        <rect
+          x="26"
+          y="17"
+          width="12"
+          height="2.5"
+          rx="1.25"
+          className="fill-lamp"
+          opacity={0.45 + 0.55 * brightness}
+        />
+      ) : null}
 
       {status === 'fault' ? (
         <g

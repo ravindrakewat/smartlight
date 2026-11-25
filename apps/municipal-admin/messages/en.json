@@ -502,6 +502,8 @@
       "hours": "{count, plural, one {# hour} other {# hours}}",
       "on": "Turn on",
       "off": "Turn off",
+      "sliderLive": "Changes the light as soon as you let go of the slider.",
+      "setBrightness": "Set brightness to {value} %",
       "auto": "Back to schedule",
       "hint": "When the time is up the lights return to their schedule by themselves.",
       "queued": "{count, plural, one {Sent to # controller} other {Sent to # controllers}}{skipped, plural, =0 {} other { · # poles have no controller}}. Each confirms within a minute when online.",
