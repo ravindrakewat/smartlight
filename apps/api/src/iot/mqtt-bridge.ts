@@ -157,7 +157,15 @@ export function startMqttBridge(options: MqttBridgeOptions): MqttBridge {
     return flushing;
   }
 
-  const outboxTimer = setInterval(() => void flushOutbox(), options.outboxIntervalMs ?? 1_500);
+  // A failed database read (e.g. the connection was dropped) must not crash the worker:
+  // log it and try again on the next tick.
+  const outboxTimer = setInterval(() => {
+    flushOutbox().catch((error: unknown) => {
+      logger.warn('Command outbox check failed, retrying', {
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
+    });
+  }, options.outboxIntervalMs ?? 1_500);
   const expiryTimer = setInterval(() => {
     void ingestService.expireCommands().catch(() => undefined);
   }, EXPIRY_INTERVAL_MS);
