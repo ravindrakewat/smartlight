@@ -304,6 +304,40 @@ describe('audit and controller lists', () => {
     ]);
   });
 
+  it('pages the command history of a pole, newest first, within the own city', async () => {
+    const city = await setupCity();
+    const controls = [
+      { action: 'auto' },
+      { action: 'off', durationMinutes: 30 },
+      { action: 'on', dimPercent: 50, durationMinutes: 30 },
+    ];
+    for (const control of controls) {
+      const sent = await request(app)
+        .post('/api/v1/lighting/commands')
+        .set(city.auth)
+        .send({ target: { type: 'pole', poleId: city.pole.id }, control });
+      expect(sent.status).toBe(202);
+    }
+    const first = await request(app)
+      .get(`/api/v1/poles/${city.pole.id}/commands?page=1&pageSize=2`)
+      .set(city.auth);
+    expect(first.status).toBe(200);
+    expect(first.body.data).toHaveLength(2);
+    expect(first.body.meta.pagination).toMatchObject({ page: 1, totalItems: 3, totalPages: 2 });
+    const second = await request(app)
+      .get(`/api/v1/poles/${city.pole.id}/commands?page=2&pageSize=2`)
+      .set(city.auth);
+    expect(second.body.data).toHaveLength(1);
+    const ids = [...first.body.data, ...second.body.data].map((row: { id: string }) => row.id);
+    expect(new Set(ids).size).toBe(3);
+    expect(first.body.data[0].createdBy).toMatchObject({ name: city.admin.name });
+
+    const other = await setupCity();
+    expect(
+      (await request(app).get(`/api/v1/poles/${city.pole.id}/commands`).set(other.auth)).status,
+    ).toBe(404);
+  });
+
   it('lists controllers of the own city, searchable by pole code', async () => {
     const city = await setupCity();
     const response = await request(app)

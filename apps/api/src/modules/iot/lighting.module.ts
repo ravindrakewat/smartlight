@@ -2,15 +2,18 @@
  * Lighting operations for the console and the technician app:
  *   POST /v1/lighting/commands      switch a pole, a zone or the city
  *   GET  /v1/poles/:id/live         controller state, 24 h power, events, commands
+ *   GET  /v1/poles/:id/commands     command history of the pole's controller, paginated
  *   GET  /v1/alerts                 controller faults (open by default)
  *   POST /v1/alerts/:id/resolve     operator closes a warning by hand
  */
 import {
   controlResultSchema,
+  deviceCommandDtoSchema,
   deviceEventDtoSchema,
   lightingCommandRequestSchema,
   listDeviceEventsQuerySchema,
   paginatedEnvelope,
+  paginationQuerySchema,
   poleLiveSchema,
   successEnvelope,
   type PoleLiveDto,
@@ -151,6 +154,47 @@ const lightingService = {
     };
   },
 
+  /** Commands sent to the pole's controller, newest first. Empty when no controller is fitted. */
+  async commands(tenantId: string, poleId: string, query: z.output<typeof paginationQuerySchema>) {
+    const pole = await prisma.pole.findFirst({
+      where: { id: poleId, tenantId },
+      select: { device: { select: { id: true } } },
+    });
+    if (!pole) {
+      throw errors.notFound('Pole');
+    }
+    if (!pole.device) {
+      return { items: [], pagination: paginationMeta(query, 0) };
+    }
+    const where = { deviceId: pole.device.id };
+    const [rows, total] = await Promise.all([
+      prisma.deviceCommand.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        ...toSkipTake(query),
+      }),
+      prisma.deviceCommand.count({ where }),
+    ]);
+    const creatorIds = [...new Set(rows.flatMap((c) => (c.createdById ? [c.createdById] : [])))];
+    const creators = new Map(
+      (
+        await prisma.user.findMany({
+          where: { id: { in: creatorIds } },
+          select: { id: true, name: true },
+        })
+      ).map((user) => [user.id, user]),
+    );
+    return {
+      items: rows.map((command) =>
+        toCommandDto({
+          ...command,
+          createdBy: command.createdById ? (creators.get(command.createdById) ?? null) : null,
+        }),
+      ),
+      pagination: paginationMeta(query, total),
+    };
+  },
+
   async alerts(tenantId: string, query: z.output<typeof listDeviceEventsQuerySchema>) {
     const where = {
       tenantId,
@@ -216,6 +260,12 @@ const lightingController = {
     const { id } = idParams.parse(req.params);
     sendData(res, await lightingService.live(tenantOf(req, res), id));
   },
+  async commands(req: Request, res: Response): Promise<void> {
+    const { id } = idParams.parse(req.params);
+    const query = paginationQuerySchema.parse(req.query);
+    const { items, pagination } = await lightingService.commands(tenantOf(req, res), id, query);
+    sendPage(res, items, pagination);
+  },
   async alerts(req: Request, res: Response): Promise<void> {
     const query = listDeviceEventsQuerySchema.parse(req.query);
     const tenantId = requireTenantId(getAuth(res), query.tenantId);
@@ -248,6 +298,12 @@ poleLiveRouter.get(
   authenticate,
   requireRoles(...ROLE_GROUPS.tenantReaders),
   lightingController.live,
+);
+poleLiveRouter.get(
+  '/:id/commands',
+  authenticate,
+  requireRoles(...ROLE_GROUPS.tenantReaders),
+  lightingController.commands,
 );
 
 /** Mounted at /v1/alerts */
@@ -287,6 +343,22 @@ registry.registerPath({
   responses: {
     200: { description: 'Live state', content: jsonContent(successEnvelope(poleLiveSchema)) },
     ...errorResponses(401, 403, 404),
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/poles/{id}/commands',
+  tags: [TAG],
+  summary: 'Command history of the pole controller, newest first (paginated)',
+  security: AUTHENTICATED,
+  request: { params: idParams, query: paginationQuerySchema.extend(tenantQuery.shape) },
+  responses: {
+    200: {
+      description: 'Commands',
+      content: jsonContent(paginatedEnvelope(deviceCommandDtoSchema)),
+    },
+    ...errorResponses(400, 401, 403, 404),
   },
 });
 

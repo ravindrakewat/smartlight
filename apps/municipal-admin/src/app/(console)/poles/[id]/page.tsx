@@ -20,6 +20,7 @@ import { useParams } from 'next/navigation';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { LightStatusLabel, useFaultLabel } from '@/components/labels';
+import { CommandHistory } from '@/components/lighting/CommandHistory';
 import { ControlPanel } from '@/components/lighting/ControlPanel';
 import { PowerChart } from '@/components/lighting/PowerChart';
 import { STREET_STATUS } from '@/components/lighting/ZoneStreet';
@@ -48,7 +49,6 @@ export default function PoleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const t = useTranslations('Lighting.pole');
   const tCommon = useTranslations('Common');
-  const tCmd = useTranslations('Lighting.commands');
   const format = useFormatter();
   const now = useNow({ updateInterval: 30_000 });
   const faultLabel = useFaultLabel();
@@ -86,7 +86,7 @@ export default function PoleDetailPage() {
   }
 
   const info = pole.data;
-  const { device, readings, events, commands, schedule } = live.data;
+  const { device, readings, events, schedule } = live.data;
   const number = (value: number | null, digits = 1) =>
     value === null ? '—' : format.number(value, { maximumFractionDigits: digits });
   // Server time can be a few seconds ahead of this tab's clock: never say "in 5 seconds".
@@ -341,64 +341,7 @@ export default function PoleDetailPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('commands.title')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {commands.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t('commands.empty')}</p>
-                ) : (
-                  <ul className="divide-y divide-border text-sm">
-                    {commands.map((command) => (
-                      <li key={command.id} className="grid gap-0.5 py-2.5">
-                        <span className="flex items-center justify-between gap-2">
-                          <span className="font-medium">
-                            {command.action === 'set_output'
-                              ? command.on
-                                ? tCmd('on', { value: command.dimPercent ?? 100 })
-                                : tCmd('off')
-                              : tCmd(command.action as 'set_auto')}
-                          </span>
-                          <Badge
-                            tone={
-                              command.status === 'ACCEPTED' || command.status === 'COMPLETED'
-                                ? 'success'
-                                : command.status === 'REJECTED' ||
-                                    command.status === 'FAILED' ||
-                                    command.status === 'EXPIRED'
-                                  ? 'danger'
-                                  : 'info'
-                            }
-                          >
-                            {tCmd(`status.${command.status}`)}
-                          </Badge>
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {[
-                            command.createdBy?.name ?? tCmd('system'),
-                            format.dateTime(new Date(command.createdAt), {
-                              dateStyle: 'short',
-                              timeStyle: 'short',
-                            }),
-                            command.until
-                              ? tCmd('until', {
-                                  time: format.dateTime(new Date(command.until), {
-                                    timeStyle: 'short',
-                                  }),
-                                })
-                              : null,
-                            command.reason,
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
+            <CommandHistory poleId={id} />
           </div>
         </div>
       )}
