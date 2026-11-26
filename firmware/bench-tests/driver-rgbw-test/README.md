@@ -8,7 +8,9 @@ Join Wi-Fi `SmartLight-RGBW` (password `test12345`) and open http://192.168.4.1.
 
 **Router Wi-Fi without code changes:** on that page, "Wi-Fi setup" → "Wi-Fi dhoondho", pick the
 network, type its password, "Save & connect". The board saves it in flash (survives restarts)
-and uses it instead of `WIFI_SSID` in `secrets.h`. "Saved Wi-Fi hatao" forgets it. Anyone who
+and uses it instead of `WIFI_SSID` in `secrets.h`. "Saved Wi-Fi hatao" forgets it. If the
+saved network is not found within 15 s, the board stops searching for 60 s so the hotspot stays
+steady for a phone (and keeps waiting while a phone is connected), then tries again — no reboot. Anyone who
 knows the hotspot password can change this, so change `test12345` before leaving a board
 somewhere public.
 

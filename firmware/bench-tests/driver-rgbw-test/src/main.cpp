@@ -361,6 +361,16 @@ Preferences wifiPrefs;
 String wifiSsid;
 String wifiPass;
 
+// While the ESP32 searches for a router that is not there it hops channels, and phones
+// cannot stay on its hotspot. So: try the saved network for 15 s, then pause 60 s with a
+// steady hotspot (Wi-Fi can be changed from the page), then try again. No restart: a reboot
+// would blink the street light every cycle and the search would start all over again.
+const unsigned long WIFI_TRY_MS = 15000;
+const unsigned long WIFI_PAUSE_MS = 60000;
+unsigned long wifiTryStart = 0;
+bool wifiPaused = false;
+unsigned long wifiPauseUntil = 0;
+
 void loadWifi() {
   wifiPrefs.begin("wifi", true);
   wifiSsid = wifiPrefs.getString("ssid", "");
@@ -380,7 +390,32 @@ void connectWifi() {
     return;
   }
   WiFi.begin(wifiSsid.c_str(), wifiPass.c_str());
+  wifiTryStart = millis();
+  wifiPaused = false;
   Serial.printf("Router Wi-Fi '%s' se jud raha hai...\n", wifiSsid.c_str());
+}
+
+// Called every loop while the router is not connected.
+void watchWifi() {
+  if (wifiSsid.isEmpty()) return;
+  const unsigned long now = millis();
+  const bool phoneOnHotspot = WiFi.softAPgetStationNum() > 0;
+  if (!wifiPaused) {
+    if (now - wifiTryStart < WIFI_TRY_MS) return;
+    WiFi.disconnect(false, false);  // stop searching; hotspot stays on a steady channel
+    wifiPaused = true;
+    wifiPauseUntil = now + WIFI_PAUSE_MS;
+    Serial.printf("Wi-Fi '%s' 15 s mein nahi mila. Hotspot 'SmartLight-RGBW' free hai "
+                  "(Wi-Fi badalna ho to badlo); 60 s baad dobara try.\n",
+                  wifiSsid.c_str());
+    return;
+  }
+  if ((long)(now - wifiPauseUntil) < 0) return;
+  if (phoneOnHotspot) {  // someone may be setting Wi-Fi: do not disturb the hotspot
+    wifiPauseUntil = now + 10000;
+    return;
+  }
+  connectWifi();
 }
 
 void handleScan() {
@@ -458,12 +493,18 @@ void loopMqtt() {
   const bool online = WiFi.status() == WL_CONNECTED;
   if (online != wasOnline) {
     wasOnline = online;
-    if (online)
+    if (online) {
       Serial.printf("Router Wi-Fi juda. ESP32 IP: %s\n", WiFi.localIP().toString().c_str());
-    else
+    } else {
       Serial.println("Router Wi-Fi nahi juda (SSID/password/2.4 GHz check karo)");
+      wifiTryStart = millis();  // lost after being connected: a fresh 15 s window
+      wifiPaused = false;
+    }
   }
-  if (!online) return;
+  if (!online) {
+    watchWifi();
+    return;
+  }
 
   if (!mqtt.connected()) {
 #if MQTT_TLS
@@ -495,8 +536,13 @@ void loopMqtt() {
 
 String mqttStatusText() {
   if (wifiSsid.isEmpty()) return "Router Wi-Fi: set nahi hai (neeche Wi-Fi setup)";
-  if (WiFi.status() != WL_CONNECTED)
-    return "Router Wi-Fi '" + wifiSsid + "': nahi juda (naam/password check karo)";
+  if (WiFi.status() != WL_CONNECTED) {
+    if (wifiPaused)
+      return "Router Wi-Fi '" + wifiSsid + "': nahi mila. Dobara try " +
+             String(max(0L, (long)(wifiPauseUntil - millis())) / 1000) +
+             " s mein (aap judey hain tab tak ruka rahega)";
+    return "Router Wi-Fi '" + wifiSsid + "': dhoondh raha hai...";
+  }
   return "Router Wi-Fi '" + wifiSsid + "': juda (" + WiFi.localIP().toString() + ") | MQTT: " +
          (mqtt.connected() ? "juda" : "nahi juda") + " | " + DEVICE_ID +
          (manualActive ? " | manual override" : "");
