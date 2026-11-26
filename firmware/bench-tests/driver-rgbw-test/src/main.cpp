@@ -370,6 +370,7 @@ const unsigned long WIFI_PAUSE_MS = 60000;
 unsigned long wifiTryStart = 0;
 bool wifiPaused = false;
 unsigned long wifiPauseUntil = 0;
+bool wifiWasOnline = false;  // last router state seen by loopMqtt (for the log lines)
 
 void loadWifi() {
   wifiPrefs.begin("wifi", true);
@@ -385,6 +386,7 @@ void loadWifi() {
 void connectWifi() {
   if (mqtt.connected()) mqtt.disconnect();
   WiFi.disconnect(false, false);  // router only; the phone hotspot stays up
+  wifiWasOnline = false;          // deliberate switch: not a "Wi-Fi lost" error
   if (wifiSsid.isEmpty()) {
     Serial.println("Router Wi-Fi set nahi hai: phone se http://192.168.4.1 kholo -> Wi-Fi setup");
     return;
@@ -493,12 +495,12 @@ void loopMqtt() {
   }
   if (rebootPending && (long)(millis() - rebootAt) >= 0) ESP.restart();
 
-  static bool wasOnline = false;
   const bool online = WiFi.status() == WL_CONNECTED;
-  if (online != wasOnline) {
-    wasOnline = online;
+  if (online != wifiWasOnline) {
+    wifiWasOnline = online;
     if (online) {
-      Serial.printf("Router Wi-Fi juda. ESP32 IP: %s\n", WiFi.localIP().toString().c_str());
+      Serial.printf("Router Wi-Fi '%s' juda. ESP32 IP: %s\n", WiFi.SSID().c_str(),
+                    WiFi.localIP().toString().c_str());
     } else {
       Serial.println("Router Wi-Fi nahi juda (SSID/password/2.4 GHz check karo)");
       wifiTryStart = millis();  // lost after being connected: a fresh 15 s window
