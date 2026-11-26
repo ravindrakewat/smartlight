@@ -28,7 +28,12 @@ import { api } from '@/lib/api';
 
 const CONTROLLERS = new Set(['SUPER_ADMIN', 'MUNICIPAL_ADMIN', 'SUPERVISOR', 'OPERATOR']);
 const LIVE_REFRESH_MS = 15_000;
-const COMMAND_SETTLE_MS = 3_000;
+/**
+ * Re-read after a command: the worker picks commands up every 1.5 s and the controller
+ * reports its new state right after applying one, so most changes show at the first or
+ * second refresh; the last catches a slow link.
+ */
+const COMMAND_REFRESH_MS = [1_500, 4_000, 8_000] as const;
 
 function Reading({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -303,7 +308,7 @@ export default function PoleDetailPage() {
                         void queryClient.invalidateQueries({ queryKey: ['pole', id] });
                       };
                       refresh();
-                      setTimeout(refresh, COMMAND_SETTLE_MS);
+                      for (const delay of COMMAND_REFRESH_MS) setTimeout(refresh, delay);
                     }}
                   />
                 </CardContent>
