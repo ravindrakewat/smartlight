@@ -474,6 +474,10 @@ void setupMqtt() {
   configTime(0, 0, "pool.ntp.org", "time.google.com");  // UTC epoch for "ts"
 #if MQTT_TLS
   netClient.setCACert(MQTT_ROOT_CAS);
+  // Library defaults to a 120 s TLS handshake: on a weak link the whole loop (phone page,
+  // commands) would freeze that long. Give up after 15 s and retry instead.
+  netClient.setHandshakeTimeout(15);
+  netClient.setTimeout(10);
 #endif
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
   mqtt.setBufferSize(1024);  // set_schedule commands are larger than the 256 B default
