@@ -71,8 +71,11 @@ export function startSlaEscalation(intervalSeconds: number): NodeJS.Timeout | nu
       .catch((error: unknown) => {
         // Prisma messages start with the call site; the reason is on the last line.
         const message = error instanceof Error ? error.message : String(error);
-        const reason = message.split('
-').filter((line) => line.trim()).at(-1) ?? message;
+        const reason =
+          message
+            .split(/\r?\n/)
+            .filter((line) => line.trim())
+            .at(-1) ?? message;
         logger.error('SLA escalation failed; will retry on the next run', {
           reason: reason.trim(),
           code: (error as { code?: string } | null)?.code,
