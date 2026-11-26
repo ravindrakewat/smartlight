@@ -128,7 +128,14 @@ export function startChirpstackBridge(options: ChirpstackBridgeOptions): Chirpst
     });
     return flushing;
   }
-  const timer = setInterval(() => void flushOutbox(), options.outboxIntervalMs ?? 2_000);
+  // A failed database read must not crash the worker: log it and retry on the next tick.
+  const timer = setInterval(() => {
+    flushOutbox().catch((error: unknown) => {
+      logger.warn('LoRaWAN outbox check failed, retrying', {
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
+    });
+  }, options.outboxIntervalMs ?? 2_000);
 
   return {
     client,
