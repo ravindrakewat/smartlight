@@ -6,6 +6,12 @@ Not production firmware. Production code: [`../../street-light-controller`](../.
 
 Join Wi-Fi `SmartLight-RGBW` (password `test12345`) and open http://192.168.4.1.
 
+**Router Wi-Fi without code changes:** on that page, "Wi-Fi setup" → "Wi-Fi dhoondho", pick the
+network, type its password, "Save & connect". The board saves it in flash (survives restarts)
+and uses it instead of `WIFI_SSID` in `secrets.h`. "Saved Wi-Fi hatao" forgets it. Anyone who
+knows the hotspot password can change this, so change `test12345` before leaving a board
+somewhere public.
+
 ## MQTT (protocol v1, plain MQTT to the dev broker)
 
 1. Copy `src/secrets.example.h` to `src/secrets.h` and set your 2.4 GHz Wi-Fi, the PC's IPv4

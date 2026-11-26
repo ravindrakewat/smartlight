@@ -2,9 +2,11 @@
 // secrets.h is git-ignored: never commit Wi-Fi or broker passwords.
 #pragma once
 
-// Router the ESP32 joins for MQTT (2.4 GHz only; ESP32 cannot use 5 GHz)
-#define WIFI_SSID "your-wifi-name"
-#define WIFI_PASS "your-wifi-password"
+// Router Wi-Fi: optional. Normally set from the phone page (hotspot "SmartLight-RGBW",
+// http://192.168.4.1 -> "Wi-Fi setup"); that choice is saved on the board and wins.
+// These are used only while nothing is saved. 2.4 GHz only.
+// #define WIFI_SSID "your-wifi-name"
+// #define WIFI_PASS "your-wifi-password"
 
 // ---- Option A: dev broker on your PC (`npm run dev:broker -w @smart-light/api`) ----
 // Use the PC's IPv4 address (PowerShell: ipconfig), not "localhost".

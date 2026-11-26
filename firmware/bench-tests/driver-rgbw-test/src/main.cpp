@@ -4,6 +4,7 @@
 // over plain MQTT to the dev broker. Production firmware uses TLS (../../street-light-controller).
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <Preferences.h>
 #include <PubSubClient.h>
 #include <WebServer.h>
 #include <WiFi.h>
@@ -18,6 +19,13 @@
 #error "Copy src/secrets.example.h to src/secrets.h and fill in your Wi-Fi and broker"
 #endif
 
+// Wi-Fi is normally set from the phone page (saved in flash); secrets.h is only a fallback.
+#ifndef WIFI_SSID
+#define WIFI_SSID ""
+#endif
+#ifndef WIFI_PASS
+#define WIFI_PASS ""
+#endif
 // Older secrets.h files (local dev broker) do not define these.
 #ifndef MQTT_TLS
 #define MQTT_TLS 0
@@ -348,17 +356,86 @@ void mqttConnect() {
   telemetryAt = millis();
 }
 
+// ---------- Wi-Fi (router) setup from the phone page, saved in flash (NVS) ----------
+Preferences wifiPrefs;
+String wifiSsid;
+String wifiPass;
+
+void loadWifi() {
+  wifiPrefs.begin("wifi", true);
+  wifiSsid = wifiPrefs.getString("ssid", "");
+  wifiPass = wifiPrefs.getString("pass", "");
+  wifiPrefs.end();
+  if (wifiSsid.isEmpty()) {  // nothing saved yet: secrets.h fallback (may be empty)
+    wifiSsid = WIFI_SSID;
+    wifiPass = WIFI_PASS;
+  }
+}
+
+void connectWifi() {
+  if (mqtt.connected()) mqtt.disconnect();
+  WiFi.disconnect(false, false);  // router only; the phone hotspot stays up
+  if (wifiSsid.isEmpty()) {
+    Serial.println("Router Wi-Fi set nahi hai: phone se http://192.168.4.1 kholo -> Wi-Fi setup");
+    return;
+  }
+  WiFi.begin(wifiSsid.c_str(), wifiPass.c_str());
+  Serial.printf("Router Wi-Fi '%s' se jud raha hai...\n", wifiSsid.c_str());
+}
+
+void handleScan() {
+  const int found = WiFi.scanNetworks();  // ~2-3 s; ESP32 sees 2.4 GHz only
+  JsonDocument doc;
+  JsonArray list = doc.to<JsonArray>();
+  for (int i = 0; i < found; i++) {
+    const String name = WiFi.SSID(i);
+    if (name.isEmpty()) continue;  // hidden network
+    bool duplicate = false;        // one entry per name (strongest first: scan is sorted)
+    for (JsonVariant item : list) duplicate |= item["ssid"] == name;
+    if (duplicate) continue;
+    JsonObject network = list.add<JsonObject>();
+    network["ssid"] = name;
+    network["rssi"] = WiFi.RSSI(i);
+    network["open"] = WiFi.encryptionType(i) == WIFI_AUTH_OPEN;
+  }
+  WiFi.scanDelete();
+  String body;
+  serializeJson(doc, body);  // escapes names safely for the page
+  server.send(200, "application/json", body);
+}
+
+void handleWifiSave() {
+  const String ssid = server.arg("ssid");
+  const String pass = server.arg("pass");
+  if (ssid.isEmpty() || ssid.length() > 32)
+    return server.send(400, "text/plain", "Wi-Fi ka naam 1-32 characters ka hona chahiye");
+  if (!pass.isEmpty() && (pass.length() < 8 || pass.length() > 63))
+    return server.send(400, "text/plain", "Password 8-63 characters ka hona chahiye");
+  wifiPrefs.begin("wifi", false);
+  wifiPrefs.putString("ssid", ssid);
+  wifiPrefs.putString("pass", pass);
+  wifiPrefs.end();
+  wifiSsid = ssid;
+  wifiPass = pass;
+  server.send(200, "text/plain", "Save ho gaya. '" + ssid + "' se jud raha hai...");
+  connectWifi();
+}
+
+void handleWifiForget() {
+  wifiPrefs.begin("wifi", false);
+  wifiPrefs.clear();
+  wifiPrefs.end();
+  wifiSsid = "";
+  wifiPass = "";
+  server.send(200, "text/plain", "Saved Wi-Fi hata diya");
+  connectWifi();
+}
+
 void setupMqtt() {
   WiFi.mode(WIFI_AP_STA);  // phone hotspot page + router for MQTT, together
   WiFi.setAutoReconnect(true);
-  // Aas-paas ke Wi-Fi naam dikhao (ESP32 sirf 2.4 GHz dekhta hai), taaki secrets.h mein
-  // sahi naam copy ho sake.
-  int found = WiFi.scanNetworks();
-  Serial.printf("Aas-paas ke 2.4 GHz Wi-Fi (%d):\n", max(found, 0));
-  for (int i = 0; i < found; i++)
-    Serial.printf("  \"%s\"  (signal %d dBm)\n", WiFi.SSID(i).c_str(), WiFi.RSSI(i));
-  WiFi.scanDelete();
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  loadWifi();
+  connectWifi();
   configTime(0, 0, "pool.ntp.org", "time.google.com");  // UTC epoch for "ts"
 #if MQTT_TLS
   netClient.setCACert(MQTT_ROOT_CAS);
@@ -367,7 +444,6 @@ void setupMqtt() {
   mqtt.setBufferSize(1024);  // set_schedule commands are larger than the 256 B default
   mqtt.setCallback(onMqttMessage);
   mqtt.setSocketTimeout(5);
-  Serial.printf("Router Wi-Fi '%s' se jud raha hai...\n", WIFI_SSID);
 }
 
 void loopMqtt() {
@@ -418,8 +494,10 @@ void loopMqtt() {
 }
 
 String mqttStatusText() {
-  if (WiFi.status() != WL_CONNECTED) return "Router Wi-Fi: nahi juda";
-  return String("Router Wi-Fi: juda (") + WiFi.localIP().toString() + ") | MQTT: " +
+  if (wifiSsid.isEmpty()) return "Router Wi-Fi: set nahi hai (neeche Wi-Fi setup)";
+  if (WiFi.status() != WL_CONNECTED)
+    return "Router Wi-Fi '" + wifiSsid + "': nahi juda (naam/password check karo)";
+  return "Router Wi-Fi '" + wifiSsid + "': juda (" + WiFi.localIP().toString() + ") | MQTT: " +
          (mqtt.connected() ? "juda" : "nahi juda") + " | " + DEVICE_ID +
          (manualActive ? " | manual override" : "");
 }
@@ -447,10 +525,28 @@ input[type=range]{width:95%}label{display:block;margin-top:14px}</style>
 <label>Warm white <input type=range min=0 max=255 value=255 oninput="q('ww='+this.value)"></label>
 <h3>Mixing mode</h3>
 <button onclick="q('seq=1')">Baari-baari</button><button onclick="q('seq=0')">Saath</button>
+<h3>Wi-Fi setup (router)</h3>
+<button onclick="scan()">&#128246; Wi-Fi dhoondho</button>
+<label>Wi-Fi <select id=ws onchange="document.getElementById('wn').value=this.value"></select></label>
+<label>Naam (SSID) <input id=wn maxlength=32 autocomplete=off></label>
+<label>Password <input id=wp type=password maxlength=63 autocomplete=off></label>
+<label><input type=checkbox onchange="document.getElementById('wp').type=this.checked?'text':'password'"> Password dikhao</label>
+<button onclick="saveWifi()">Save &amp; connect</button><button onclick="forget()">Saved Wi-Fi hatao</button>
+<p id=wm></p>
 <script>
 function q(p){fetch('/set?'+p)}
 function st(){fetch('/status').then(r=>r.text()).then(t=>document.getElementById('st').textContent=t)}
 st();setInterval(st,3000);
+const wm=t=>document.getElementById('wm').textContent=t;
+function scan(){wm('Dhoondh raha hai...');fetch('/scan').then(r=>r.json()).then(list=>{
+ const s=document.getElementById('ws');s.replaceChildren();
+ const first=document.createElement('option');first.value='';first.textContent='-- chuno ('+list.length+') --';s.append(first);
+ for(const n of list){const o=document.createElement('option');o.value=n.ssid;
+  o.textContent=n.ssid+'  ('+n.rssi+' dBm'+(n.open?', open':'')+')';s.append(o);}
+ wm(list.length?'List se apna Wi-Fi chuno':'Koi 2.4 GHz Wi-Fi nahi mila');}).catch(()=>wm('Scan nahi hua, dobara try karo'))}
+function saveWifi(){const b=new URLSearchParams({ssid:document.getElementById('wn').value,pass:document.getElementById('wp').value});
+ fetch('/wifi',{method:'POST',body:b}).then(r=>r.text()).then(wm).catch(()=>wm('Save ho gaya, board jud raha hai (page ek baar reload karo)'))}
+function forget(){if(confirm('Saved Wi-Fi hata dein?'))fetch('/wifi/forget',{method:'POST'}).then(r=>r.text()).then(wm)}
 function col(){const h=document.getElementById('c').value;
  q('r='+parseInt(h.substr(1,2),16)+'&g='+parseInt(h.substr(3,2),16)+'&b='+parseInt(h.substr(5,2),16))}
 </script>
@@ -501,6 +597,9 @@ void setup() {
   server.on("/", [] { server.send_P(200, "text/html", PAGE); });
   server.on("/set", handleSet);
   server.on("/status", [] { server.send(200, "text/plain", mqttStatusText()); });
+  server.on("/scan", HTTP_GET, handleScan);
+  server.on("/wifi", HTTP_POST, handleWifiSave);
+  server.on("/wifi/forget", HTTP_POST, handleWifiForget);
   server.begin();
   setupMqtt();
   blinkAt = millis();
