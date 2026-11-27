@@ -12,10 +12,19 @@ export interface ConsoleHeroProps {
   icon?: ReactNode;
   /** Buttons shown under the banner, on the right. */
   actions?: ReactNode;
+  /** Shorter banner (dashboard). */
+  compact?: boolean;
 }
 
 /** Page banner with the live clock; carries the page's `h1`. */
-export function ConsoleHero({ title, accent, description, icon, actions }: ConsoleHeroProps) {
+export function ConsoleHero({
+  title,
+  accent,
+  description,
+  icon,
+  actions,
+  compact,
+}: ConsoleHeroProps) {
   const t = useTranslations('Shell');
   const format = useFormatter();
 
@@ -27,6 +36,7 @@ export function ConsoleHero({ title, accent, description, icon, actions }: Conso
         description={description}
         icon={icon}
         background={<HeroBackground />}
+        compact={compact}
         className={actions ? 'mb-4' : undefined}
         aside={
           <LiveIndicator

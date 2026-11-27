@@ -13,6 +13,8 @@ export interface PageHeroProps {
    * under a navy overlay instead of the built-in night street.
    */
   background?: ReactNode;
+  /** Shorter banner for dense pages such as the dashboard. */
+  compact?: boolean;
   /** Optional last part of the title drawn in the accent colour, e.g. "Map" in "Live Map". */
   accent?: string;
   description?: ReactNode;
@@ -174,6 +176,7 @@ export function PageHero({
   icon,
   aside,
   background,
+  compact = false,
   className,
 }: PageHeroProps) {
   return (
@@ -197,11 +200,19 @@ export function PageHero({
       ) : (
         <NightStreet />
       )}
-      <div className="relative flex min-h-36 flex-wrap items-center gap-x-6 gap-y-4 px-5 py-6 sm:px-8">
+      <div
+        className={cn(
+          'relative flex flex-wrap items-center gap-x-6 gap-y-4 px-5 sm:px-8',
+          compact ? 'min-h-24 py-4' : 'min-h-36 py-6',
+        )}
+      >
         {icon ? (
           <span
             aria-hidden="true"
-            className="hidden size-16 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_0_32px] shadow-primary/60 sm:grid [&_svg]:size-7"
+            className={cn(
+              'hidden shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_0_32px] shadow-primary/60 sm:grid',
+              compact ? 'size-12 [&_svg]:size-6' : 'size-16 [&_svg]:size-7',
+            )}
           >
             {icon}
           </span>
@@ -210,7 +221,13 @@ export function PageHero({
           {eyebrow ? (
             <p className="mb-0.5 text-sm font-semibold text-night-accent">{eyebrow}</p>
           ) : null}
-          <h1 className={cn('text-2xl font-bold break-words sm:text-3xl', titleClassName)}>
+          <h1
+            className={cn(
+              'font-bold break-words',
+              compact ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl',
+              titleClassName,
+            )}
+          >
             {title}
             {accent ? <span className="text-night-accent"> {accent}</span> : null}
           </h1>

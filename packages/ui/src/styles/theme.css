@@ -47,6 +47,14 @@
   --color-info-subtle: var(--sl-info-subtle);
   --color-neutral: var(--sl-neutral);
   --color-neutral-subtle: var(--sl-neutral-subtle);
+  /* Extra icon accents (decorative backgrounds only, never body text). */
+  --color-accent-cyan: var(--sl-accent-cyan);
+  --color-accent-purple: var(--sl-accent-purple);
+  /* National flag colours (Made in India mark only; same in every theme). */
+  --color-flag-saffron: #ff9933;
+  --color-flag-white: #ffffff;
+  --color-flag-green: #138808;
+  --color-flag-navy: #000080;
 
   /* Night street scene (street view, pole illustrations). Always dark, in both themes. */
   --color-night: var(--sl-night);
@@ -124,6 +132,8 @@
 
   --sl-chart-1: #2563eb;
   --sl-chart-2: #d97706;
+  --sl-accent-cyan: #0e7490;
+  --sl-accent-purple: #6d28d9;
 }
 
 /* Screen only: printouts (QR plates, reports) always use the light palette. */
@@ -163,6 +173,85 @@
 
     --sl-chart-1: #5b8cf5;
     --sl-chart-2: #b87a12;
+  }
+}
+
+/*
+ * Midnight: the dark control-room look of the municipal console, set with
+ * `class="theme-midnight"` on <html>. Screen only; printouts keep the light palette.
+ * Contrast (WCAG 2.1 AA) on the card colour #071a2b: foreground 16:1, muted 9:1,
+ * primary text 7:1, success 8:1, warning 8:1, danger 4.9:1. White on the primary
+ * button colour 5.1:1. Text on danger buttons is dark (white would be 3.6:1).
+ */
+@media screen {
+  .theme-midnight {
+    color-scheme: dark;
+
+    --sl-background: #020d1a;
+    --sl-foreground: #f1f5fc;
+    --sl-surface: #071a2b;
+    --sl-surface-subtle: #0b2035;
+    --sl-muted-foreground: #a8b8cc;
+    --sl-border: rgb(65 130 180 / 0.22);
+    --sl-ring: #12b8f5;
+
+    /* Buttons use --sl-primary with white text; text links use --sl-primary-text. */
+    --sl-primary: #0a6cd6;
+    --sl-primary-hover: #0960bf;
+    --sl-primary-foreground: #ffffff;
+    --sl-primary-subtle: #0b2a47;
+    --sl-primary-text: #3da5ff;
+
+    --sl-brand: #f59e0b;
+
+    --sl-success: #16c75a;
+    --sl-success-subtle: #0a2a1c;
+    --sl-warning: #f59e0b;
+    --sl-warning-subtle: #2e220a;
+    --sl-danger: #f04452;
+    --sl-danger-subtle: #3a1420;
+    --sl-danger-foreground: #1a0606;
+    --sl-info: #3da5ff;
+    --sl-info-subtle: #0b2a47;
+    --sl-neutral: #a8b8cc;
+    --sl-neutral-subtle: #0b2035;
+
+    --sl-night: #031426;
+    --sl-night-soft: #0b2442;
+    --sl-night-foreground: #f1f5fc;
+    --sl-night-muted: #a8b8cc;
+    --sl-road: #10263f;
+    --sl-night-accent: #3da5ff;
+
+    --sl-sidebar: #031426;
+    --sl-sidebar-soft: #0b2442;
+    --sl-sidebar-foreground: #f1f5fc;
+    --sl-sidebar-muted: #a8b8cc;
+
+    --sl-chart-1: #12b8f5;
+    --sl-chart-2: #f59e0b;
+    --sl-accent-cyan: #12b8f5;
+    --sl-accent-purple: #813cf5;
+  }
+
+  /* One blue cannot carry both white button text and text on dark cards (see above). */
+  .theme-midnight .text-primary {
+    color: var(--sl-primary-text);
+  }
+  .theme-midnight .bg-primary .text-primary,
+  .theme-midnight .bg-primary.text-primary {
+    color: var(--sl-primary-foreground);
+  }
+
+  /* Map popups follow the theme. */
+  .theme-midnight .maplibregl-popup-content {
+    background: var(--color-surface);
+    color: var(--color-foreground);
+    border: 1px solid var(--color-border);
+  }
+  .theme-midnight .maplibregl-popup-tip {
+    border-top-color: var(--color-surface);
+    border-bottom-color: var(--color-surface);
   }
 }
 

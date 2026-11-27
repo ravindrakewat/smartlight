@@ -20,7 +20,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const locale = await getLocale();
 
   return (
-    <html lang={locale} className={`${inter.variable} ${notoDevanagari.variable}`}>
+    // Midnight: the dark control-room palette (screen only; print stays light).
+    <html lang={locale} className={`theme-midnight ${inter.variable} ${notoDevanagari.variable}`}>
       <body>
         <NextIntlClientProvider>
           <Providers>{children}</Providers>

@@ -16,6 +16,7 @@ import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { NotificationsMenu } from './shell/NotificationsMenu';
+import { SidebarBrand } from './shell/SidebarBrand';
 import { UserMenu } from './Session';
 import {
   AlertsBell,
@@ -63,7 +64,12 @@ export async function ConsoleShell({ children }: { children: ReactNode }) {
           <UserMenu />
         </>
       }
-      sidebarFooter={<SystemStatus />}
+      sidebarFooter={
+        <div className="grid gap-2">
+          <SidebarBrand />
+          <SystemStatus />
+        </div>
+      }
     >
       {children}
     </AppShell>

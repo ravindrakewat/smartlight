@@ -54,7 +54,7 @@ function NavList({ items, pathname }: { items: AppShellNavItem[]; pathname: stri
               className={cn(
                 'flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors focus-visible:outline-sidebar-foreground [&_svg]:size-[1.15rem] [&_svg]:shrink-0',
                 active
-                  ? 'bg-primary text-primary-foreground shadow-md shadow-black/30'
+                  ? 'bg-linear-to-r from-primary to-primary/55 text-primary-foreground shadow-lg shadow-primary/25'
                   : 'text-sidebar-muted hover:bg-sidebar-soft hover:text-sidebar-foreground',
               )}
             >
