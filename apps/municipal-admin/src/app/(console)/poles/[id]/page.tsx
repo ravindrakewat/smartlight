@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
   EmptyState,
-  PageHero,
   Skeleton,
   StreetPole,
   cn,
@@ -49,7 +48,6 @@ import { PoleQuickActions } from '@/components/lighting/PoleQuickActions';
 import { PowerChart } from '@/components/lighting/PowerChart';
 import { STREET_STATUS } from '@/components/lighting/ZoneStreet';
 import { useSessionUser } from '@/components/Session';
-import { HeroBackground } from '@/components/shell/HeroBackground';
 import { api } from '@/lib/api';
 
 const CONTROLLERS = new Set(['SUPER_ADMIN', 'MUNICIPAL_ADMIN', 'SUPERVISOR', 'OPERATOR']);
@@ -200,34 +198,30 @@ export default function PoleDetailPage() {
     void queryClient.invalidateQueries({ queryKey: ['pole', id] });
   };
 
+  // Plain title row (no banner): pole code, address and Open in Maps.
   const hero = (
-    <PageHero
-      eyebrow={t('eyebrow')}
-      title={info.code}
-      titleClassName="font-mono"
-      background={<HeroBackground />}
-      icon={<Lightbulb />}
-      description={
-        <span className="inline-flex items-start gap-1.5">
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-xs font-semibold text-info">{t('eyebrow')}</p>
+        <h1 className="font-mono text-xl font-bold break-words sm:text-2xl">{info.code}</h1>
+        <p className="mt-0.5 flex items-start gap-1.5 text-sm text-muted-foreground">
           <MapPin aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
           {[info.address, info.ward, info.zone?.name].filter(Boolean).join(' · ') || t('noAddress')}
-        </span>
-      }
-      aside={
-        <Button asChild className="rounded-full">
-          <a
-            href={`https://www.google.com/maps/search/?api=1&query=${info.latitude},${info.longitude}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <MapPin aria-hidden="true" />
-            {tCommon('openInMaps')}
-            <ExternalLink aria-hidden="true" />
-            <span className="sr-only">{t('opensNewTab')}</span>
-          </a>
-        </Button>
-      }
-    />
+        </p>
+      </div>
+      <Button asChild variant="outline">
+        <a
+          href={`https://www.google.com/maps/search/?api=1&query=${info.latitude},${info.longitude}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <MapPin aria-hidden="true" />
+          {tCommon('openInMaps')}
+          <ExternalLink aria-hidden="true" />
+          <span className="sr-only">{t('opensNewTab')}</span>
+        </a>
+      </Button>
+    </div>
   );
 
   const quickActions = (
