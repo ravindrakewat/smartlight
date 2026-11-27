@@ -24,7 +24,7 @@ import { getAuth, requireTenantId } from '../auth/auth.context';
 type StatusCounts = DashboardSummaryDto['poles'];
 
 function emptyCounts(): StatusCounts {
-  return { total: 0, working: 0, fault: 0, offline: 0, unknown: 0 };
+  return { total: 0, working: 0, on: 0, dimmed: 0, off: 0, fault: 0, offline: 0, unknown: 0 };
 }
 
 function addToCounts(counts: StatusCounts, status: LightStatus, count: number): void {
@@ -32,13 +32,21 @@ function addToCounts(counts: StatusCounts, status: LightStatus, count: number): 
   if (status === 'FAULT') counts.fault += count;
   else if (status === 'OFFLINE') counts.offline += count;
   else if (status === 'UNKNOWN') counts.unknown += count;
-  else counts.working += count;
+  else {
+    counts.working += count;
+    if (status === 'ON') counts.on += count;
+    else if (status === 'DIMMED') counts.dimmed += count;
+    else counts.off += count;
+  }
 }
+
+/** Readings older than this do not count towards the current load. */
+const LOAD_WINDOW_MINUTES = 15;
 
 // ── Service ──
 const dashboardService = {
   async summary(tenantId: string): Promise<DashboardSummaryDto> {
-    const [byZoneAndStatus, zones, devices] = await Promise.all([
+    const [byZoneAndStatus, zones, devices, load] = await Promise.all([
       prisma.pole.groupBy({
         by: ['zoneId', 'lightStatus'],
         where: { tenantId, assetStatus: 'ACTIVE' },
@@ -46,6 +54,14 @@ const dashboardService = {
       }),
       prisma.zone.findMany({ where: { tenantId }, orderBy: { code: 'asc' } }),
       prisma.device.groupBy({ by: ['online'], where: { tenantId }, _count: { _all: true } }),
+      prisma.$queryRaw<{ watts: number; reporting: number }[]>(Prisma.sql`
+        SELECT coalesce(sum(("lastTelemetry" -> 'electrical' ->> 'powerW')::float8), 0)::float8 AS watts,
+               count(*)::int AS reporting
+          FROM devices
+         WHERE "tenantId" = ${tenantId}::uuid
+           AND online
+           AND "lastTelemetryAt" > now() - make_interval(mins => ${LOAD_WINDOW_MINUTES})
+           AND jsonb_typeof("lastTelemetry" -> 'electrical' -> 'powerW') = 'number'`),
     ]);
 
     const poles = emptyCounts();
@@ -63,6 +79,10 @@ const dashboardService = {
       devices: {
         total: devices.reduce((sum, row) => sum + row._count._all, 0),
         online: devices.find((row) => row.online)?._count._all ?? 0,
+      },
+      power: {
+        currentW: Math.round((load[0]?.watts ?? 0) * 10) / 10,
+        reporting: load[0]?.reporting ?? 0,
       },
       zones: zones.map((zone) => ({
         id: zone.id,

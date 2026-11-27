@@ -177,6 +177,10 @@ export const statusCountsSchema = z.object({
   total: z.number().int(),
   /** ON + DIMMED + OFF (off during the day is normal). */
   working: z.number().int(),
+  /** The parts of `working`: lamp on at full, dimmed, or switched off. */
+  on: z.number().int(),
+  dimmed: z.number().int(),
+  off: z.number().int(),
   fault: z.number().int(),
   offline: z.number().int(),
   /** Poles without a reporting controller. */
@@ -187,6 +191,11 @@ export const dashboardSummarySchema = z
   .object({
     poles: statusCountsSchema,
     devices: z.object({ total: z.number().int(), online: z.number().int() }),
+    /**
+     * Load measured right now: the sum of the latest power reading of online controllers
+     * that reported in the last 15 minutes (`reporting` of them). Measured, not estimated.
+     */
+    power: z.object({ currentW: z.number(), reporting: z.number().int() }),
     zones: z.array(statusCountsSchema.extend({ id: z.uuid(), code: z.string(), name: z.string() })),
   })
   .meta({ id: 'DashboardSummary' });

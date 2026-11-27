@@ -450,11 +450,45 @@ describe('device commissioning and dashboard', () => {
     expect(response.body.data.poles).toEqual({
       total: 2,
       working: 0,
+      on: 0,
+      dimmed: 0,
+      off: 0,
       fault: 1,
       offline: 0,
       unknown: 1,
     });
     expect(response.body.data.zones[0]).toMatchObject({ code: 'Z01', total: 2, fault: 1 });
+    expect(response.body.data.power).toEqual({ currentW: 0, reporting: 0 });
+  });
+
+  it('splits working lights and sums the current load of fresh readings only', async () => {
+    const city = await setupCity();
+    const telemetry = (powerW: number) => ({ electrical: { powerW, voltageV: 230 } });
+    const make = async (
+      status: 'ON' | 'DIMMED' | 'OFF',
+      device: { online: boolean; powerW: number; minutesAgo: number },
+    ) => {
+      const pole = await createPole(city.auth, { zoneId: city.zone.id });
+      await prisma.pole.update({ where: { id: pole.id }, data: { lightStatus: status } });
+      await prisma.device.create({
+        data: {
+          tenantId: city.tenant.id,
+          deviceId: `sl-${uniqueSuffix()}`,
+          poleId: pole.id,
+          online: device.online,
+          lastTelemetry: telemetry(device.powerW),
+          lastTelemetryAt: new Date(Date.now() - device.minutesAgo * 60_000),
+        },
+      });
+    };
+    await make('ON', { online: true, powerW: 90, minutesAgo: 1 });
+    await make('DIMMED', { online: true, powerW: 30.5, minutesAgo: 5 });
+    await make('OFF', { online: true, powerW: 500, minutesAgo: 60 }); // stale: not counted
+    await make('ON', { online: false, powerW: 700, minutesAgo: 1 }); // offline: not counted
+
+    const response = await request(app).get('/api/v1/dashboard/summary').set(city.auth);
+    expect(response.body.data.poles).toMatchObject({ working: 4, on: 2, dimmed: 1, off: 1 });
+    expect(response.body.data.power).toEqual({ currentW: 120.5, reporting: 2 });
   });
 
   it('returns controller history in buckets, newest last', async () => {
