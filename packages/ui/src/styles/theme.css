@@ -263,3 +263,29 @@
     opacity: 1;
   }
 }
+
+/* Thin scrollbar for the navy sidebar: muted thumb, no track, a little brighter on hover. */
+@utility scrollbar-sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-sidebar-muted) 30%, transparent) transparent;
+  overscroll-behavior: contain;
+  &:hover {
+    scrollbar-color: color-mix(in oklab, var(--color-sidebar-muted) 55%, transparent) transparent;
+  }
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: color-mix(in oklab, var(--color-sidebar-muted) 30%, transparent);
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--color-sidebar-muted) 55%, transparent);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    scroll-behavior: smooth;
+  }
+}

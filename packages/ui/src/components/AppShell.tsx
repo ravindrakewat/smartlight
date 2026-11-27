@@ -160,7 +160,7 @@ export function AppShell({
         </div>
         <nav
           aria-label={labels.navigation}
-          className="relative z-10 -mx-1 flex-1 overflow-y-auto px-1"
+          className="scrollbar-sidebar relative z-10 -mx-1 flex-1 overflow-y-auto px-1"
         >
           <NavList items={navigation} pathname={pathname} />
         </nav>
