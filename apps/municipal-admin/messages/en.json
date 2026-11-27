@@ -147,17 +147,29 @@
       "controllersHint": "{online} of {total} controllers",
       "shareOfTotal": "{percent} of all poles",
       "heading": "Street lights at a glance",
-      "zones": "{count, plural, one {In # zone} other {Across # zones}}"
+      "zones": "{count, plural, one {In # zone} other {Across # zones}}",
+      "online": "Online",
+      "ofControllers": "{percent} of {total}",
+      "load": "Current load",
+      "loadNote": "from {count} reporting",
+      "energyWeek": "Energy (7 days)",
+      "measured": "Measured by controllers",
+      "noReport": "Not available for your role"
     },
     "map": {
-      "title": "Live map",
+      "title": "Live city map",
       "description": "Every pole, coloured by its current status.",
       "emptyTitle": "No poles on the map yet",
       "emptyDescription": "Import poles to see them here with their live status.",
-      "openFull": "View full map"
+      "openFull": "View full map",
+      "search": "Search pole code",
+      "zone": "Zone",
+      "allZones": "All zones",
+      "notFound": "No pole matches \"{query}\".",
+      "legend": "Poles on the map by status"
     },
     "openWork": {
-      "title": "Most urgent repairs",
+      "title": "Open work orders",
       "description": "Open work orders, nearest deadline first.",
       "viewAll": "View all",
       "empty": "No open work orders. Every light is working.",
@@ -207,13 +219,84 @@
       "when": "When"
     },
     "events": {
-      "title": "Recent controller events",
+      "title": "Recent alerts",
       "viewAll": "View all",
       "empty": "No controller events yet.",
       "noAccess": "Controller events are not available for your role.",
       "raised": "{fault} at pole {pole}",
-      "fixed": "Fixed: {fault} at pole {pole}"
-    }
+      "fixed": "Fixed: {fault} at pole {pole}",
+      "boot": "Controller restarted",
+      "resolved": "Resolved",
+      "open": "Open",
+      "columns": {
+        "time": "Time",
+        "pole": "Pole",
+        "type": "Type",
+        "status": "Status"
+      }
+    },
+    "selected": {
+      "title": "Selected street light",
+      "pick": "Select a pole on the map to see it here and switch it.",
+      "failed": "This pole could not be loaded.",
+      "poleId": "Pole ID",
+      "location": "Location",
+      "zone": "Zone",
+      "model": "Lamp",
+      "controller": "Controller",
+      "noController": "Not fitted",
+      "lastUpdate": "Last report",
+      "openPole": "Open {code}"
+    },
+    "energy": {
+      "title": "Energy consumption",
+      "week": "last 7 days",
+      "note": "{count, plural, =0 {No controller reported energy yet.} one {Measured by # controller.} other {Measured by # controllers.}}",
+      "noAccess": "Energy reports are not available for your role.",
+      "tableCaption": "Energy per day, last 7 days",
+      "day": "Day",
+      "kwh": "kWh"
+    },
+    "status": {
+      "title": "Light status",
+      "total": "poles"
+    },
+    "metrics": {
+      "title": "Real-time metrics",
+      "load": "Current load",
+      "reporting": "Controllers reporting",
+      "lit": "Lights on now",
+      "dimmed": "Dimmed now",
+      "energyToday": "Energy today",
+      "working": "Poles working"
+    },
+    "automation": {
+      "title": "Automation",
+      "manage": "Schedules",
+      "failed": "Schedules could not be loaded.",
+      "default": {
+        "title": "City schedule",
+        "none": "Not set",
+        "next": "Next: {step}",
+        "safe": "Lights stay on (safe mode) until a schedule is set."
+      },
+      "zones": {
+        "title": "Zone schedules",
+        "status": "{count, plural, =0 {No zone has its own} one {# zone has its own} other {# zones have their own}}",
+        "detail": "{count, plural, one {# schedule saved} other {# schedules saved}}"
+      },
+      "astro": {
+        "title": "Sunset and sunrise",
+        "status": "Worked out on each controller",
+        "detail": "From the pole’s location, every day, even without network."
+      },
+      "override": {
+        "title": "Manual override",
+        "status": "Returns to schedule by itself",
+        "detail": "Switching on or off lasts for the chosen time only."
+      }
+    },
+    "updated": "Updated {time}"
   },
   "WorkOrders": {
     "title": "Work orders",
@@ -894,7 +977,9 @@
     "systemOnline": "System online",
     "systemDown": "Server not reachable",
     "lastUpdate": "Last update {time}",
-    "live": "Live"
+    "live": "Live",
+    "madeInIndia": "Made in India",
+    "tagline": "Smart infrastructure for brighter streets"
   },
   "Mfa": {
     "verifyTitle": "Enter your code",

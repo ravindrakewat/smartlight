@@ -6,8 +6,8 @@ import type { GeoJSONSource, Map as MapLibreMap, MapLayerMouseEvent } from 'mapl
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useRef } from 'react';
 
-/** Free vector tiles with no API key (OpenFreeMap). Replace with own tiles for production scale. */
-const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+/** Free dark vector tiles with no API key (OpenFreeMap), matching the console's midnight theme. Replace with own tiles for production scale. */
+const STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
 const INDIA_CENTER: [number, number] = [78.9629, 22.5937];
 
 /** Map colours come from the design tokens so the map matches the rest of the console. */
@@ -43,6 +43,12 @@ export interface PoleMapProps {
   onOpen: (poleId: string) => void;
   /** Height and other layout classes; defaults to a large map. */
   className?: string;
+  /** Called with the pole's id when a dot is clicked (e.g. to show it in a side panel). */
+  onSelect?: (poleId: string) => void;
+  /** Pole drawn with a ring. */
+  selectedId?: string | null;
+  /** Change it (e.g. the zone filter) to zoom to the poles shown again. */
+  fitKey?: string;
 }
 
 /**
@@ -50,12 +56,22 @@ export interface PoleMapProps {
  * pole code and status with a link to the pole page. The data is also
  * available as text (legend counts and the poles list) for screen readers.
  */
-export function PoleMap({ poles, label, statusLabel, openLabel, onOpen, className }: PoleMapProps) {
+export function PoleMap({
+  poles,
+  label,
+  statusLabel,
+  openLabel,
+  onOpen,
+  className,
+  onSelect,
+  selectedId = null,
+  fitKey,
+}: PoleMapProps) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
   const fitted = useRef(false);
-  const latest = useRef({ poles, statusLabel, openLabel, onOpen });
-  latest.current = { poles, statusLabel, openLabel, onOpen };
+  const latest = useRef({ poles, statusLabel, openLabel, onOpen, onSelect, selectedId });
+  latest.current = { poles, statusLabel, openLabel, onOpen, onSelect, selectedId };
 
   useEffect(() => {
     let cancelled = false;
@@ -90,6 +106,19 @@ export function PoleMap({ poles, label, statusLabel, openLabel, onOpen, classNam
             'circle-stroke-color': tokenColor('--color-surface'),
           },
         });
+        // Ring around the selected pole.
+        instance.addLayer({
+          id: 'pole-selected',
+          type: 'circle',
+          source: 'poles',
+          filter: ['==', ['get', 'id'], latest.current.selectedId ?? ''],
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 7, 15, 12, 18, 15],
+            'circle-color': 'rgba(0,0,0,0)',
+            'circle-stroke-width': 3,
+            'circle-stroke-color': tokenColor('--color-ring'),
+          },
+        });
 
         instance.on('click', 'poles', (event: MapLayerMouseEvent) => {
           const feature = event.features?.[0];
@@ -99,6 +128,7 @@ export function PoleMap({ poles, label, statusLabel, openLabel, onOpen, classNam
             code: string;
             status: LightStatusName;
           };
+          latest.current.onSelect?.(id);
           // Built with DOM APIs (no HTML strings): codes come from the database.
           const content = document.createElement('div');
           content.className = 'grid gap-1 text-sm';
@@ -150,6 +180,17 @@ export function PoleMap({ poles, label, statusLabel, openLabel, onOpen, classNam
     );
     fitted.current = true;
   }
+
+  useEffect(() => {
+    const instance = map.current;
+    if (instance?.getLayer('pole-selected')) {
+      instance.setFilter('pole-selected', ['==', ['get', 'id'], selectedId ?? '']);
+    }
+  }, [selectedId]);
+
+  useEffect(() => {
+    fitted.current = false;
+  }, [fitKey]);
 
   useEffect(() => {
     const source = map.current?.getSource('poles') as GeoJSONSource | undefined;
