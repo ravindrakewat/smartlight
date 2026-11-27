@@ -1,21 +1,23 @@
 /**
- * Emergency: sets a new temporary password for one account (forgotten password,
- * or locked out after too many attempts) when no administrator can do it from a
- * console. Also clears the lockout and ends the person's sessions. The new
- * password is generated here, shown once in this terminal and never stored in
- * plain text; the person should change it after signing in.
+ * Emergency: sets a new password for one account (forgotten password, or locked
+ * out after too many attempts) when no administrator can do it from a console.
+ * Also clears the lockout and ends the person's sessions. Type the new password
+ * (hidden, same rules as the console) or press Enter to have one generated, which
+ * is shown once in this terminal. Passwords are never stored in plain text.
  *
  *   npm run password:reset -w @smart-light/db              (uses DATABASE_URL)
  *   npm run password:reset:render -w @smart-light/db       (RENDER_EXTERNAL_DATABASE_URL
  *                                                            from apps/api/.env)
  *   add `-- --list` to only list the accounts (e-mail, role, status, locked).
  *
- * The e-mail is typed in the terminal and the action is written to the audit log.
+ * Questions: e-mail, new password (twice), optional reason, then `y` to confirm.
+ * The action is written to the audit log.
  * Only someone with database access can run this; keep it that way.
  */
 import { randomInt } from 'node:crypto';
 import { stdin, stdout } from 'node:process';
 import { createInterface } from 'node:readline';
+import { newPasswordSchema } from '@smart-light/shared';
 import { config as loadEnv } from 'dotenv';
 import { createPrismaClient } from '../src';
 import { hashPassword } from '../src/security/password';
@@ -57,6 +59,48 @@ function temporaryPassword(): string {
   return chars.join('');
 }
 
+/**
+ * Terminal questions. In a terminal, hidden answers echo `*`; when answers are piped
+ * in, lines are read in order so none are lost.
+ */
+function prompter() {
+  if (!stdin.isTTY) {
+    const rl = createInterface({ input: stdin, terminal: false });
+    const lines = rl[Symbol.asyncIterator]();
+    return {
+      ask: async (question: string, _options?: { hidden?: boolean }) => {
+        stdout.write(`${question}\n`);
+        const next = await lines.next();
+        const answer = next.done ? '' : String(next.value);
+        return _options?.hidden ? answer : answer.trim();
+      },
+      close: () => rl.close(),
+    };
+  }
+  const rl = createInterface({ input: stdin, output: stdout, terminal: true });
+  let muted = false;
+  // Echo `*` instead of the typed characters while a hidden answer is being typed.
+  const internal = rl as unknown as { _writeToOutput: (text: string) => void };
+  const write = internal._writeToOutput.bind(rl);
+  internal._writeToOutput = (text: string) => {
+    if (!muted || text.includes('\n') || text.includes('\r')) write(text);
+    else write('*'.repeat(text.length));
+  };
+  return {
+    ask: (question: string, options?: { hidden?: boolean }) =>
+      new Promise<string>((resolve) => {
+        stdout.write(question);
+        muted = options?.hidden ?? false;
+        rl.question('', (answer) => {
+          const hidden = muted;
+          muted = false;
+          resolve(hidden ? answer : answer.trim());
+        });
+      }),
+    close: () => rl.close(),
+  };
+}
+
 async function main(): Promise<void> {
   const host = new URL(databaseUrl as string).hostname;
   const prisma = createPrismaClient(withSsl(databaseUrl as string), { maxConnections: 1 });
@@ -79,29 +123,37 @@ async function main(): Promise<void> {
       return;
     }
 
-    // Lines are read in order, so answers piped in ahead of the prompts are not lost.
-    const rl = createInterface({ input: stdin, terminal: false });
-    const lines = rl[Symbol.asyncIterator]();
-    const ask = async (question: string): Promise<string> => {
-      stdout.write(question);
-      const next = await lines.next();
-      if (!stdin.isTTY) stdout.write('\n');
-      return next.done ? '' : String(next.value).trim();
-    };
+    const { ask, close } = prompter();
     console.log(`\nSet a new password on database host: ${host}\n`);
     const email = (await ask('E-mail of the account: ')).toLowerCase();
-    const reason = await ask('Reason (kept in the audit log): ');
-    const confirm = await ask(`Type RESET to set a new password for ${email}: `);
-    rl.close();
-    if (confirm !== 'RESET' || !email || reason.length < 5) {
-      throw new Error('Cancelled: an e-mail, a reason (5+ characters) and RESET are required.');
+    const user = email ? await prisma.user.findUnique({ where: { email } }) : null;
+    if (!user) {
+      close();
+      throw new Error(`No user with e-mail "${email}". Run with -- --list to see the accounts.`);
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      throw new Error(`No user with e-mail ${email}. Run with --list to see the accounts.`);
+    const chosen = await ask(
+      'New password (min 10, with a-z, A-Z and 0-9; press Enter to generate one): ',
+      { hidden: true },
+    );
+    if (chosen) {
+      const rule = newPasswordSchema.safeParse(chosen);
+      if (!rule.success) {
+        close();
+        throw new Error(`Password not accepted: ${rule.error.issues[0]?.message ?? 'invalid'}.`);
+      }
+      if ((await ask('Type the new password again: ', { hidden: true })) !== chosen) {
+        close();
+        throw new Error('The two passwords do not match. Nothing was changed.');
+      }
     }
-    const password = temporaryPassword();
+    const reason = (await ask('Reason for the audit log (optional): ')) || 'not given';
+    const confirm = await ask(`Set the new password for ${email} now? Type y and press Enter: `);
+    close();
+    if (confirm.toLowerCase() !== 'y') {
+      throw new Error('Cancelled. Nothing was changed.');
+    }
+    const password = chosen || temporaryPassword();
     await prisma.$transaction([
       prisma.user.update({
         where: { id: user.id },
@@ -126,8 +178,12 @@ async function main(): Promise<void> {
         },
       }),
     ]);
-    console.log(`\nNew password for ${email} (shown once, change it after signing in):`);
-    console.log(`\n    ${password}\n`);
+    if (chosen) {
+      console.log(`\nPassword changed for ${email}. Sign in with the password you typed.\n`);
+    } else {
+      console.log(`\nNew password for ${email} (shown once, change it after signing in):`);
+      console.log(`\n    ${password}\n`);
+    }
     if (user.status !== 'ACTIVE') {
       console.log(`Note: this account's status is ${user.status}; it cannot sign in until active.`);
     }
