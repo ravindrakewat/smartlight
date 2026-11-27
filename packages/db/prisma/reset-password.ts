@@ -79,23 +79,26 @@ function prompter() {
   }
   const rl = createInterface({ input: stdin, output: stdout, terminal: true });
   let muted = false;
-  // Echo `*` instead of the typed characters while a hidden answer is being typed.
-  const internal = rl as unknown as { _writeToOutput: (text: string) => void };
+  let current = '';
+  // While a hidden answer is typed, redraw the line as the question plus one `*` per
+  // character, so neither typing nor backspace ever shows the password.
+  const internal = rl as unknown as { _writeToOutput: (text: string) => void; line: string };
   const write = internal._writeToOutput.bind(rl);
   internal._writeToOutput = (text: string) => {
-    if (!muted || text.includes('\n') || text.includes('\r')) write(text);
-    else write('*'.repeat(text.length));
+    if (!muted || text === '\r\n' || text === '\n') write(text);
+    else write(`\r\x1b[2K${current}${'*'.repeat(internal.line.length)}`);
   };
   return {
     ask: (question: string, options?: { hidden?: boolean }) =>
       new Promise<string>((resolve) => {
-        stdout.write(question);
-        muted = options?.hidden ?? false;
-        rl.question('', (answer) => {
-          const hidden = muted;
+        const hidden = options?.hidden ?? false;
+        current = question;
+        // readline prints the question itself; mute only what is typed after it.
+        rl.question(question, (answer) => {
           muted = false;
           resolve(hidden ? answer : answer.trim());
         });
+        muted = hidden;
       }),
     close: () => rl.close(),
   };
