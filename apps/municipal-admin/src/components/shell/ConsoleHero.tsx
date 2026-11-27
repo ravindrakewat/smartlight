@@ -3,6 +3,7 @@
 import { LiveIndicator, PageHero } from '@smart-light/ui';
 import { useFormatter, useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
+import { HeroBackground } from './HeroBackground';
 
 export interface ConsoleHeroProps {
   title: string;
@@ -25,6 +26,7 @@ export function ConsoleHero({ title, accent, description, icon, actions }: Conso
         accent={accent}
         description={description}
         icon={icon}
+        background={<HeroBackground />}
         className={actions ? 'mb-4' : undefined}
         aside={
           <LiveIndicator

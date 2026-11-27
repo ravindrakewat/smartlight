@@ -38,7 +38,6 @@ import {
   WifiOff,
   Zap,
 } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
@@ -50,6 +49,7 @@ import { PoleQuickActions } from '@/components/lighting/PoleQuickActions';
 import { PowerChart } from '@/components/lighting/PowerChart';
 import { STREET_STATUS } from '@/components/lighting/ZoneStreet';
 import { useSessionUser } from '@/components/Session';
+import { HeroBackground } from '@/components/shell/HeroBackground';
 import { api } from '@/lib/api';
 
 const CONTROLLERS = new Set(['SUPER_ADMIN', 'MUNICIPAL_ADMIN', 'SUPERVISOR', 'OPERATOR']);
@@ -205,16 +205,7 @@ export default function PoleDetailPage() {
       eyebrow={t('eyebrow')}
       title={info.code}
       titleClassName="font-mono"
-      background={
-        <Image
-          src="/images/pole-hero.webp"
-          alt=""
-          fill
-          priority
-          sizes="(min-width: 1280px) 1100px, 100vw"
-          className="object-cover object-center"
-        />
-      }
+      background={<HeroBackground />}
       icon={<Lightbulb />}
       description={
         <span className="inline-flex items-start gap-1.5">
