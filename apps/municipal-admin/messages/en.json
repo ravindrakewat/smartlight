@@ -520,7 +520,8 @@
       "reported": "Controller reports:",
       "reportedUnknown": "not reported yet",
       "reportedOff": "Off",
-      "dimmingNote": "Dimming works only where the controller drives a dimmable LED driver (PWM output). A lamp switched only by the relay stays fully on or off: compare with what the controller reports."
+      "dimmingNote": "Dimming works only where the controller drives a dimmable LED driver (PWM output). A lamp switched only by the relay stays fully on or off: compare with what the controller reports.",
+      "selected": "Selected"
     },
     "commands": {
       "on": "On at {value} %",

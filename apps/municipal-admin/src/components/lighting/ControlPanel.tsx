@@ -7,7 +7,16 @@ import {
 } from '@smart-light/shared';
 import { Alert, Button, Field, Select, Spinner, cn } from '@smart-light/ui';
 import { useMutation } from '@tanstack/react-query';
-import { Info, Lightbulb, LightbulbOff, RotateCcw, Sun, SunDim, WifiOff } from 'lucide-react';
+import {
+  Check,
+  Info,
+  Lightbulb,
+  LightbulbOff,
+  RotateCcw,
+  Sun,
+  SunDim,
+  WifiOff,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { api } from '@/lib/api';
@@ -39,8 +48,14 @@ export function ControlPanel({
   /** Asked before a command is sent; return false to cancel. */
   confirm?: (action: LightingCommandRequest['control']['action']) => boolean;
   /** Last state the pole's controller reported (pole page only). */
-  reported?: { online: boolean; lampOn: boolean | null; dimPercent: number | null };
+  reported?: {
+    online: boolean;
+    lampOn: boolean | null;
+    dimPercent: number | null;
+    mode?: string | null;
+  };
 }) {
+  const reportedMode = reported?.mode ?? null;
   const t = useTranslations('Lighting.control');
   const [duration, setDuration] = useState<number>(120);
   // Start the slider where the lamp is now, so a small nudge does not jump to 100 %.
@@ -84,6 +99,19 @@ export function ControlPanel({
       SLIDER_SETTLE_MS,
     );
   };
+
+  // Which choice is highlighted: the command being sent or last sent from this panel;
+  // before any, what the controller reports (manual on/off, otherwise on schedule).
+  const lastAction = send.isError ? undefined : send.variables?.action;
+  const selected: 'on' | 'off' | 'auto' | null =
+    lastAction ??
+    (reported?.lampOn === null || !reported
+      ? null
+      : reportedMode === 'manual'
+        ? reported.lampOn
+          ? 'on'
+          : 'off'
+        : 'auto');
 
   const errorKey =
     send.error instanceof ApiClientError && send.error.code === 'FORBIDDEN'
@@ -144,34 +172,35 @@ export function ControlPanel({
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
-          <Button
-            size="lg"
-            className="h-14 rounded-xl"
+          <ChoiceButton
+            selected={selected === 'on'}
+            sending={send.isPending && send.variables?.action === 'on'}
             disabled={send.isPending}
+            icon={<Lightbulb />}
+            label={t('on')}
+            selectedLabel={t('selected')}
             onClick={() => run({ action: 'on', dimPercent: dim, durationMinutes: duration })}
-          >
-            <Lightbulb aria-hidden="true" />
-            {t('on')}
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="h-14 rounded-xl border-primary/40 text-primary"
+          />
+          <ChoiceButton
+            selected={selected === 'off'}
+            sending={send.isPending && send.variables?.action === 'off'}
             disabled={send.isPending}
+            icon={<LightbulbOff />}
+            label={t('off')}
+            selectedLabel={t('selected')}
             onClick={() => run({ action: 'off', durationMinutes: duration })}
-          >
-            <LightbulbOff aria-hidden="true" />
-            {t('off')}
-          </Button>
-          <Button
-            variant="ghost"
-            className="col-span-2 justify-start"
+          />
+          <ChoiceButton
+            compact
+            className="col-span-2"
+            selected={selected === 'auto'}
+            sending={send.isPending && send.variables?.action === 'auto'}
             disabled={send.isPending}
+            icon={<RotateCcw />}
+            label={t('auto')}
+            selectedLabel={t('selected')}
             onClick={() => run({ action: 'auto' })}
-          >
-            <RotateCcw aria-hidden="true" />
-            {t('auto')}
-          </Button>
+          />
         </div>
       )}
       {send.isPending ? (
@@ -295,6 +324,59 @@ function ActionTile({
         <span className="font-semibold">{label}</span>
         <span className="text-xs font-normal opacity-80">{detail}</span>
       </span>
+    </Button>
+  );
+}
+
+/**
+ * On / off / back-to-schedule choice. The selected one is filled and shows a tick and
+ * the word "Selected", so the choice never depends on colour alone.
+ */
+function ChoiceButton({
+  selected,
+  sending,
+  disabled,
+  icon,
+  label,
+  selectedLabel,
+  compact,
+  className,
+  onClick,
+}: {
+  selected: boolean;
+  sending: boolean;
+  disabled: boolean;
+  icon: ReactNode;
+  label: string;
+  selectedLabel: string;
+  compact?: boolean;
+  className?: string;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      size={compact ? 'md' : 'lg'}
+      variant={selected ? 'primary' : 'outline'}
+      aria-pressed={selected}
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        'relative rounded-xl',
+        compact ? 'h-12' : 'h-14',
+        selected
+          ? 'ring-2 ring-primary ring-offset-2 ring-offset-surface'
+          : 'border-primary/40 text-primary hover:bg-primary-subtle',
+        className,
+      )}
+    >
+      {sending ? <Spinner className="size-5" /> : <span aria-hidden="true">{icon}</span>}
+      {label}
+      {selected && !sending ? (
+        <span className="absolute -top-2 -right-2 grid size-6 place-items-center rounded-full bg-success text-primary-foreground shadow-sm ring-2 ring-surface">
+          <Check aria-hidden="true" className="size-3.5" />
+          <span className="sr-only">{selectedLabel}</span>
+        </span>
+      ) : null}
     </Button>
   );
 }

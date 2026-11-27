@@ -515,6 +515,7 @@ export default function PoleDetailPage() {
                     online: device.online,
                     lampOn: device.lampOn,
                     dimPercent: device.dimPercent,
+                    mode: device.mode,
                   }}
                   onSent={() => {
                     // Now (command list) and again once the controller has had time to
