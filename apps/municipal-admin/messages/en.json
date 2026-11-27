@@ -511,7 +511,11 @@
       "errors": {
         "forbidden": "You are not allowed to switch these lights.",
         "failed": "The command could not be sent. Please try again."
-      }
+      },
+      "sending": "Sending…",
+      "tileOn": "At {value} % brightness",
+      "tileOff": "For the chosen time",
+      "tileAuto": "End the override now"
     },
     "commands": {
       "on": "On at {value} %",
@@ -647,7 +651,14 @@
         "description": "For festivals, VIP visits or storms: override the schedule for a while.",
         "target": "Where",
         "city": "Whole city",
-        "zone": "Zone {code} · {name}"
+        "zone": "Zone {code} · {name}",
+        "viewMap": "View live map",
+        "checkStatus": "Check alerts",
+        "confirm": {
+          "on": "Turn ON every light in {target}? The schedule resumes when the time is up.",
+          "off": "Turn OFF every light in {target}? The schedule resumes when the time is up.",
+          "auto": "Return every light in {target} to its schedule now?"
+        }
       },
       "zones": {
         "title": "Zone schedules",
@@ -671,6 +682,19 @@
           "exists": "A schedule with this name already exists.",
           "invalid": "Please check the steps (offsets can be at most 240 minutes).",
           "generic": "The schedule could not be saved. Please try again."
+        },
+        "subtitle": "Set when the lights switch on, dim and switch off.",
+        "namePlaceholder": "e.g. Indore standard",
+        "stepsHint": "Each step lasts until the next one.",
+        "saving": "Saving…",
+        "templates": {
+          "label": "Quick templates",
+          "choose": "Choose a template…",
+          "nightDimming": "Dusk to dawn, dimmed at night",
+          "duskToDawn": "Dusk to dawn, full brightness",
+          "energySaver": "Energy saver (step dimming)",
+          "parks": "Parks and markets (off at midnight)",
+          "applied": "Steps replaced with \"{name}\". Adjust them, then save."
         }
       },
       "step": {
@@ -699,7 +723,38 @@
         "before": {
           "sunset": "{minutes} min before sunset",
           "sunrise": "{minutes} min before sunrise"
-        }
+        },
+        "direction": "Before / after",
+        "beforeShort": "Before",
+        "afterShort": "After",
+        "number": "Step {number}:"
+      },
+      "active": "Active",
+      "inactive": "Not in use",
+      "next": "Next:",
+      "notRunning": "Not running: assign it to a zone or make it the city default.",
+      "stepsOf": "Steps of {name}",
+      "listTitle": "All schedules",
+      "listDescription": "Each controller keeps its schedule and runs it even without network.",
+      "notices": {
+        "created": "Schedule \"{name}\" created and sent to the controllers that use it.",
+        "saved": "Schedule \"{name}\" saved and sent to the controllers that use it.",
+        "deleted": "Schedule \"{name}\" deleted. Its zones now follow the city default."
+      },
+      "activePanel": {
+        "title": "Active schedules",
+        "viewAll": "View all",
+        "none": "No schedule is in use. Until one is set, every controller keeps its light on (safe mode).",
+        "cityDefault": "City default",
+        "zones": "{count, plural, one {# zone} other {# zones}}",
+        "next": "next: {step}",
+        "active": "Active"
+      },
+      "status": {
+        "controllers": "Controllers online",
+        "working": "Poles working",
+        "faults": "Faults",
+        "ofTotal": "{value} / {total}"
       }
     },
     "map": {

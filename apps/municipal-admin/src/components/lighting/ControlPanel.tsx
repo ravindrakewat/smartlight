@@ -5,11 +5,11 @@ import {
   type ControlResultDto,
   type LightingCommandRequest,
 } from '@smart-light/shared';
-import { Alert, Button, Field, Select } from '@smart-light/ui';
+import { Alert, Button, Field, Select, Spinner, cn } from '@smart-light/ui';
 import { useMutation } from '@tanstack/react-query';
 import { Lightbulb, LightbulbOff, RotateCcw, SunDim } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { api } from '@/lib/api';
 
 /** Override durations offered to operators, in minutes. */
@@ -28,9 +28,15 @@ const SLIDER_SETTLE_MS = 600;
 export function ControlPanel({
   target,
   onSent,
+  layout = 'buttons',
+  confirm,
 }: {
   target: LightingCommandRequest['target'];
   onSent?: (result: ControlResultDto) => void;
+  /** `tiles`: large two-column action tiles (Lighting & schedules page). */
+  layout?: 'buttons' | 'tiles';
+  /** Asked before a command is sent; return false to cancel. */
+  confirm?: (action: LightingCommandRequest['control']['action']) => boolean;
 }) {
   const t = useTranslations('Lighting.control');
   const [duration, setDuration] = useState<number>(120);
@@ -55,6 +61,11 @@ export function ControlPanel({
       onSent?.(data);
     },
   });
+
+  const run = (control: LightingCommandRequest['control']) => {
+    if (confirm && !confirm(control.action)) return;
+    send.mutate(control);
+  };
 
   const changeDim = (value: number) => {
     setDim(value);
@@ -90,31 +101,63 @@ export function ControlPanel({
           </Select>
         )}
       </Field>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          disabled={send.isPending}
-          onClick={() => send.mutate({ action: 'on', dimPercent: dim, durationMinutes: duration })}
-        >
-          <Lightbulb aria-hidden="true" />
-          {t('on')}
-        </Button>
-        <Button
-          variant="secondary"
-          disabled={send.isPending}
-          onClick={() => send.mutate({ action: 'off', durationMinutes: duration })}
-        >
-          <LightbulbOff aria-hidden="true" />
-          {t('off')}
-        </Button>
-        <Button
-          variant="ghost"
-          disabled={send.isPending}
-          onClick={() => send.mutate({ action: 'auto' })}
-        >
-          <RotateCcw aria-hidden="true" />
-          {t('auto')}
-        </Button>
-      </div>
+      {layout === 'tiles' ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+          <ActionTile
+            variant="primary"
+            icon={<Lightbulb />}
+            label={t('on')}
+            detail={t('tileOn', { value: dim })}
+            disabled={send.isPending}
+            onClick={() => run({ action: 'on', dimPercent: dim, durationMinutes: duration })}
+          />
+          <ActionTile
+            variant="secondary"
+            icon={<LightbulbOff />}
+            label={t('off')}
+            detail={t('tileOff')}
+            disabled={send.isPending}
+            onClick={() => run({ action: 'off', durationMinutes: duration })}
+          />
+          <ActionTile
+            variant="outline"
+            className="sm:col-span-2 xl:col-span-1"
+            icon={<RotateCcw />}
+            label={t('auto')}
+            detail={t('tileAuto')}
+            disabled={send.isPending}
+            onClick={() => run({ action: 'auto' })}
+          />
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          <Button
+            disabled={send.isPending}
+            onClick={() => run({ action: 'on', dimPercent: dim, durationMinutes: duration })}
+          >
+            <Lightbulb aria-hidden="true" />
+            {t('on')}
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={send.isPending}
+            onClick={() => run({ action: 'off', durationMinutes: duration })}
+          >
+            <LightbulbOff aria-hidden="true" />
+            {t('off')}
+          </Button>
+          <Button variant="ghost" disabled={send.isPending} onClick={() => run({ action: 'auto' })}>
+            <RotateCcw aria-hidden="true" />
+            {t('auto')}
+          </Button>
+        </div>
+      )}
+      {send.isPending ? (
+        <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Spinner className="size-4" />
+          {t('sending')}
+        </p>
+      ) : null}
       <div className="grid gap-2 rounded-lg bg-surface-subtle/60 p-3">
         <div className="flex items-center justify-between gap-3">
           <label htmlFor={sliderId} className="text-sm font-medium">
@@ -140,9 +183,7 @@ export function ControlPanel({
           <Button
             variant="secondary"
             disabled={send.isPending}
-            onClick={() =>
-              send.mutate({ action: 'on', dimPercent: dim, durationMinutes: duration })
-            }
+            onClick={() => run({ action: 'on', dimPercent: dim, durationMinutes: duration })}
             className="justify-self-start"
           >
             <SunDim aria-hidden="true" />
@@ -160,5 +201,50 @@ export function ControlPanel({
         </Alert>
       ) : null}
     </div>
+  );
+}
+
+/** Large action button with an icon circle and a one-line explanation. */
+function ActionTile({
+  icon,
+  label,
+  detail,
+  variant,
+  className,
+  disabled,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  detail: string;
+  variant: 'primary' | 'secondary' | 'outline';
+  className?: string;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      variant={variant}
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        'h-auto min-h-16 justify-start gap-3 rounded-xl px-3 py-3 text-left whitespace-normal',
+        className,
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          'grid size-10 shrink-0 place-items-center rounded-full [&_svg]:size-5',
+          variant === 'primary' ? 'bg-primary-foreground/15' : 'bg-surface shadow-xs',
+        )}
+      >
+        {icon}
+      </span>
+      <span className="grid min-w-0">
+        <span className="font-semibold">{label}</span>
+        <span className="text-xs font-normal opacity-80">{detail}</span>
+      </span>
+    </Button>
   );
 }

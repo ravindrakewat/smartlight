@@ -1,42 +1,60 @@
 'use client';
 
-import { compareScheduleSteps, type ScheduleDto, type ZoneDto } from '@smart-light/shared';
+import type { ScheduleDto, ZoneDto } from '@smart-light/shared';
 import {
   Alert,
-  Badge,
   Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
+  EmptyState,
   Field,
   Select,
   Skeleton,
 } from '@smart-light/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarClock, Plus } from 'lucide-react';
+import { Activity, CalendarClock, Map as MapIcon, MapPinned, Plus, Zap } from 'lucide-react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ControlPanel } from '@/components/lighting/ControlPanel';
-import { ScheduleEditor, useStepLabel } from '@/components/lighting/ScheduleEditor';
+import { ScheduleEditor } from '@/components/lighting/ScheduleEditor';
+import {
+  ActiveSchedules,
+  LightingStatus,
+  ScheduleCard,
+} from '@/components/lighting/ScheduleOverview';
 import { useSessionUser } from '@/components/Session';
-import { api } from '@/lib/api';
 import { ConsoleHero } from '@/components/shell/ConsoleHero';
+import { api } from '@/lib/api';
 
 const ADMINS = new Set(['SUPER_ADMIN', 'MUNICIPAL_ADMIN']);
 const CONTROLLERS = new Set(['SUPER_ADMIN', 'MUNICIPAL_ADMIN', 'SUPERVISOR', 'OPERATOR']);
+/** Roles allowed to read the dashboard summary (live counts). */
+const STATUS_READERS = new Set([
+  'SUPER_ADMIN',
+  'MUNICIPAL_ADMIN',
+  'SUPERVISOR',
+  'OPERATOR',
+  'AGENCY_MANAGER',
+]);
+const LIST_ID = 'all-schedules';
+
+type Notice = { kind: 'saved' | 'created' | 'deleted'; name: string } | null;
 
 export default function SchedulesPage() {
   const t = useTranslations('Lighting.schedules');
   const tCommon = useTranslations('Common');
-  const stepLabel = useStepLabel();
   const user = useSessionUser();
   const queryClient = useQueryClient();
   const admin = ADMINS.has(user.role);
 
   const [editing, setEditing] = useState<ScheduleDto | 'new' | null>(null);
   const [overrideTarget, setOverrideTarget] = useState('city');
+  const [notice, setNotice] = useState<Notice>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
 
   const schedules = useQuery({
     queryKey: ['schedules'],
@@ -47,14 +65,23 @@ export default function SchedulesPage() {
     queryFn: () => api.request<ZoneDto[]>('/v1/zones'),
   });
 
+  // Bring the editor into view when it opens (it sits above the list).
+  useEffect(() => {
+    if (editing !== null) editorRef.current?.scrollIntoView({ block: 'start' });
+  }, [editing]);
+
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: ['schedules'] });
     void queryClient.invalidateQueries({ queryKey: ['zones'] });
   };
 
   const remove = useMutation({
-    mutationFn: (id: string) => api.request(`/v1/schedules/${id}`, { method: 'DELETE' }),
-    onSuccess: refresh,
+    mutationFn: (schedule: ScheduleDto) =>
+      api.request(`/v1/schedules/${schedule.id}`, { method: 'DELETE' }),
+    onSuccess: (_, schedule) => {
+      setNotice({ kind: 'deleted', name: schedule.name });
+      refresh();
+    },
   });
   const assign = useMutation({
     mutationFn: (input: { zoneId: string; scheduleId: string | null }) =>
@@ -66,6 +93,16 @@ export default function SchedulesPage() {
   });
 
   const defaultSchedule = schedules.data?.find((schedule) => schedule.isDefault);
+  const targetName =
+    overrideTarget === 'city'
+      ? t('override.city')
+      : (zones.data?.find((zone) => zone.id === overrideTarget)?.name ?? '');
+
+  const openEditor = (next: ScheduleDto | 'new') => {
+    setNotice(null);
+    remove.reset();
+    setEditing(next);
+  };
 
   return (
     <>
@@ -75,7 +112,7 @@ export default function SchedulesPage() {
         description={t('description')}
         actions={
           admin && editing === null ? (
-            <Button onClick={() => setEditing('new')}>
+            <Button onClick={() => openEditor('new')}>
               <Plus aria-hidden="true" />
               {t('new')}
             </Button>
@@ -85,102 +122,109 @@ export default function SchedulesPage() {
 
       <div className="grid gap-6 xl:grid-cols-3">
         <div className="grid min-w-0 content-start gap-6 xl:col-span-2">
+          {notice ? (
+            <Alert tone="success">{t(`notices.${notice.kind}`, { name: notice.name })}</Alert>
+          ) : null}
+
           {editing !== null ? (
-            <ScheduleEditor
-              key={editing === 'new' ? 'new' : editing.id}
-              schedule={editing === 'new' ? null : editing}
-              onCancel={() => setEditing(null)}
-              onSaved={() => {
-                setEditing(null);
-                refresh();
-              }}
-            />
+            <div ref={editorRef} className="scroll-mt-24">
+              <ScheduleEditor
+                key={editing === 'new' ? 'new' : editing.id}
+                schedule={editing === 'new' ? null : editing}
+                onCancel={() => setEditing(null)}
+                onSaved={(saved) => {
+                  setNotice({ kind: editing === 'new' ? 'created' : 'saved', name: saved.name });
+                  setEditing(null);
+                  refresh();
+                }}
+              />
+            </div>
           ) : null}
 
-          {schedules.error ? (
-            <Alert tone="danger" title={tCommon('errorTitle')}>
-              {tCommon('errorBody')}
-            </Alert>
-          ) : null}
-          {remove.error ? <Alert tone="danger">{t('deleteFailed')}</Alert> : null}
+          <section
+            aria-labelledby={`${LIST_ID}-title`}
+            id={LIST_ID}
+            className="grid scroll-mt-24 gap-4"
+          >
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <h2 id={`${LIST_ID}-title`} className="text-xl font-semibold">
+                  {t('listTitle')}
+                </h2>
+                <p className="text-sm text-muted-foreground">{t('listDescription')}</p>
+              </div>
+            </div>
 
-          {schedules.isPending ? (
-            <Skeleton className="h-48" />
-          ) : schedules.data && schedules.data.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-start gap-3 pt-5">
-                <CalendarClock aria-hidden="true" className="size-8 text-muted-foreground" />
-                <p className="font-medium">{t('empty')}</p>
-                <p className="text-sm text-muted-foreground">{t('emptyBody')}</p>
-              </CardContent>
-            </Card>
-          ) : (
-            schedules.data?.map((schedule) => (
-              <Card key={schedule.id}>
-                <CardHeader>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <CardTitle>{schedule.name}</CardTitle>
-                      <CardDescription>
-                        {schedule.isDefault
-                          ? t('usedByDefault')
-                          : schedule.zones.length > 0
-                            ? t('usedByZones', {
-                                zones: schedule.zones.map((zone) => zone.code).join(', '),
-                              })
-                            : t('unused')}
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {schedule.isDefault ? <Badge tone="info">{t('default')}</Badge> : null}
-                      {admin ? (
-                        <>
-                          <Button size="sm" variant="ghost" onClick={() => setEditing(schedule)}>
-                            {t('edit')}
-                          </Button>
-                          {!schedule.isDefault ? (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-danger"
-                              disabled={remove.isPending}
-                              onClick={() => {
-                                if (window.confirm(t('confirmDelete', { name: schedule.name }))) {
-                                  remove.mutate(schedule.id);
-                                }
-                              }}
-                            >
-                              {t('delete')}
-                            </Button>
-                          ) : null}
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ol className="grid gap-1.5 text-sm">
-                    {[...schedule.steps].sort(compareScheduleSteps).map((step, index) => (
-                      <li key={index} className="flex items-center gap-2">
-                        <span
-                          aria-hidden="true"
-                          className={`size-2.5 shrink-0 rounded-full ${step.on ? 'bg-brand' : 'bg-muted-foreground/40'}`}
-                        />
-                        {stepLabel(step)}
-                      </li>
-                    ))}
-                  </ol>
-                </CardContent>
-              </Card>
-            ))
-          )}
+            {schedules.error ? (
+              <Alert tone="danger" title={tCommon('errorTitle')}>
+                <p>{tCommon('errorBody')}</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-2"
+                  onClick={() => void schedules.refetch()}
+                >
+                  {tCommon('retry')}
+                </Button>
+              </Alert>
+            ) : null}
+            {remove.error ? <Alert tone="danger">{t('deleteFailed')}</Alert> : null}
+
+            {schedules.isPending ? (
+              <>
+                <Skeleton className="h-44" />
+                <Skeleton className="h-44" />
+              </>
+            ) : schedules.data && schedules.data.length === 0 ? (
+              <EmptyState
+                icon={<CalendarClock />}
+                title={t('empty')}
+                description={t('emptyBody')}
+                action={
+                  admin && editing === null ? (
+                    <Button onClick={() => openEditor('new')}>
+                      <Plus aria-hidden="true" />
+                      {t('new')}
+                    </Button>
+                  ) : null
+                }
+              />
+            ) : (
+              schedules.data?.map((schedule) => (
+                <ScheduleCard
+                  key={schedule.id}
+                  schedule={schedule}
+                  canEdit={admin}
+                  deleting={remove.isPending}
+                  onEdit={() => openEditor(schedule)}
+                  onDelete={() => {
+                    if (window.confirm(t('confirmDelete', { name: schedule.name }))) {
+                      setNotice(null);
+                      remove.mutate(schedule);
+                    }
+                  }}
+                />
+              ))
+            )}
+          </section>
         </div>
 
-        <div className="grid content-start gap-6">
+        <div className="grid min-w-0 content-start gap-6">
+          <ActiveSchedules
+            schedules={schedules.data}
+            loading={schedules.isPending}
+            listId={LIST_ID}
+          />
+
+          {STATUS_READERS.has(user.role) ? <LightingStatus /> : null}
+
           {CONTROLLERS.has(user.role) ? (
             <Card>
               <CardHeader>
-                <CardTitle>{t('override.title')}</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap aria-hidden="true" className="size-5 text-primary" />
+                  {t('override.title')}
+                </CardTitle>
                 <CardDescription>{t('override.description')}</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
@@ -202,19 +246,48 @@ export default function SchedulesPage() {
                 </Field>
                 <ControlPanel
                   key={overrideTarget}
+                  layout="tiles"
                   target={
                     overrideTarget === 'city'
                       ? { type: 'city' }
                       : { type: 'zone', zoneId: overrideTarget }
                   }
+                  confirm={(action) =>
+                    window.confirm(t(`override.confirm.${action}`, { target: targetName }))
+                  }
                 />
+                <div className="grid grid-cols-2 gap-3 border-t border-border pt-4">
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-auto min-h-11 py-2 whitespace-normal"
+                  >
+                    <Link href="/map">
+                      <MapIcon aria-hidden="true" />
+                      {t('override.viewMap')}
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-auto min-h-11 py-2 whitespace-normal"
+                  >
+                    <Link href="/alerts">
+                      <Activity aria-hidden="true" />
+                      {t('override.checkStatus')}
+                    </Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ) : null}
 
           <Card>
             <CardHeader>
-              <CardTitle>{t('zones.title')}</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <MapPinned aria-hidden="true" className="size-5 text-primary" />
+                {t('zones.title')}
+              </CardTitle>
               <CardDescription>{t('zones.description')}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
@@ -222,6 +295,8 @@ export default function SchedulesPage() {
               {assign.data && !assign.isPending ? (
                 <Alert tone="success">{t('zones.queued', { count: assign.data.queued })}</Alert>
               ) : null}
+              {zones.isPending ? <Skeleton className="h-24" /> : null}
+              {zones.error ? <Alert tone="danger">{tCommon('errorBody')}</Alert> : null}
               {zones.data?.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t('zones.empty')}</p>
               ) : null}
