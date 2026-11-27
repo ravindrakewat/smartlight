@@ -7,7 +7,7 @@ import {
 } from '@smart-light/shared';
 import { Alert, Button, Field, Select, Spinner, cn } from '@smart-light/ui';
 import { useMutation } from '@tanstack/react-query';
-import { Lightbulb, LightbulbOff, RotateCcw, SunDim } from 'lucide-react';
+import { Info, Lightbulb, LightbulbOff, RotateCcw, Sun, SunDim, WifiOff } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { api } from '@/lib/api';
@@ -30,6 +30,7 @@ export function ControlPanel({
   onSent,
   layout = 'buttons',
   confirm,
+  reported,
 }: {
   target: LightingCommandRequest['target'];
   onSent?: (result: ControlResultDto) => void;
@@ -37,10 +38,17 @@ export function ControlPanel({
   layout?: 'buttons' | 'tiles';
   /** Asked before a command is sent; return false to cancel. */
   confirm?: (action: LightingCommandRequest['control']['action']) => boolean;
+  /** Last state the pole's controller reported (pole page only). */
+  reported?: { online: boolean; lampOn: boolean | null; dimPercent: number | null };
 }) {
   const t = useTranslations('Lighting.control');
   const [duration, setDuration] = useState<number>(120);
-  const [dim, setDim] = useState<number>(100);
+  // Start the slider where the lamp is now, so a small nudge does not jump to 100 %.
+  const [dim, setDim] = useState<number>(() =>
+    reported?.lampOn && reported.dimPercent
+      ? Math.min(100, Math.max(DIM_MIN, Math.round(reported.dimPercent / DIM_STEP) * DIM_STEP))
+      : 100,
+  );
   const [result, setResult] = useState<ControlResultDto | null>(null);
   const sliderId = useId();
   // One pole: the slider switches the light itself, once the operator stops moving it.
@@ -84,6 +92,11 @@ export function ControlPanel({
 
   return (
     <div className="grid gap-4">
+      {reported && !reported.online ? (
+        <Alert tone="warning" icon={<WifiOff aria-hidden="true" />}>
+          {t('offlineNote')}
+        </Alert>
+      ) : null}
       <Field label={t('duration')}>
         {({ id }) => (
           <Select
@@ -130,8 +143,10 @@ export function ControlPanel({
           />
         </div>
       ) : (
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-3">
           <Button
+            size="lg"
+            className="h-14 rounded-xl"
             disabled={send.isPending}
             onClick={() => run({ action: 'on', dimPercent: dim, durationMinutes: duration })}
           >
@@ -139,14 +154,21 @@ export function ControlPanel({
             {t('on')}
           </Button>
           <Button
-            variant="secondary"
+            size="lg"
+            variant="outline"
+            className="h-14 rounded-xl border-primary/40 text-primary"
             disabled={send.isPending}
             onClick={() => run({ action: 'off', durationMinutes: duration })}
           >
             <LightbulbOff aria-hidden="true" />
             {t('off')}
           </Button>
-          <Button variant="ghost" disabled={send.isPending} onClick={() => run({ action: 'auto' })}>
+          <Button
+            variant="ghost"
+            className="col-span-2 justify-start"
+            disabled={send.isPending}
+            onClick={() => run({ action: 'auto' })}
+          >
             <RotateCcw aria-hidden="true" />
             {t('auto')}
           </Button>
@@ -158,12 +180,17 @@ export function ControlPanel({
           {t('sending')}
         </p>
       ) : null}
-      <div className="grid gap-2 rounded-lg bg-surface-subtle/60 p-3">
+      <div className="grid gap-2 rounded-xl border border-border bg-surface-subtle/60 p-3">
         <div className="flex items-center justify-between gap-3">
-          <label htmlFor={sliderId} className="text-sm font-medium">
+          <label htmlFor={sliderId} className="flex items-center gap-2 text-sm font-semibold">
+            <Sun aria-hidden="true" className="size-4 text-warning" />
             {t('brightness')}
           </label>
-          <output htmlFor={sliderId} className="text-sm font-semibold tabular-nums">
+          <output
+            htmlFor={sliderId}
+            aria-live="polite"
+            className="text-2xl font-bold text-primary tabular-nums"
+          >
             {t('percent', { value: dim })}
           </output>
         </div>
@@ -177,8 +204,31 @@ export function ControlPanel({
           onChange={(event) => changeDim(Number(event.target.value))}
           className="h-11 w-full cursor-pointer accent-primary"
         />
+        <div aria-hidden="true" className="flex justify-between text-xs text-muted-foreground">
+          <span>{t('percent', { value: DIM_MIN })}</span>
+          <span>{t('percent', { value: 50 })}</span>
+          <span>{t('percent', { value: 100 })}</span>
+        </div>
+        {reported ? (
+          <p className="text-sm">
+            <span className="text-muted-foreground">{t('reported')}</span>{' '}
+            <span className="font-semibold">
+              {reported.lampOn === null
+                ? t('reportedUnknown')
+                : reported.lampOn
+                  ? t('percent', { value: reported.dimPercent ?? 100 })
+                  : t('reportedOff')}
+            </span>
+          </p>
+        ) : null}
         {singlePole ? (
-          <p className="text-xs text-muted-foreground">{t('sliderLive')}</p>
+          <>
+            <p className="text-xs text-muted-foreground">{t('sliderLive')}</p>
+            <p className="flex gap-2 rounded-lg bg-info-subtle p-2 text-xs text-info">
+              <Info aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+              {t('dimmingNote')}
+            </p>
+          </>
         ) : (
           <Button
             variant="secondary"

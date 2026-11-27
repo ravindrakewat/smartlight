@@ -4,6 +4,10 @@ import { cn } from '../lib/cn';
 export interface PageHeroProps {
   /** Page title, rendered as the page's only `h1`. */
   title: string;
+  /** Small label above the title, e.g. "Pole details". */
+  eyebrow?: ReactNode;
+  /** Extra classes for the title, e.g. a monospace font for codes. */
+  titleClassName?: string;
   /** Optional last part of the title drawn in the accent colour, e.g. "Map" in "Live Map". */
   accent?: string;
   description?: ReactNode;
@@ -156,7 +160,16 @@ function NightStreet() {
  * Page banner: a street at night behind the page title. Carries the page's `h1`,
  * so use it instead of `PageHeader`, never both.
  */
-export function PageHero({ title, accent, description, icon, aside, className }: PageHeroProps) {
+export function PageHero({
+  title,
+  eyebrow,
+  titleClassName,
+  accent,
+  description,
+  icon,
+  aside,
+  className,
+}: PageHeroProps) {
   return (
     <section
       className={cn(
@@ -175,7 +188,10 @@ export function PageHero({ title, accent, description, icon, aside, className }:
           </span>
         ) : null}
         <div className="min-w-[14rem] flex-1">
-          <h1 className="text-2xl font-bold sm:text-3xl">
+          {eyebrow ? (
+            <p className="mb-0.5 text-sm font-semibold text-night-accent">{eyebrow}</p>
+          ) : null}
+          <h1 className={cn('text-2xl font-bold break-words sm:text-3xl', titleClassName)}>
             {title}
             {accent ? <span className="text-night-accent"> {accent}</span> : null}
           </h1>

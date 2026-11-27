@@ -515,7 +515,12 @@
       "sending": "Sending…",
       "tileOn": "At {value} % brightness",
       "tileOff": "For the chosen time",
-      "tileAuto": "End the override now"
+      "tileAuto": "End the override now",
+      "offlineNote": "This controller is offline. A command waits for it to reconnect and expires if it does not.",
+      "reported": "Controller reports:",
+      "reportedUnknown": "not reported yet",
+      "reportedOff": "Off",
+      "dimmingNote": "Dimming works only where the controller drives a dimmable LED driver (PWM output). A lamp switched only by the relay stays fully on or off: compare with what the controller reports."
     },
     "commands": {
       "on": "On at {value} %",
@@ -565,14 +570,37 @@
         "energy": "Energy (total)",
         "signal": "Signal",
         "temperature": "Controller",
-        "lastReport": "Last report"
+        "lastReport": "Last report",
+        "controller": "Controller",
+        "online": "Online",
+        "offline": "Offline",
+        "controllerId": "Controller ID",
+        "firmware": "Firmware",
+        "boardTemp": "Board temperature"
       },
       "controllerLine": "Controller {id} · firmware {firmware} · {network}",
       "power": {
         "title": "Power, last 24 hours",
         "empty": "Not enough readings yet.",
         "label": "Power draw over the last 24 hours, peak {peak} W",
-        "peak": "Peak {peak} W"
+        "peak": "Peak {peak} W",
+        "emptyBody": "The chart appears once the controller has sent a few readings.",
+        "lampOnAt": "Lamp on at {value} %",
+        "lampOff": "Lamp off",
+        "legendPower": "Power (W)",
+        "legendLampOn": "Lamp on",
+        "legendLampOff": "Lamp off",
+        "summary": "Peak {peak} W · latest {latest} W · {from} to {to}",
+        "keys": "Focus the chart and use the arrow keys to read each point.",
+        "allZero": "Every reading is 0 W. If the lamp was on, the power sensor may not be fitted or wired yet.",
+        "table": {
+          "toggle": "Show as table (hourly)",
+          "caption": "Power per hour over the last 24 hours",
+          "hour": "Hour",
+          "average": "Average",
+          "peak": "Peak",
+          "lampOn": "Lamp on"
+        }
       },
       "events": {
         "title": "Controller events",
@@ -597,6 +625,37 @@
       "commands": {
         "title": "Recent commands",
         "empty": "No commands sent yet."
+      },
+      "eyebrow": "Pole details",
+      "opensNewTab": "(opens in a new tab)",
+      "updated": "Updated {time}",
+      "refresh": "Refresh now",
+      "offlineTitle": "Controller offline",
+      "offlineBody": "Last seen {time}. The readings below are its last report. Commands sent now reach the light only if the controller reconnects before they expire.",
+      "staleBody": "No report for {time}: the controller says it is online but has stopped sending readings.",
+      "refreshFailed": "Could not refresh. Showing the last data received.",
+      "lastSeen": "Seen {time}",
+      "signal": {
+        "good": "Good",
+        "fair": "Fair",
+        "weak": "Weak"
+      },
+      "quick": {
+        "title": "Quick actions",
+        "map": "Live map",
+        "reports": "Reports",
+        "workOrders": "Work orders",
+        "createWorkOrder": "Create work order for this pole",
+        "createTitle": "New work order · {code}",
+        "priority": "Priority",
+        "description": "What is wrong?",
+        "descriptionHint": "Optional. The technician sees this.",
+        "create": "Create work order",
+        "creating": "Creating…",
+        "cancel": "Cancel",
+        "created": "Work order {number} created.",
+        "openWorkOrder": "Open it",
+        "createFailed": "The work order could not be created. Please try again."
       }
     },
     "alerts": {
