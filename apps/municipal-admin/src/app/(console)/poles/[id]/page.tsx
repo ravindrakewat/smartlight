@@ -141,7 +141,7 @@ export default function PoleDetailPage() {
   const backLink = (
     <Link
       href="/poles"
-      className="mb-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-primary hover:underline [&_svg]:size-4"
+      className="-mt-3 mb-1 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-primary hover:underline [&_svg]:size-4"
     >
       <ArrowLeft aria-hidden="true" />
       {t('back')}
