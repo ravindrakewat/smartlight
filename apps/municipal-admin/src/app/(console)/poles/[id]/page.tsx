@@ -38,6 +38,7 @@ import {
   WifiOff,
   Zap,
 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
@@ -204,6 +205,16 @@ export default function PoleDetailPage() {
       eyebrow={t('eyebrow')}
       title={info.code}
       titleClassName="font-mono"
+      background={
+        <Image
+          src="/images/pole-hero.webp"
+          alt=""
+          fill
+          priority
+          sizes="(min-width: 1280px) 1100px, 100vw"
+          className="object-cover object-center"
+        />
+      }
       icon={<Lightbulb />}
       description={
         <span className="inline-flex items-start gap-1.5">

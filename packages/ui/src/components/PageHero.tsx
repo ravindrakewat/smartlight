@@ -8,6 +8,11 @@ export interface PageHeroProps {
   eyebrow?: ReactNode;
   /** Extra classes for the title, e.g. a monospace font for codes. */
   titleClassName?: string;
+  /**
+   * Decorative background (e.g. a `next/image` with `fill` and `object-cover`) drawn
+   * under a navy overlay instead of the built-in night street.
+   */
+  background?: ReactNode;
   /** Optional last part of the title drawn in the accent colour, e.g. "Map" in "Live Map". */
   accent?: string;
   description?: ReactNode;
@@ -168,6 +173,7 @@ export function PageHero({
   description,
   icon,
   aside,
+  background,
   className,
 }: PageHeroProps) {
   return (
@@ -177,7 +183,20 @@ export function PageHero({
         className,
       )}
     >
-      <NightStreet />
+      {background ? (
+        <>
+          <div aria-hidden="true" className="absolute inset-0 -z-10">
+            {background}
+          </div>
+          {/* Navy wash, darker behind the text, so the title stays readable on any photo. */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 -z-10 bg-gradient-to-r from-night/90 via-night/60 to-night/25"
+          />
+        </>
+      ) : (
+        <NightStreet />
+      )}
       <div className="relative flex min-h-36 flex-wrap items-center gap-x-6 gap-y-4 px-5 py-6 sm:px-8">
         {icon ? (
           <span
