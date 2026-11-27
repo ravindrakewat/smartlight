@@ -165,7 +165,7 @@ function Table({
   minWidth?: string;
 }) {
   return (
-    <div className={cn(!printable && 'overflow-x-auto')}>
+    <div className={cn(!printable && 'relative overflow-x-auto')}>
       <table className={cn('w-full text-left text-sm', !printable && minWidth)}>
         <thead className="bg-surface-subtle/60 text-muted-foreground">
           <tr>{head}</tr>

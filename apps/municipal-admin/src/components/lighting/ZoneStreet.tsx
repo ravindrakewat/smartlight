@@ -130,7 +130,7 @@ export function ZoneStreet({
 
       {/* The street at night */}
       <div className="relative bg-[radial-gradient(120%_100%_at_50%_0%,var(--color-night-soft),var(--color-night))]">
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <ul
             aria-label={t('zone.streetLabel', { zone: name, count: poles.length })}
             className={cn(

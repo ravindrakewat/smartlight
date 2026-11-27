@@ -110,7 +110,11 @@ export function LiveRoad({ statusFilter = '' }: LiveRoadProps) {
       </div>
 
       {/* Zone picker */}
-      <div role="group" aria-label={t('zones')} className="flex gap-2 overflow-x-auto px-4 py-3">
+      <div
+        role="group"
+        aria-label={t('zones')}
+        className="relative flex gap-2 overflow-x-auto px-4 py-3"
+      >
         {roads.map((item) => {
           const active = item.key === road.key;
           return (
@@ -166,7 +170,7 @@ export function LiveRoad({ statusFilter = '' }: LiveRoadProps) {
 
       {/* The road at night: far footpath, road, near footpath */}
       <div className="bg-[radial-gradient(140%_120%_at_50%_0%,var(--color-night-soft),var(--color-night))]">
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <div className="relative min-w-max px-6">
             {/* Footpaths and road, behind the poles */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-36">

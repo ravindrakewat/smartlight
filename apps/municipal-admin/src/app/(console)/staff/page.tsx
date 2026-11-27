@@ -216,7 +216,7 @@ export default function StaffPage() {
             ) : staff.data && staff.data.items.length === 0 ? (
               <EmptyState className="m-5" icon={<UsersRound />} title={t('empty')} />
             ) : staff.data ? (
-              <div className="overflow-x-auto">
+              <div className="relative overflow-x-auto">
                 <table className="w-full min-w-[34rem] text-left text-sm">
                   <thead className="bg-surface-subtle/60">
                     <tr className="text-muted-foreground">

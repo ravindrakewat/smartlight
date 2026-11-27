@@ -326,7 +326,7 @@ export default function PoleImportPage() {
               <CardHeader>
                 <CardTitle>{t('preview')}</CardTitle>
               </CardHeader>
-              <div className="overflow-x-auto">
+              <div className="relative overflow-x-auto">
                 <table className="w-full min-w-[40rem] text-left text-sm">
                   <thead className="bg-surface-subtle/60 text-muted-foreground">
                     <tr>
