@@ -53,7 +53,10 @@ export function startChirpstackBridge(options: ChirpstackBridgeOptions): Chirpst
   });
   client.on('reconnect', () => logger.warn('ChirpStack bridge reconnecting'));
   client.on('error', (error) =>
-    logger.error('ChirpStack MQTT error', { errorMessage: error.message }),
+    logger.error('ChirpStack MQTT error', {
+      errorMessage: error.message,
+      code: (error as { code?: string | number }).code,
+    }),
   );
 
   client.on('message', (topic, buffer) => {

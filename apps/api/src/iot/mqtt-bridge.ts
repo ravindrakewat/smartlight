@@ -79,7 +79,14 @@ export function startMqttBridge(options: MqttBridgeOptions): MqttBridge {
     flushOutboxSafely();
   });
   client.on('reconnect', () => logger.warn('MQTT bridge reconnecting'));
-  client.on('error', (error) => logger.error('MQTT error', { errorMessage: error.message }));
+  // A refused connection has an empty message; the code (e.g. ECONNREFUSED) says why.
+  client.on('error', (error) =>
+    logger.error('MQTT error', {
+      errorMessage: error.message,
+      code: (error as { code?: string | number }).code,
+      broker: options.url.replace(/\/\/[^@/]*@/, '//'),
+    }),
+  );
 
   client.on('message', (topic, buffer) => {
     const parsed = parseDeviceTopic(topic);
