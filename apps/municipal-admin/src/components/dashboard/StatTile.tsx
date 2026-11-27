@@ -13,14 +13,14 @@ const ICON: Record<StatTone, string> = {
   cyan: 'bg-accent-cyan text-background',
 };
 
-/** Coloured edge of the card, matching the icon (decorative). */
-const EDGE: Record<StatTone, string> = {
-  blue: 'border-t-primary',
-  green: 'border-t-success',
-  red: 'border-t-danger',
-  orange: 'border-t-warning',
-  purple: 'border-t-accent-purple',
-  cyan: 'border-t-accent-cyan',
+/** A faint wash of the tile's colour on the border and background (decorative). */
+const WASH: Record<StatTone, string> = {
+  blue: 'border-primary/35 bg-primary/[0.06]',
+  green: 'border-success/35 bg-success/[0.06]',
+  red: 'border-danger/35 bg-danger/[0.06]',
+  orange: 'border-warning/35 bg-warning/[0.06]',
+  purple: 'border-accent-purple/40 bg-accent-purple/[0.07]',
+  cyan: 'border-accent-cyan/35 bg-accent-cyan/[0.06]',
 };
 
 /** Text colours that pass contrast on the card (the icon colour is not always text-safe). */
@@ -34,12 +34,14 @@ const TEXT: Record<StatTone, string> = {
 };
 
 /**
- * Headline number with a solid icon square, as on the control-room dashboard.
- * `note` is the small coloured line under the label (e.g. "94.7 %").
+ * Headline number with a solid icon square, as on the control-room dashboard:
+ * icon left, value and label beside it, the small coloured `note` in the bottom-right
+ * corner. Give the value's unit as `unit` so it is set smaller than the number.
  */
 export function StatTile({
   label,
   value,
+  unit,
   note,
   icon,
   tone,
@@ -47,6 +49,7 @@ export function StatTile({
 }: {
   label: string;
   value: ReactNode;
+  unit?: string;
   note?: ReactNode;
   icon: ReactNode;
   tone: StatTone;
@@ -55,30 +58,35 @@ export function StatTile({
   return (
     <div
       className={cn(
-        'flex min-w-0 items-center gap-3 rounded-xl border border-t-2 border-border bg-surface p-3 shadow-sm sm:p-4',
-        EDGE[tone],
+        'flex min-h-[4.75rem] min-w-0 items-center gap-3 rounded-xl border px-3 py-2.5 shadow-sm',
+        WASH[tone],
       )}
     >
       <span
         aria-hidden="true"
         className={cn(
-          'grid size-11 shrink-0 place-items-center rounded-xl sm:size-12 [&_svg]:size-6',
+          'grid size-12 shrink-0 place-items-center rounded-lg [&_svg]:size-6',
           ICON[tone],
         )}
       >
         {icon}
       </span>
-      <div className="min-w-0">
-        <p className="text-lg leading-tight font-bold break-words tabular-nums sm:text-xl">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <p className="text-xl leading-tight font-bold tabular-nums">
           {loading ? (
             <span className="inline-block h-6 w-16 animate-pulse rounded bg-surface-subtle" />
           ) : (
-            value
+            <>
+              {value}
+              {unit ? <span className="ml-1 text-sm font-semibold">{unit}</span> : null}
+            </>
           )}
         </p>
-        <p className="text-xs leading-snug text-muted-foreground sm:text-sm">{label}</p>
+        <p className="text-xs leading-snug text-muted-foreground">{label}</p>
         {note ? (
-          <p className={cn('text-xs font-semibold tabular-nums', TEXT[tone])}>{note}</p>
+          <p className={cn('self-end text-right text-xs font-semibold tabular-nums', TEXT[tone])}>
+            {note}
+          </p>
         ) : null}
       </div>
     </div>

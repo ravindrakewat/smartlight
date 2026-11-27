@@ -151,10 +151,11 @@
       "online": "ऑनलाइन",
       "ofControllers": "{total} में से {percent}",
       "load": "वर्तमान लोड",
-      "loadNote": "{count} रिपोर्ट कर रहे",
+      "loadNote": "{count} रिपोर्ट",
       "energyWeek": "ऊर्जा (7 दिन)",
-      "measured": "कंट्रोलरों द्वारा मापी गई",
-      "noReport": "आपकी भूमिका के लिए उपलब्ध नहीं"
+      "measured": "मापी गई",
+      "noReport": "आपकी भूमिका के लिए उपलब्ध नहीं",
+      "zonesShort": "{count} ज़ोन"
     },
     "map": {
       "title": "लाइव शहर नक्शा",

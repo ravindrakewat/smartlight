@@ -265,7 +265,7 @@ export default function DashboardPage() {
           label={t('stats.totalLights')}
           loading={loading}
           value={poles ? format.number(poles.total) : ''}
-          note={t('stats.zones', { count: summary.data?.zones.length ?? 0 })}
+          note={t('stats.zonesShort', { count: summary.data?.zones.length ?? 0 })}
         />
         <StatTile
           tone="green"
@@ -273,14 +273,7 @@ export default function DashboardPage() {
           label={t('stats.online')}
           loading={loading}
           value={devices ? format.number(devices.online) : ''}
-          note={
-            devices
-              ? t('stats.ofControllers', {
-                  percent: percent(share(devices.online, devices.total)),
-                  total: format.number(devices.total),
-                })
-              : null
-          }
+          note={devices ? percent(share(devices.online, devices.total)) : null}
         />
         <StatTile
           tone="orange"
@@ -303,7 +296,8 @@ export default function DashboardPage() {
           icon={<Zap />}
           label={t('stats.load')}
           loading={loading}
-          value={power ? `${kw(power.currentW)} kW` : ''}
+          value={power ? kw(power.currentW) : ''}
+          unit="kW"
           note={power ? t('stats.loadNote', { count: format.number(power.reporting) }) : null}
         />
         <StatTile
@@ -311,7 +305,8 @@ export default function DashboardPage() {
           icon={<Leaf />}
           label={t('stats.energyWeek')}
           loading={energy.isPending && energy.fetchStatus !== 'idle'}
-          value={energy.data ? `${kwh(weekKWh)} kWh` : '—'}
+          value={energy.data ? kwh(weekKWh) : '—'}
+          unit={energy.data ? 'kWh' : undefined}
           note={energy.data ? t('stats.measured') : t('stats.noReport')}
         />
       </section>

@@ -151,10 +151,11 @@
       "online": "Online",
       "ofControllers": "{percent} of {total}",
       "load": "Current load",
-      "loadNote": "from {count} reporting",
+      "loadNote": "{count} reporting",
       "energyWeek": "Energy (7 days)",
-      "measured": "Measured by controllers",
-      "noReport": "Not available for your role"
+      "measured": "Measured",
+      "noReport": "Not available for your role",
+      "zonesShort": "{count, plural, one {# zone} other {# zones}}"
     },
     "map": {
       "title": "Live city map",
