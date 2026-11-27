@@ -76,7 +76,7 @@ export function startMqttBridge(options: MqttBridgeOptions): MqttBridge {
         logger.error('MQTT subscribe failed', { errorMessage: error.message });
       }
     });
-    void flushOutbox();
+    flushOutboxSafely();
   });
   client.on('reconnect', () => logger.warn('MQTT bridge reconnecting'));
   client.on('error', (error) => logger.error('MQTT error', { errorMessage: error.message }));
@@ -157,15 +157,17 @@ export function startMqttBridge(options: MqttBridgeOptions): MqttBridge {
     return flushing;
   }
 
-  // A failed database read (e.g. the connection was dropped) must not crash the worker:
-  // log it and try again on the next tick.
-  const outboxTimer = setInterval(() => {
+  // A failed database read (database down, or the connection was dropped) must not crash
+  // the worker: log it and try again on the next tick.
+  function flushOutboxSafely(): void {
     flushOutbox().catch((error: unknown) => {
       logger.warn('Command outbox check failed, retrying', {
         errorMessage: error instanceof Error ? error.message : String(error),
       });
     });
-  }, options.outboxIntervalMs ?? 1_500);
+  }
+
+  const outboxTimer = setInterval(flushOutboxSafely, options.outboxIntervalMs ?? 1_500);
   const expiryTimer = setInterval(() => {
     void ingestService.expireCommands().catch(() => undefined);
   }, EXPIRY_INTERVAL_MS);

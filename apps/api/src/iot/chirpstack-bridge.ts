@@ -49,7 +49,7 @@ export function startChirpstackBridge(options: ChirpstackBridgeOptions): Chirpst
     client.subscribe('application/+/device/+/event/+', { qos: 1 }, (error) => {
       if (error) logger.error('ChirpStack subscribe failed', { errorMessage: error.message });
     });
-    void flushOutbox();
+    flushOutboxSafely();
   });
   client.on('reconnect', () => logger.warn('ChirpStack bridge reconnecting'));
   client.on('error', (error) =>
@@ -129,13 +129,14 @@ export function startChirpstackBridge(options: ChirpstackBridgeOptions): Chirpst
     return flushing;
   }
   // A failed database read must not crash the worker: log it and retry on the next tick.
-  const timer = setInterval(() => {
+  function flushOutboxSafely(): void {
     flushOutbox().catch((error: unknown) => {
       logger.warn('LoRaWAN outbox check failed, retrying', {
         errorMessage: error instanceof Error ? error.message : String(error),
       });
     });
-  }, options.outboxIntervalMs ?? 2_000);
+  }
+  const timer = setInterval(flushOutboxSafely, options.outboxIntervalMs ?? 2_000);
 
   return {
     client,
