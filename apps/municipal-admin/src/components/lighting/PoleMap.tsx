@@ -24,6 +24,51 @@ function tokenColor(token: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(token).trim() || '#64748b';
 }
 
+/** How strongly each status glows: lit and faulty lights shine, dark ones barely. */
+const GLOW_LEVEL: Record<LightStatusName, number> = {
+  ON: 0.9,
+  DIMMED: 0.75,
+  FAULT: 0.9,
+  OFFLINE: 0.7,
+  OFF: 0.2,
+  UNKNOWN: 0.12,
+};
+
+/** Glow opacity per status, multiplied by `pulse` (0–1) for the gentle breathing effect. */
+function glowOpacity(pulse: number): unknown[] {
+  const expression: unknown[] = ['match', ['get', 'status']];
+  for (const [status, level] of Object.entries(GLOW_LEVEL)) {
+    expression.push(status, Number((level * pulse).toFixed(3)));
+  }
+  expression.push(0.08);
+  return expression;
+}
+
+const GLOW_OPACITY = glowOpacity(1);
+/** One slow breath of the glow, in milliseconds. */
+const PULSE_MS = 2400;
+
+/**
+ * Let the halo breathe slowly (between 55 % and 100 % of its strength). Skipped when
+ * the user asks for reduced motion. Returns a function that stops it.
+ */
+function startGlowPulse(instance: MapLibreMap): () => void {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {};
+  let frame = 0;
+  let last = 0;
+  const tick = (time: number) => {
+    // About 15 updates a second is smooth enough and keeps the map light.
+    if (time - last > 66 && instance.getLayer('pole-glow')) {
+      last = time;
+      const pulse = 0.775 + 0.225 * Math.sin((time / PULSE_MS) * 2 * Math.PI);
+      instance.setPaintProperty('pole-glow', 'circle-opacity', glowOpacity(pulse) as never);
+    }
+    frame = requestAnimationFrame(tick);
+  };
+  frame = requestAnimationFrame(tick);
+  return () => cancelAnimationFrame(frame);
+}
+
 function toGeoJson(poles: PoleMapItemDto[]): GeoJSON.FeatureCollection<GeoJSON.Point> {
   return {
     type: 'FeatureCollection',
@@ -70,6 +115,7 @@ export function PoleMap({
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
   const fitted = useRef(false);
+  const stopPulse = useRef<() => void>(() => {});
   const latest = useRef({ poles, statusLabel, openLabel, onOpen, onSelect, selectedId });
   latest.current = { poles, statusLabel, openLabel, onOpen, onSelect, selectedId };
 
@@ -95,17 +141,41 @@ export function PoleMap({
         colorByStatus.push(tokenColor('--color-muted-foreground'));
 
         instance.addSource('poles', { type: 'geojson', data: toGeoJson(latest.current.poles) });
+        // Soft halo in the status colour, like light on the street (decorative).
+        instance.addLayer({
+          id: 'pole-glow',
+          type: 'circle',
+          source: 'poles',
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 11, 13, 15, 15, 22, 18, 30],
+            'circle-color': colorByStatus as never,
+            'circle-blur': 0.85,
+            'circle-opacity': GLOW_OPACITY as never,
+          },
+        });
         instance.addLayer({
           id: 'poles',
           type: 'circle',
           source: 'poles',
           paint: {
-            'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 3, 15, 7, 18, 10],
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 3.5, 15, 7, 18, 10],
             'circle-color': colorByStatus as never,
             'circle-stroke-width': 1.5,
-            'circle-stroke-color': tokenColor('--color-surface'),
+            'circle-stroke-color': 'rgba(255, 255, 255, 0.75)',
           },
         });
+        // Bright core on lights that are lit.
+        instance.addLayer({
+          id: 'pole-core',
+          type: 'circle',
+          source: 'poles',
+          filter: ['in', ['get', 'status'], ['literal', ['ON', 'DIMMED']]],
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1.2, 15, 2.6, 18, 3.6],
+            'circle-color': '#ffffff',
+          },
+        });
+        stopPulse.current = startGlowPulse(instance);
         // Ring around the selected pole.
         instance.addLayer({
           id: 'pole-selected',
@@ -155,6 +225,7 @@ export function PoleMap({
     });
     return () => {
       cancelled = true;
+      stopPulse.current();
       map.current?.remove();
       map.current = null;
     };
