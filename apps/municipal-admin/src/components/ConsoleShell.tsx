@@ -64,6 +64,7 @@ export async function ConsoleShell({ children }: { children: ReactNode }) {
           <UserMenu />
         </>
       }
+      mainClassName="pt-4 lg:pt-4"
       sidebarFooter={
         <div className="grid gap-2">
           <SidebarBrand />

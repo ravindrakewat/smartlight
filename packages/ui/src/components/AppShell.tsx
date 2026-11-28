@@ -34,6 +34,8 @@ export interface AppShellProps {
   headerActions?: ReactNode;
   /** Bottom of the sidebar, e.g. a system status card. */
   sidebarFooter?: ReactNode;
+  /** Extra classes for `main`, e.g. to change its padding. */
+  mainClassName?: string;
   children: ReactNode;
 }
 
@@ -141,6 +143,7 @@ export function AppShell({
   headerStart,
   headerActions,
   sidebarFooter,
+  mainClassName,
   children,
 }: AppShellProps) {
   const pathname = usePathname();
@@ -205,7 +208,7 @@ export function AppShell({
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 px-4 py-6 outline-none lg:px-8 lg:py-6"
+          className={cn('flex-1 px-4 py-6 outline-none lg:px-8 lg:py-6', mainClassName)}
         >
           <div className="mx-auto w-full max-w-[96rem]">{children}</div>
         </main>

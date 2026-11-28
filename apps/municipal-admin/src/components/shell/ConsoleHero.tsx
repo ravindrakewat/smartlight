@@ -24,7 +24,7 @@ export function ConsoleHero({ title, accent, description, actions }: ConsoleHero
         {description ? <p>{description}</p> : null}
       </div>
       {actions ? (
-        <div className="mb-4 flex flex-wrap items-center justify-end gap-3">{actions}</div>
+        <div className="mb-3 flex flex-wrap items-center justify-end gap-3">{actions}</div>
       ) : null}
     </>
   );
