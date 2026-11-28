@@ -102,7 +102,8 @@
       "queue": "जॉब क्यू",
       "operational": "चालू",
       "down": "उपलब्ध नहीं",
-      "notConnected": "अभी जुड़ा नहीं"
+      "notConnected": "अभी जुड़ा नहीं",
+      "details": "विवरण"
     },
     "city": {
       "health": "{percent} चालू हालत में",
@@ -346,7 +347,10 @@
     "checking": "जाँच हो रही है…",
     "systemOnline": "सिस्टम चालू है",
     "systemDown": "सर्वर से संपर्क नहीं",
-    "lastUpdate": "आखिरी अपडेट {time}"
+    "lastUpdate": "आखिरी अपडेट {time}",
+    "fullscreen": "पूरी स्क्रीन",
+    "madeInIndia": "भारत में निर्मित",
+    "tagline": "उजली सड़कों के लिए स्मार्ट ढाँचा"
   },
   "Mfa": {
     "verifyTitle": "अपना कोड डालें",

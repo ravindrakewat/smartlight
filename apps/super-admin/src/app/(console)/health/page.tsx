@@ -35,7 +35,7 @@ export default function SystemHealthPage() {
   const locale = useLocale();
 
   const ready = useQuery({
-    queryKey: ['health', 'ready'],
+    queryKey: ['health', 'ready', 'timed'],
     queryFn: async (): Promise<ReadyResult> => {
       const started = performance.now();
       const data = await api.request<HealthCheckData>('/health/ready');

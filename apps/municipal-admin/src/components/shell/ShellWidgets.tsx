@@ -1,9 +1,9 @@
 'use client';
 
 import type { DeviceEventDto, HealthCheckData } from '@smart-light/shared';
-import { Button, cn } from '@smart-light/ui';
+import { cn, FullscreenButton as UiFullscreenButton } from '@smart-light/ui';
 import { useQuery } from '@tanstack/react-query';
-import { Bell, Maximize, Minimize, Search } from 'lucide-react';
+import { Bell, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
@@ -97,34 +97,7 @@ export function AlertsNavBadge() {
 /** Full-screen toggle, handy on the control-room wall display. */
 export function FullscreenButton() {
   const t = useTranslations('Shell');
-  const [supported, setSupported] = useState(false);
-  const [active, setActive] = useState(false);
-
-  useEffect(() => {
-    setSupported(document.fullscreenEnabled);
-    const sync = () => setActive(document.fullscreenElement !== null);
-    document.addEventListener('fullscreenchange', sync);
-    return () => document.removeEventListener('fullscreenchange', sync);
-  }, []);
-
-  if (!supported) return null;
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      className="hidden rounded-full md:inline-flex"
-      aria-pressed={active}
-      aria-label={t('fullscreen')}
-      title={t('fullscreen')}
-      onClick={() => {
-        if (document.fullscreenElement) void document.exitFullscreen();
-        else void document.documentElement.requestFullscreen();
-      }}
-    >
-      {active ? <Minimize /> : <Maximize />}
-    </Button>
-  );
+  return <UiFullscreenButton label={t('fullscreen')} />;
 }
 
 /** Sidebar card: is the platform reachable, and when did we last hear from it. */

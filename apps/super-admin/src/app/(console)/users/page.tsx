@@ -167,7 +167,7 @@ export default function PlatformUsersPage() {
         ) : users.data && users.data.items.length === 0 ? (
           <EmptyState className="m-5" icon={<Users />} title={t('empty')} />
         ) : users.data ? (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full min-w-[52rem] text-left text-sm">
               <caption className="sr-only">{t('title')}</caption>
               <thead className="bg-surface-subtle/60 text-muted-foreground">

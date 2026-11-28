@@ -19,12 +19,15 @@ export {
   type LanguageOption,
   type LanguageSwitcherProps,
 } from './components/LanguageSwitcher';
+export { FullscreenButton, type FullscreenButtonProps } from './components/FullscreenButton';
 export { KpiCard, type KpiCardProps } from './components/KpiCard';
 export { LiveIndicator, type LiveIndicatorProps } from './components/LiveIndicator';
 export { PageHeader, type PageHeaderProps } from './components/PageHeader';
 export { PageHero, type PageHeroProps } from './components/PageHero';
+export { Panel, type PanelProps } from './components/Panel';
 export { SkipLink, type SkipLinkProps } from './components/SkipLink';
 export { StatCard, type StatCardProps } from './components/StatCard';
+export { StatTile, type StatTileProps, type StatTone } from './components/StatTile';
 export {
   StatusIndicator,
   type LightStatus,

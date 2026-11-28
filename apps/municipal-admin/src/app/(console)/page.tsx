@@ -10,7 +10,7 @@ import {
   type ReportBreakdownDto,
   type WorkOrderSummaryDto,
 } from '@smart-light/shared';
-import { Alert, cn, EmptyState, Input, Select, Skeleton } from '@smart-light/ui';
+import { Alert, cn, EmptyState, Input, Panel, Select, Skeleton, StatTile } from '@smart-light/ui';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
   Activity,
@@ -42,9 +42,7 @@ import { ActivityChart } from '@/components/charts/ActivityChart';
 import { StatusDonut } from '@/components/charts/StatusDonut';
 import { AutomationPanel } from '@/components/dashboard/AutomationPanel';
 import { EnergyBars } from '@/components/dashboard/EnergyBars';
-import { Panel } from '@/components/dashboard/Panel';
 import { SelectedLight } from '@/components/dashboard/SelectedLight';
-import { StatTile } from '@/components/dashboard/StatTile';
 import { DeadlineLabel, PriorityBadge, useFaultLabel } from '@/components/labels';
 import { ZoneStreet } from '@/components/lighting/ZoneStreet';
 import { useSessionUser } from '@/components/Session';

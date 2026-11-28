@@ -1,7 +1,7 @@
 'use client';
 
 import type { DashboardSummaryDto } from '@smart-light/shared';
-import { Alert, Button, EmptyState, Select, Skeleton } from '@smart-light/ui';
+import { Alert, Button, EmptyState, Panel, Select, Skeleton, StatTile } from '@smart-light/ui';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart3, CalendarDays, FileBarChart, Gauge, Radio, TrendingUp, Zap } from 'lucide-react';
 import Link from 'next/link';
@@ -9,8 +9,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
 import { Suspense, useId } from 'react';
 import { EnergyBars } from '@/components/dashboard/EnergyBars';
-import { Panel } from '@/components/dashboard/Panel';
-import { StatTile } from '@/components/dashboard/StatTile';
 import { parseDays, useReport } from '@/components/reports/useReport';
 import { useSessionUser } from '@/components/Session';
 import { ConsoleHero } from '@/components/shell/ConsoleHero';

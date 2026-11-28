@@ -101,7 +101,7 @@ export default function AuditPage() {
         ) : entries.data && entries.data.items.length === 0 ? (
           <EmptyState className="m-5" icon={<ScrollText />} title={t('empty')} />
         ) : entries.data ? (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full min-w-[56rem] text-left text-sm">
               <caption className="sr-only">{t('title')}</caption>
               <thead className="bg-surface-subtle/60 text-muted-foreground">

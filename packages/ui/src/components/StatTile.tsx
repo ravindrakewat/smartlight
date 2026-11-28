@@ -1,5 +1,5 @@
-import { cn } from '@smart-light/ui';
 import type { ReactNode } from 'react';
+import { cn } from '../lib/cn';
 
 export type StatTone = 'blue' | 'green' | 'red' | 'orange' | 'purple' | 'cyan';
 
@@ -33,20 +33,7 @@ const TEXT: Record<StatTone, string> = {
   cyan: 'text-info',
 };
 
-/**
- * Headline number with a solid icon square, as on the control-room dashboard:
- * icon left, value and label beside it, the small coloured `note` in the bottom-right
- * corner. Give the value's unit as `unit` so it is set smaller than the number.
- */
-export function StatTile({
-  label,
-  value,
-  unit,
-  note,
-  icon,
-  tone,
-  loading,
-}: {
+export interface StatTileProps {
   label: string;
   value: ReactNode;
   unit?: string;
@@ -54,7 +41,14 @@ export function StatTile({
   icon: ReactNode;
   tone: StatTone;
   loading?: boolean;
-}) {
+}
+
+/**
+ * Headline number with a solid icon square, as on the control-room dashboard:
+ * icon left, value and label beside it, the small coloured `note` in the bottom-right
+ * corner. Give the value's unit as `unit` so it is set smaller than the number.
+ */
+export function StatTile({ label, value, unit, note, icon, tone, loading }: StatTileProps) {
   return (
     <div
       className={cn(

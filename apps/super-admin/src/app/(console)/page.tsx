@@ -4,18 +4,23 @@ import type { AuditEntryDto, HealthCheckData, TenantDto } from '@smart-light/sha
 import {
   Alert,
   Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
   EmptyState,
+  Panel,
   Skeleton,
-  KpiCard,
+  StatTile,
   StatusIndicator,
 } from '@smart-light/ui';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, Lightbulb, Plus, TriangleAlert, Wifi, LayoutDashboard } from 'lucide-react';
+import {
+  Activity,
+  Building2,
+  History,
+  LayoutDashboard,
+  Lightbulb,
+  Plus,
+  TriangleAlert,
+  Wifi,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useFormatter, useTranslations } from 'next-intl';
 import { CityCard } from '@/components/CityCard';
@@ -82,6 +87,9 @@ export default function OverviewPage() {
         ? t('health.down')
         : t('health.notConnected');
 
+  const percent = (part: number, whole: number) =>
+    format.number(whole ? part / whole : 0, { style: 'percent', maximumFractionDigits: 1 });
+
   return (
     <>
       <ConsoleHero
@@ -104,50 +112,40 @@ export default function OverviewPage() {
         </Alert>
       ) : null}
 
-      <section aria-label={t('title')} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {tenants.data ? (
-          <>
-            <KpiCard
-              label={t('stats.municipalities')}
-              value={format.number(tenants.data.length)}
-              icon={<Building2 />}
-              tone="info"
-            />
-            <KpiCard
-              label={t('stats.poles')}
-              value={format.number(totals.poles)}
-              icon={<Lightbulb />}
-              tone="info"
-            />
-            <KpiCard
-              label={t('stats.online')}
-              value={format.number(totals.online)}
-              hint={t('stats.onlineHint', {
-                total: format.number(totals.devices),
-                percent: format.number(totals.devices ? totals.online / totals.devices : 0, {
-                  style: 'percent',
-                  maximumFractionDigits: 1,
-                }),
-              })}
-              share={totals.devices ? totals.online / totals.devices : null}
-              icon={<Wifi />}
-              tone="success"
-            />
-            <KpiCard
-              label={t('stats.problems')}
-              value={format.number(totals.problems)}
-              hint={t('stats.problemsHint')}
-              share={totals.poles ? totals.problems / totals.poles : null}
-              icon={<TriangleAlert />}
-              tone={totals.problems > 0 ? 'danger' : 'success'}
-            />
-          </>
-        ) : (
-          Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-28" />)
-        )}
+      <section aria-label={t('title')} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatTile
+          tone="purple"
+          icon={<Building2 />}
+          label={t('stats.municipalities')}
+          loading={!tenants.data}
+          value={tenants.data ? format.number(tenants.data.length) : ''}
+        />
+        <StatTile
+          tone="blue"
+          icon={<Lightbulb />}
+          label={t('stats.poles')}
+          loading={!tenants.data}
+          value={format.number(totals.poles)}
+        />
+        <StatTile
+          tone="green"
+          icon={<Wifi />}
+          label={t('stats.online')}
+          loading={!tenants.data}
+          value={format.number(totals.online)}
+          note={percent(totals.online, totals.devices)}
+        />
+        <StatTile
+          tone="red"
+          icon={<TriangleAlert />}
+          label={t('stats.problems')}
+          loading={!tenants.data}
+          value={format.number(totals.problems)}
+          note={percent(totals.problems, totals.poles)}
+        />
       </section>
 
-      <section aria-labelledby="cities-heading" className="mt-8">
+      <section aria-labelledby="cities-heading" className="mt-6">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
           <div>
             <h2 id="cities-heading" className="text-lg font-semibold">
@@ -177,45 +175,39 @@ export default function OverviewPage() {
         )}
       </section>
 
-      <div className="mt-8 grid gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <div>
-              <CardTitle>{t('activity.title')}</CardTitle>
-              <CardDescription>{t('activity.description')}</CardDescription>
-            </div>
-            <Link href="/audit" className="text-sm font-medium text-primary hover:underline">
-              {t('activity.all')}
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {activity.data ? (
-              <RecentActivity entries={activity.data.items} />
-            ) : activity.error ? (
-              <p className="text-sm text-muted-foreground">{tCommon('errorBody')}</p>
-            ) : (
-              <Skeleton className="h-48" />
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <div>
-              <CardTitle>{t('health.title')}</CardTitle>
-              <CardDescription>{t('health.description')}</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ul className="divide-y divide-border">
-              {services.map((service) => (
-                <li key={service.key} className="flex items-center justify-between gap-3 py-3">
-                  <span className="font-medium">{t(`health.${service.key}`)}</span>
-                  <StatusIndicator status={service.state} label={serviceLabel(service.state)} />
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+      <div className="mt-6 grid gap-4 xl:grid-cols-3">
+        <Panel
+          id="recent-activity"
+          title={t('activity.title')}
+          icon={<History />}
+          link={{ href: '/audit', label: t('activity.all') }}
+          className="xl:col-span-2"
+        >
+          <p className="mb-3 text-sm text-muted-foreground">{t('activity.description')}</p>
+          {activity.data ? (
+            <RecentActivity entries={activity.data.items} />
+          ) : activity.error ? (
+            <p className="text-sm text-muted-foreground">{tCommon('errorBody')}</p>
+          ) : (
+            <Skeleton className="h-48" />
+          )}
+        </Panel>
+        <Panel
+          id="platform-health"
+          title={t('health.title')}
+          icon={<Activity />}
+          link={{ href: '/health', label: t('health.details') }}
+        >
+          <p className="mb-1 text-sm text-muted-foreground">{t('health.description')}</p>
+          <ul className="divide-y divide-border">
+            {services.map((service) => (
+              <li key={service.key} className="flex items-center justify-between gap-3 py-3">
+                <span className="font-medium">{t(`health.${service.key}`)}</span>
+                <StatusIndicator status={service.state} label={serviceLabel(service.state)} />
+              </li>
+            ))}
+          </ul>
+        </Panel>
       </div>
     </>
   );

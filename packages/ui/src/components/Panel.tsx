@@ -1,9 +1,22 @@
-import { Card, cn } from '@smart-light/ui';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { cn } from '../lib/cn';
+import { Card } from './Card';
 
 /** Compact dark card with an icon title and an optional "view all" link. */
+export interface PanelProps {
+  /** Id of the heading; the section is labelled by it. */
+  id: string;
+  title: string;
+  icon: ReactNode;
+  link?: { href: string; label: string };
+  actions?: ReactNode;
+  className?: string;
+  bodyClassName?: string;
+  children: ReactNode;
+}
+
 export function Panel({
   id,
   title,
@@ -13,16 +26,7 @@ export function Panel({
   className,
   bodyClassName,
   children,
-}: {
-  id: string;
-  title: string;
-  icon: ReactNode;
-  link?: { href: string; label: string };
-  actions?: ReactNode;
-  className?: string;
-  bodyClassName?: string;
-  children: ReactNode;
-}) {
+}: PanelProps) {
   return (
     <Card className={cn('flex min-w-0 flex-col', className)}>
       <section aria-labelledby={id} className="flex flex-1 flex-col">

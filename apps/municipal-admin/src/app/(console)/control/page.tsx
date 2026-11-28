@@ -1,12 +1,11 @@
 'use client';
 
 import type { PoleMapItemDto, ZoneDto } from '@smart-light/shared';
-import { Button, EmptyState, Input } from '@smart-light/ui';
+import { Button, EmptyState, Input, Panel } from '@smart-light/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Lightbulb, MapPinned, Search, SlidersHorizontal, Zap } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
-import { Panel } from '@/components/dashboard/Panel';
 import { SelectedLight } from '@/components/dashboard/SelectedLight';
 import { GroupOverride } from '@/components/lighting/GroupOverride';
 import { LightingStatus } from '@/components/lighting/ScheduleOverview';

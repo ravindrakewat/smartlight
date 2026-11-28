@@ -1,4 +1,4 @@
-import { AppShell, type AppShellNavItem } from '@smart-light/ui';
+import { AppShell, FullscreenButton, type AppShellNavItem } from '@smart-light/ui';
 import {
   Activity,
   Building2,
@@ -13,6 +13,7 @@ import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { UserMenu } from './Session';
+import { SidebarBrand } from './shell/SidebarBrand';
 import { SystemStatus } from './shell/SystemStatus';
 
 export async function ConsoleShell({ children }: { children: ReactNode }) {
@@ -40,9 +41,16 @@ export async function ConsoleShell({ children }: { children: ReactNode }) {
         closeMenu: t('Common.closeMenu'),
         skipToContent: t('Common.skipToContent'),
       }}
-      sidebarFooter={<SystemStatus />}
+      mainClassName="pt-4 lg:pt-4"
+      sidebarFooter={
+        <div className="grid gap-2">
+          <SidebarBrand />
+          <SystemStatus />
+        </div>
+      }
       headerActions={
         <>
+          <FullscreenButton label={t('Shell.fullscreen')} />
           <LocaleSwitcher />
           <UserMenu />
         </>

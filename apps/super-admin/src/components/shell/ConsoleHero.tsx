@@ -1,42 +1,30 @@
-'use client';
-
-import { LiveIndicator, PageHero } from '@smart-light/ui';
-import { useFormatter, useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
-import { HeroBackground } from './HeroBackground';
 
 export interface ConsoleHeroProps {
   title: string;
   accent?: string;
   description?: ReactNode;
   icon?: ReactNode;
-  /** Buttons shown under the banner, on the right. */
+  /** Buttons shown at the top of the page, on the right. */
   actions?: ReactNode;
+  /** Kept for callers; the page no longer has a banner. */
+  compact?: boolean;
 }
 
-/** Page banner with the live clock; carries the page's `h1`. */
-export function ConsoleHero({ title, accent, description, icon, actions }: ConsoleHeroProps) {
-  const t = useTranslations('Shell');
-  const format = useFormatter();
-
+/**
+ * The page's `h1` without a visible banner (the console shows no page banner; the
+ * sidebar marks where you are). The title stays for screen readers and the page
+ * outline, and the page's action buttons stay at the top right.
+ */
+export function ConsoleHero({ title, accent, description, actions }: ConsoleHeroProps) {
   return (
     <>
-      <PageHero
-        title={title}
-        accent={accent}
-        description={description}
-        icon={icon}
-        background={<HeroBackground />}
-        className={actions ? 'mb-4' : undefined}
-        aside={
-          <LiveIndicator
-            label={t('live')}
-            formatTime={(now) => format.dateTime(now, { dateStyle: 'medium', timeStyle: 'short' })}
-          />
-        }
-      />
+      <div className="sr-only">
+        <h1>{accent ? `${title} ${accent}` : title}</h1>
+        {description ? <p>{description}</p> : null}
+      </div>
       {actions ? (
-        <div className="mb-6 flex flex-wrap items-center justify-end gap-3">{actions}</div>
+        <div className="mb-3 flex flex-wrap items-center justify-end gap-3">{actions}</div>
       ) : null}
     </>
   );

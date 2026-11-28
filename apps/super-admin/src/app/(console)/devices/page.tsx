@@ -6,12 +6,12 @@ import {
   Card,
   cn,
   EmptyState,
-  KpiCard,
   Field,
   Input,
   Pagination,
   Select,
   Skeleton,
+  StatTile,
 } from '@smart-light/ui';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Cpu, Lightbulb, LightbulbOff, Search, Wifi, WifiOff } from 'lucide-react';
@@ -77,48 +77,37 @@ function Devices() {
   const onlineCount = scope.reduce((sum, tenant) => sum + tenant.stats.devicesOnline, 0);
   const now = new Date();
 
+  const percent = (part: number, whole: number) =>
+    format.number(whole ? part / whole : 0, { style: 'percent', maximumFractionDigits: 1 });
+
   return (
     <>
       <ConsoleHero icon={<Cpu />} title={t('title')} description={t('description')} />
 
-      <section aria-label={t('summary')} className="mb-6 grid gap-4 sm:grid-cols-3">
-        {tenants.data ? (
-          <>
-            <KpiCard
-              label={t('stats.total')}
-              value={format.number(total)}
-              icon={<Cpu />}
-              tone="info"
-            />
-            <KpiCard
-              label={t('stats.online')}
-              value={format.number(onlineCount)}
-              hint={
-                total
-                  ? t('stats.share', {
-                      percent: format.number(onlineCount / total, {
-                        style: 'percent',
-                        maximumFractionDigits: 1,
-                      }),
-                    })
-                  : undefined
-              }
-              share={total ? onlineCount / total : null}
-              icon={<Wifi />}
-              tone="success"
-            />
-            <KpiCard
-              label={t('stats.offline')}
-              value={format.number(total - onlineCount)}
-              hint={t('stats.offlineHint')}
-              share={total ? (total - onlineCount) / total : null}
-              icon={<WifiOff />}
-              tone={total - onlineCount > 0 ? 'warning' : 'success'}
-            />
-          </>
-        ) : (
-          Array.from({ length: 3 }, (_, index) => <Skeleton key={index} className="h-28" />)
-        )}
+      <section aria-label={t('summary')} className="mb-4 grid gap-3 sm:grid-cols-3">
+        <StatTile
+          tone="blue"
+          icon={<Cpu />}
+          label={t('stats.total')}
+          loading={!tenants.data}
+          value={format.number(total)}
+        />
+        <StatTile
+          tone="green"
+          icon={<Wifi />}
+          label={t('stats.online')}
+          loading={!tenants.data}
+          value={format.number(onlineCount)}
+          note={percent(onlineCount, total)}
+        />
+        <StatTile
+          tone="orange"
+          icon={<WifiOff />}
+          label={t('stats.offline')}
+          loading={!tenants.data}
+          value={format.number(total - onlineCount)}
+          note={percent(total - onlineCount, total)}
+        />
       </section>
 
       <div className="mb-4 grid gap-3 rounded-2xl border border-border bg-surface p-4 md:grid-cols-3">
@@ -186,7 +175,7 @@ function Devices() {
         ) : devices.data && devices.data.items.length === 0 ? (
           <EmptyState className="m-5" icon={<Search />} title={t('empty')} />
         ) : devices.data ? (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full min-w-[52rem] text-left text-sm">
               <caption className="sr-only">{t('title')}</caption>
               <thead className="bg-surface-subtle/60 text-muted-foreground">

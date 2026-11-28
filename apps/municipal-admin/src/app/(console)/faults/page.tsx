@@ -7,7 +7,7 @@ import type {
   ReportSummaryDto,
   WorkOrderSummaryDto,
 } from '@smart-light/shared';
-import { Alert, cn, EmptyState, Skeleton } from '@smart-light/ui';
+import { Alert, cn, EmptyState, Panel, Skeleton, StatTile } from '@smart-light/ui';
 import { useQuery } from '@tanstack/react-query';
 import {
   BarChart3,
@@ -22,8 +22,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
-import { Panel } from '@/components/dashboard/Panel';
-import { StatTile } from '@/components/dashboard/StatTile';
 import { DeadlineLabel, PriorityBadge, useFaultLabel } from '@/components/labels';
 import { useSessionUser } from '@/components/Session';
 import { ConsoleHero } from '@/components/shell/ConsoleHero';
