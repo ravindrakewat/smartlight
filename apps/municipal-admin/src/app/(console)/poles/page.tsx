@@ -10,9 +10,10 @@ import {
   Pagination,
   Select,
   Skeleton,
+  StreetLightIcon,
 } from '@smart-light/ui';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { FileUp, Printer, Search, Lightbulb } from 'lucide-react';
+import { FileUp, Printer, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
@@ -68,7 +69,7 @@ function PolesView() {
   return (
     <>
       <ConsoleHero
-        icon={<Lightbulb />}
+        icon={<StreetLightIcon />}
         title={t('title')}
         description={t('description')}
         actions={

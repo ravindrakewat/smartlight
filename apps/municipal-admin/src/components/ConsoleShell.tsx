@@ -1,4 +1,4 @@
-import { AppShell, type AppShellNavItem } from '@smart-light/ui';
+import { AppShell, type AppShellNavItem, StreetLightIcon } from '@smart-light/ui';
 import {
   Boxes,
   Bell,
@@ -7,7 +7,6 @@ import {
   FileBarChart,
   LampWallDown,
   LayoutDashboard,
-  Lightbulb,
   Map as MapIcon,
   Settings,
   Siren,
@@ -36,7 +35,7 @@ export async function ConsoleShell({ children }: { children: ReactNode }) {
     { href: '/', label: t('Nav.dashboard'), icon: <LayoutDashboard /> },
     { href: '/map', label: t('Nav.map'), icon: <MapIcon /> },
     { href: '/streets', label: t('Nav.streets'), icon: <LampWallDown /> },
-    { href: '/poles', label: t('Nav.assets'), icon: <Lightbulb /> },
+    { href: '/poles', label: t('Nav.assets'), icon: <StreetLightIcon /> },
     { href: '/energy', label: t('Nav.energy'), icon: <Zap /> },
     { href: '/faults', label: t('Nav.faults'), icon: <Siren /> },
     { href: '/alerts', label: t('Nav.alerts'), icon: <Bell />, badge: <AlertsNavBadge /> },

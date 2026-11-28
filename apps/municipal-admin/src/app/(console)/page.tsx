@@ -10,7 +10,17 @@ import {
   type ReportBreakdownDto,
   type WorkOrderSummaryDto,
 } from '@smart-light/shared';
-import { Alert, cn, EmptyState, Input, Panel, Select, Skeleton, StatTile } from '@smart-light/ui';
+import {
+  Alert,
+  cn,
+  EmptyState,
+  Input,
+  Panel,
+  Select,
+  Skeleton,
+  StatTile,
+  StreetLightIcon,
+} from '@smart-light/ui';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
   Activity,
@@ -210,7 +220,7 @@ export default function DashboardPage() {
       >
         <StatTile
           tone="blue"
-          icon={<Lightbulb />}
+          icon={<StreetLightIcon />}
           label={t('stats.totalLights')}
           loading={loading}
           value={poles ? format.number(poles.total) : ''}
@@ -363,7 +373,7 @@ export default function DashboardPage() {
           )}
         </Panel>
 
-        <Panel id="selected-light" title={t('selected.title')} icon={<Lightbulb />}>
+        <Panel id="selected-light" title={t('selected.title')} icon={<StreetLightIcon />}>
           <SelectedLight poleId={selectedId} canControl={canControl} />
         </Panel>
       </div>

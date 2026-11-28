@@ -1,9 +1,9 @@
 'use client';
 
 import type { PoleMapItemDto, ZoneDto } from '@smart-light/shared';
-import { Button, EmptyState, Input, Panel } from '@smart-light/ui';
+import { Button, EmptyState, Input, Panel, StreetLightIcon } from '@smart-light/ui';
 import { useQuery } from '@tanstack/react-query';
-import { Lightbulb, MapPinned, Search, SlidersHorizontal, Zap } from 'lucide-react';
+import { MapPinned, Search, SlidersHorizontal, Zap } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
 import { SelectedLight } from '@/components/dashboard/SelectedLight';
@@ -70,7 +70,7 @@ export default function RemoteControlPage() {
           </div>
         </Panel>
 
-        <Panel id="control-single" title={t('single.title')} icon={<Lightbulb />}>
+        <Panel id="control-single" title={t('single.title')} icon={<StreetLightIcon />}>
           <div className="grid gap-4">
             <form onSubmit={onSearch} role="search" className="grid gap-1.5">
               <label htmlFor="control-search" className="text-sm font-medium">

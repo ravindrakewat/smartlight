@@ -5,14 +5,13 @@ import {
   type DashboardSummaryDto,
   type ScheduleDto,
 } from '@smart-light/shared';
-import { Badge, Button, Card, CardContent, Skeleton } from '@smart-light/ui';
+import { Badge, Button, Card, CardContent, Skeleton, StreetLightIcon } from '@smart-light/ui';
 import { useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle,
   ArrowDown,
   CalendarClock,
   CheckCircle2,
-  Lightbulb,
   Pencil,
   Radio,
   Trash2,
@@ -242,7 +241,11 @@ export function LightingStatus() {
           })
         : null,
     },
-    { key: 'working', icon: <Lightbulb />, value: data ? format.number(data.poles.working) : null },
+    {
+      key: 'working',
+      icon: <StreetLightIcon />,
+      value: data ? format.number(data.poles.working) : null,
+    },
     {
       key: 'faults',
       icon: <AlertTriangle />,

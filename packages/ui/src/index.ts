@@ -33,6 +33,7 @@ export {
   type LightStatus,
   type StatusIndicatorProps,
 } from './components/StatusIndicator';
+export { StreetLightIcon, type StreetLightIconProps } from './components/StreetLightIcon';
 export { StreetPole, type StreetPoleProps, type StreetPoleStatus } from './components/StreetPole';
 export { TextSizeControl, type TextSizeControlProps } from './components/TextSizeControl';
 export { Field, Input, Select, Textarea, type FieldProps } from './components/Form';

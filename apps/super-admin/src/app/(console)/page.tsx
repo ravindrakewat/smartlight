@@ -9,6 +9,7 @@ import {
   Skeleton,
   StatTile,
   StatusIndicator,
+  StreetLightIcon,
 } from '@smart-light/ui';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -16,7 +17,6 @@ import {
   Building2,
   History,
   LayoutDashboard,
-  Lightbulb,
   Plus,
   TriangleAlert,
   Wifi,
@@ -122,7 +122,7 @@ export default function OverviewPage() {
         />
         <StatTile
           tone="blue"
-          icon={<Lightbulb />}
+          icon={<StreetLightIcon />}
           label={t('stats.poles')}
           loading={!tenants.data}
           value={format.number(totals.poles)}
