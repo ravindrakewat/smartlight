@@ -10,7 +10,10 @@ import {
   Lightbulb,
   Map as MapIcon,
   Settings,
+  Siren,
+  SlidersHorizontal,
   UsersRound,
+  Zap,
 } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
@@ -34,11 +37,14 @@ export async function ConsoleShell({ children }: { children: ReactNode }) {
     { href: '/map', label: t('Nav.map'), icon: <MapIcon /> },
     { href: '/streets', label: t('Nav.streets'), icon: <LampWallDown /> },
     { href: '/poles', label: t('Nav.assets'), icon: <Lightbulb /> },
+    { href: '/energy', label: t('Nav.energy'), icon: <Zap /> },
+    { href: '/faults', label: t('Nav.faults'), icon: <Siren /> },
     { href: '/alerts', label: t('Nav.alerts'), icon: <Bell />, badge: <AlertsNavBadge /> },
     { href: '/work-orders', label: t('Nav.workOrders'), icon: <ClipboardList /> },
     { href: '/schedules', label: t('Nav.schedules'), icon: <CalendarClock /> },
-    { href: '/inventory', label: t('Nav.inventory'), icon: <Boxes /> },
+    { href: '/control', label: t('Nav.control'), icon: <SlidersHorizontal /> },
     { href: '/reports', label: t('Nav.reports'), icon: <FileBarChart /> },
+    { href: '/inventory', label: t('Nav.inventory'), icon: <Boxes /> },
     { href: '/staff', label: t('Nav.staff'), icon: <UsersRound /> },
     { href: '/settings', label: t('Nav.settings'), icon: <Settings /> },
   ];

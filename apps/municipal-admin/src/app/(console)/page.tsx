@@ -10,11 +10,10 @@ import {
   type ReportBreakdownDto,
   type WorkOrderSummaryDto,
 } from '@smart-light/shared';
-import { Alert, Card, cn, EmptyState, Input, Select, Skeleton } from '@smart-light/ui';
+import { Alert, cn, EmptyState, Input, Select, Skeleton } from '@smart-light/ui';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
   Activity,
-  ArrowRight,
   BarChart3,
   Bolt,
   CalendarClock,
@@ -43,6 +42,7 @@ import { ActivityChart } from '@/components/charts/ActivityChart';
 import { StatusDonut } from '@/components/charts/StatusDonut';
 import { AutomationPanel } from '@/components/dashboard/AutomationPanel';
 import { EnergyBars } from '@/components/dashboard/EnergyBars';
+import { Panel } from '@/components/dashboard/Panel';
 import { SelectedLight } from '@/components/dashboard/SelectedLight';
 import { StatTile } from '@/components/dashboard/StatTile';
 import { DeadlineLabel, PriorityBadge, useFaultLabel } from '@/components/labels';
@@ -73,55 +73,6 @@ const LEGEND: { status: PoleMapItemDto['lightStatus']; dot: string }[] = [
   { status: 'OFFLINE', dot: 'bg-warning' },
   { status: 'UNKNOWN', dot: 'bg-muted-foreground' },
 ];
-
-/** Compact dark card with an icon title and an optional "view all" link. */
-function Panel({
-  id,
-  title,
-  icon,
-  link,
-  actions,
-  className,
-  bodyClassName,
-  children,
-}: {
-  id: string;
-  title: string;
-  icon: ReactNode;
-  link?: { href: string; label: string };
-  actions?: ReactNode;
-  className?: string;
-  bodyClassName?: string;
-  children: ReactNode;
-}) {
-  return (
-    <Card className={cn('flex min-w-0 flex-col', className)}>
-      <section aria-labelledby={id} className="flex flex-1 flex-col">
-        <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-4 pb-3">
-          <h2 id={id} className="flex items-center gap-2 text-base font-semibold">
-            <span aria-hidden="true" className="text-info [&_svg]:size-5">
-              {icon}
-            </span>
-            {title}
-          </h2>
-          <div className="flex flex-wrap items-center gap-2">
-            {actions}
-            {link ? (
-              <Link
-                href={link.href}
-                className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-primary hover:underline"
-              >
-                {link.label}
-                <ArrowRight aria-hidden="true" className="size-4" />
-              </Link>
-            ) : null}
-          </div>
-        </div>
-        <div className={cn('flex-1 px-4 pb-4', bodyClassName)}>{children}</div>
-      </section>
-    </Card>
-  );
-}
 
 function Metric({
   icon,

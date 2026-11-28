@@ -45,7 +45,10 @@
     "reports": "Reports",
     "settings": "Settings",
     "staff": "Staff & agencies",
-    "inventory": "Spare parts"
+    "inventory": "Spare parts",
+    "energy": "Energy analytics",
+    "faults": "Fault management",
+    "control": "Remote control"
   },
   "Login": {
     "title": "Sign in",
@@ -1209,6 +1212,98 @@
         "sla_breached": "{number} ({poleCode}) is past its SLA deadline"
       },
       "other": "Update on {number}"
+    }
+  },
+  "Energy": {
+    "title": "Energy analytics",
+    "description": "Energy measured by the street light controllers.",
+    "fullReport": "Full report",
+    "noAccess": "Energy reports are not available for your role.",
+    "empty": "No controller has reported energy in this period.",
+    "note": "Measured by the controllers. Energy that crosses a day or month boundary is not counted.",
+    "tiles": {
+      "heading": "Energy in numbers",
+      "total": "Energy used",
+      "average": "Average per day",
+      "perDay": "per day",
+      "load": "Current load",
+      "loadNote": "{count} reporting",
+      "reporting": "Controllers reporting",
+      "ofControllers": "of {total}"
+    },
+    "chart": {
+      "daily": "Energy per day",
+      "monthly": "Energy per month"
+    },
+    "highlights": {
+      "title": "Highlights",
+      "peakDay": "Highest day",
+      "peakMonth": "Highest month",
+      "perController": "Per reporting controller",
+      "savings": "Savings",
+      "noBaseline": "Needs an agreed baseline"
+    },
+    "table": {
+      "daily": "Daily readings",
+      "monthly": "Monthly readings",
+      "date": "Date",
+      "month": "Month",
+      "kwh": "kWh",
+      "share": "Share"
+    }
+  },
+  "Faults": {
+    "title": "Fault management",
+    "description": "Faulty and offline lights, open alerts and repairs in one place.",
+    "noAccess": "Controller alerts are not available for your role.",
+    "tiles": {
+      "heading": "Faults in numbers",
+      "faulty": "Faulty lights",
+      "offline": "Offline",
+      "critical": "Critical alerts",
+      "open": "Open now",
+      "overdue": "Overdue repairs",
+      "openRepairs": "{count} open"
+    },
+    "alerts": {
+      "title": "Open alerts",
+      "viewAll": "All alerts"
+    },
+    "repairs": {
+      "title": "Open repairs",
+      "viewAll": "All work orders"
+    },
+    "types": {
+      "title": "Repairs by fault type, last 30 days",
+      "empty": "No faults reported in the last 30 days.",
+      "note": "Work orders created in the last 30 days, by fault type."
+    },
+    "wards": {
+      "title": "Wards with most faults",
+      "viewAll": "Ward report",
+      "empty": "No ward has a faulty or offline light.",
+      "ward": "Ward",
+      "faulty": "Faulty",
+      "offline": "Offline",
+      "open": "Open jobs",
+      "overdue": "Overdue",
+      "noWard": "No ward"
+    }
+  },
+  "Control": {
+    "title": "Remote control",
+    "description": "Switch the whole city, one zone or a single street light.",
+    "noAccess": "Only administrators, supervisors and operators can switch lights.",
+    "group": {
+      "title": "City or zone"
+    },
+    "single": {
+      "title": "One street light",
+      "label": "Pole code",
+      "placeholder": "e.g. IND-000001",
+      "find": "Find",
+      "notFound": "No pole matches \"{query}\".",
+      "pick": "Search a pole code to control one light."
     }
   }
 }

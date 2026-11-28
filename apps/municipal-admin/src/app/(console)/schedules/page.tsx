@@ -19,7 +19,7 @@ import { Activity, CalendarClock, Map as MapIcon, MapPinned, Plus, Zap } from 'l
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
-import { ControlPanel } from '@/components/lighting/ControlPanel';
+import { GroupOverride } from '@/components/lighting/GroupOverride';
 import { ScheduleEditor } from '@/components/lighting/ScheduleEditor';
 import {
   ActiveSchedules,
@@ -52,7 +52,6 @@ export default function SchedulesPage() {
   const admin = ADMINS.has(user.role);
 
   const [editing, setEditing] = useState<ScheduleDto | 'new' | null>(null);
-  const [overrideTarget, setOverrideTarget] = useState('city');
   const [notice, setNotice] = useState<Notice>(null);
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -93,10 +92,6 @@ export default function SchedulesPage() {
   });
 
   const defaultSchedule = schedules.data?.find((schedule) => schedule.isDefault);
-  const targetName =
-    overrideTarget === 'city'
-      ? t('override.city')
-      : (zones.data?.find((zone) => zone.id === overrideTarget)?.name ?? '');
 
   const openEditor = (next: ScheduleDto | 'new') => {
     setNotice(null);
@@ -228,34 +223,7 @@ export default function SchedulesPage() {
                 <CardDescription>{t('override.description')}</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
-                <Field label={t('override.target')}>
-                  {({ id }) => (
-                    <Select
-                      id={id}
-                      value={overrideTarget}
-                      onChange={(event) => setOverrideTarget(event.target.value)}
-                    >
-                      <option value="city">{t('override.city')}</option>
-                      {zones.data?.map((zone) => (
-                        <option key={zone.id} value={zone.id}>
-                          {t('override.zone', { code: zone.code, name: zone.name })}
-                        </option>
-                      ))}
-                    </Select>
-                  )}
-                </Field>
-                <ControlPanel
-                  key={overrideTarget}
-                  layout="tiles"
-                  target={
-                    overrideTarget === 'city'
-                      ? { type: 'city' }
-                      : { type: 'zone', zoneId: overrideTarget }
-                  }
-                  confirm={(action) =>
-                    window.confirm(t(`override.confirm.${action}`, { target: targetName }))
-                  }
-                />
+                <GroupOverride zones={zones.data} />
                 <div className="grid grid-cols-2 gap-3 border-t border-border pt-4">
                   <Button
                     asChild
